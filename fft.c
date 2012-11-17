@@ -14,6 +14,11 @@ static const double highend = 2225 + PERBIN;
 #define SAMPLE_RATE     44100
 #define BAUD_RATE       300
 #define SAMPLES_PER_BIT ((double)SAMPLE_RATE / BAUD_RATE)
+#define START_BITS      1
+#define DATA_BITS       8
+#define PARITY_BITS     0
+#define STOP_BITS       2
+#define ALL_BITS        (START_BITS + DATA_BITS + PARITY_BITS + STOP_BITS)
 
 #define countof(X) (sizeof (X) / sizeof (X)[0])
 
@@ -65,15 +70,20 @@ int process_bit(size_t bit_base, fftw_complex *data, fftw_complex *fft_result, i
     return 0;
 }
 
-int process_byte(size_t size, double input[size])
+int process_byte(size_t size, double input[size], int output[size / (size_t)SAMPLES_PER_BIT / ALL_BITS])
 {
     fftw_complex *data       = fftw_malloc(SIZE * sizeof *data);
     fftw_complex *fft_result = fftw_malloc(SIZE * sizeof *fft_result);
 
-    for (int bit = 0; bit < size / SAMPLES_PER_BIT; bit++) {
+    for (int biti = 0; biti < size / SAMPLES_PER_BIT; biti++) {
+        int word = biti / ALL_BITS;
+        int wordbit = biti % ALL_BITS;
+        if (wordbit == 0)
+            output[word] = 0;
+
         fftw_plan plan_forward  = fftw_plan_dft_1d(SIZE, data, fft_result, FFTW_FORWARD, FFTW_ESTIMATE);
 
-        size_t bit_base = bit * SAMPLES_PER_BIT;
+        size_t bit_base = biti * SAMPLES_PER_BIT;
 
         for (int i = 0; i < SIZE; i++) {
             data[i][0] = i < SAMPLES_PER_BIT ? input[bit_base + i] : 0.;
@@ -85,6 +95,10 @@ int process_byte(size_t size, double input[size])
         int channel, bit;
         process_bit(bit_base, data, fft_result, &channel, &bit);
         printf("Guess : channel %zd bit %zd\n", channel, bit);
+        output[word] |= bit << wordbit;
+        #if VERBOSE
+        printf("output[%zd] = %#x\n", word, output[word]);
+        #endif
 
         fftw_destroy_plan(plan_forward);
     }
@@ -115,7 +129,16 @@ int main(int argc, char** argv)
     printf("baud rate is %4d\n", BAUD_RATE);
     printf("samples per bit is %4.0f\n", SAMPLES_PER_BIT);
 
-    process_byte(index, input);
+    int output[(index + (size_t)SAMPLES_PER_BIT - 1) / (size_t)SAMPLES_PER_BIT / ALL_BITS];
+
+    process_byte(index, input, output);
+    for (int i = 0; i < countof(output); i++) {
+        if (output[i] & 1)
+            fprintf(stderr, "Start bit was not zero\n");
+        if (output[i] >> (START_BITS + DATA_BITS) != (1 << STOP_BITS) - 1)
+            fprintf(stderr, "Stop bits were not one\n");
+        printf("output[%zd] = %#x\n", i, (output[i] >> 1) & 0xff);
+    }
 
     return 0;
 }
