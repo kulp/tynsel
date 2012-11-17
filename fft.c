@@ -64,7 +64,7 @@ static size_t get_nearest_freq(double freq)
     return mini;
 }
 
-int process_bit(size_t bit_base, fftw_complex *data, fftw_complex *fft_result, int *channel, int *bit)
+int process_bit(size_t bit_base, fftw_complex *fft_result, int *channel, int *bit)
 {
     size_t maxi = get_max_magnitude(fft_result);
 
@@ -93,7 +93,7 @@ int process_byte(size_t size, double input[size], int output[size / (size_t)SAMP
         if (wordbit == 0)
             output[word] = 0;
 
-        fftw_plan plan_forward  = fftw_plan_dft_1d(SIZE, data, fft_result, FFTW_FORWARD, FFTW_ESTIMATE);
+        fftw_plan plan_forward = fftw_plan_dft_1d(SIZE, data, fft_result, FFTW_FORWARD, FFTW_ESTIMATE);
 
         size_t bit_base = biti * SAMPLES_PER_BIT;
 
@@ -105,10 +105,10 @@ int process_byte(size_t size, double input[size], int output[size / (size_t)SAMP
         fftw_execute(plan_forward);
 
         int channel, bit;
-        process_bit(bit_base, data, fft_result, &channel, &bit);
+        process_bit(bit_base, fft_result, &channel, &bit);
         output[word] |= bit << wordbit;
 
-        #if VERBOSE > 3
+        #if VERBOSE > 2
         printf("Guess : channel %zd bit %zd\n", channel, bit);
         printf("output[%zd] = %#x\n", word, output[word]);
         #endif
@@ -152,8 +152,12 @@ int main(int argc, char** argv)
             fprintf(stderr, "Start bit was not zero\n");
         if (output[i] >> (START_BITS + DATA_BITS) != (1 << STOP_BITS) - 1)
             fprintf(stderr, "Stop bits were not one\n");
-        printf("output[%zd] = %#x\n", i, (output[i] >> 1) & 0xff);
+        printf("output[%zd] = 0x%02x\n", i, (output[i] >> 1) & 0xff);
     }
+
+    sf_close(sf);
+
+    fftw_cleanup();
 
     return 0;
 }
