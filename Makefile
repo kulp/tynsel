@@ -1,5 +1,6 @@
 ifneq ($(DEBUG),)
 CFLAGS += -g -O0
+CPPFLAGS += -DVERBOSE
 endif
 
 fft: CPPFLAGS += -std=c99
