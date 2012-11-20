@@ -1,19 +1,22 @@
 #include <stdio.h>
-#include <fftw3.h>
 #include <math.h>
 #include <float.h>
+#include <stdlib.h>
+#include <string.h>
+#include <getopt.h>
 
+#include <fftw3.h>
 #include <sndfile.h>
 
-#define BUFFER_SIZE 2048
+#define BUFFER_SIZE 16384
 #define SIZE 512
 
-#define PERBIN          (44100. / SIZE)
-#define LOWEND          (freqs[0] - PERBIN)
+static int sample_rate = 44100;
+#define PERBIN          ((double)sample_rate / SIZE)
+#define LOWEND          (freqs[2] - PERBIN)
 #define HIGHEND         (freqs[3] + PERBIN)
-#define SAMPLE_RATE     44100
 #define BAUD_RATE       300
-#define SAMPLES_PER_BIT ((double)SAMPLE_RATE / BAUD_RATE)
+#define SAMPLES_PER_BIT ((double)sample_rate / BAUD_RATE)
 #define START_BITS      1
 #define DATA_BITS       8
 #define PARITY_BITS     0
@@ -27,16 +30,18 @@ static const double freqs[] = {
     2025., 2225.,
 };
 
+static int verbosity;
+
 static size_t get_max_magnitude(fftw_complex *fft_result)
 {
     size_t maxi = 0;
     double max = -1;
     for (size_t i = 0; i < SIZE; i++) {
         double mag = sqrt(pow(fft_result[i][0],2) + pow(fft_result[i][1],2));
-        #if VERBOSE > 3
-        printf("fft_result[%zd] = { %2.2f, %2.2f }\n", i, fft_result[i][0], fft_result[i][1]);
-        printf("magnitude[%zd] = { %6.2f }\n", i, mag);
-        #endif
+        if (verbosity > 3) {
+            printf("fft_result[%zd] = { %2.2f, %2.2f }\n", i, fft_result[i][0], fft_result[i][1]);
+            printf("magnitude[%zd] = { %6.2f }\n", i, mag);
+        }
         if (mag > max && (LOWEND / PERBIN) <= i && i <= (HIGHEND / PERBIN)) {
             max = mag;
             maxi = i;
@@ -50,9 +55,10 @@ static size_t get_nearest_freq(double freq)
 {
     size_t mini = 0;
     double min = DBL_MAX;
-    #if VERBOSE
-    printf("midpoint frequency is %4.0f\n", freq);
-    #endif
+
+    if (verbosity)
+        printf("midpoint frequency is %4.0f\n", freq);
+
     for (int i = 0; i < countof(freqs); i++) {
         double t = fabs(freq - freqs[i]);
         if (t < min) {
@@ -68,10 +74,10 @@ int process_bit(size_t bit_base, fftw_complex *fft_result, int *channel, int *bi
 {
     size_t maxi = get_max_magnitude(fft_result);
 
-    #if VERBOSE
-    printf("bucket with greatest magnitude was %zd, which corresponds to frequency range [%4.0f, %4.0f)\n",
-            maxi, PERBIN * maxi, PERBIN * (maxi + 1));
-    #endif
+    if (verbosity) {
+        printf("bucket with greatest magnitude was %zd, which corresponds to frequency range [%4.0f, %4.0f)\n",
+                maxi, PERBIN * maxi, PERBIN * (maxi + 1));
+    }
 
     double freq = maxi * PERBIN + (PERBIN / 2.);
     size_t mini = get_nearest_freq(freq);
@@ -108,10 +114,10 @@ int process_byte(size_t size, double input[size], int output[size / (size_t)SAMP
         process_bit(bit_base, fft_result, &channel, &bit);
         output[word] |= bit << wordbit;
 
-        #if VERBOSE > 2
-        printf("Guess : channel %zd bit %zd\n", channel, bit);
-        printf("output[%zd] = %#x\n", word, output[word]);
-        #endif
+        if (verbosity > 2) {
+            printf("Guess : channel %zd bit %zd\n", channel, bit);
+            printf("output[%zd] = %#x\n", word, output[word]);
+        }
 
         fftw_destroy_plan(plan_forward);
     }
@@ -122,31 +128,49 @@ int process_byte(size_t size, double input[size], int output[size / (size_t)SAMP
     return 0;
 }
 
-int main(int argc, char** argv)
+int main(int argc, char* argv[])
 {
-    if (argc < 2)
+    int sample_offset = 0;
+
+    int ch;
+    while ((ch = getopt(argc, argv, "s:O:v")) != -1) {
+        switch (ch) {
+            case 's': sample_rate = strtol(optarg, NULL, 0); break;
+            case 'O': sample_offset = strtol(optarg, NULL, 0); break;
+            case 'v': verbosity++; break;
+            default: fprintf(stderr, "args error before argument index %d\n", optind); return -1;
+        }
+    }
+
+    if (abs(sample_offset) > SAMPLES_PER_BIT) {
+        fprintf(stderr, "sample offset (%d) > samples per bit (%4.1f)\n",
+                sample_offset, SAMPLES_PER_BIT);
         return -1;
+    }
 
     SF_INFO sinfo = { 0 };
-    SNDFILE *sf = sf_open(argv[1], SFM_READ, &sinfo);
+    SNDFILE *sf = sf_open(argv[optind], SFM_READ, &sinfo);
 
-    double input[BUFFER_SIZE] = { 0 };
+    double _input[(size_t)SAMPLES_PER_BIT * 2 + BUFFER_SIZE];
+    memset(_input, 0, sizeof _input);
+    double *input = &_input[(size_t)SAMPLES_PER_BIT + sample_offset];
 
     sf_count_t count = 0;
     size_t index = 0;
     do {
-        count = sf_read_double(sf, &input[index++], 1);
+        count = sf_read_double(sf, &_input[(size_t)SAMPLES_PER_BIT + index++], 1);
     } while (count && index < BUFFER_SIZE);
-    #if VERBOSE
-    printf("read %zd items\n", index);
-    printf("sample rate is %4d Hz\n", SAMPLE_RATE);
-    printf("baud rate is %4d\n", BAUD_RATE);
-    printf("samples per bit is %4.0f\n", SAMPLES_PER_BIT);
-    #endif
+
+    if (verbosity) {
+        printf("read %zd items\n", index);
+        printf("sample rate is %4d Hz\n", sample_rate);
+        printf("baud rate is %4d\n", BAUD_RATE);
+        printf("samples per bit is %4.0f\n", SAMPLES_PER_BIT);
+    }
 
     int output[(index + (size_t)SAMPLES_PER_BIT - 1) / (size_t)SAMPLES_PER_BIT / ALL_BITS];
 
-    process_byte(index, input, output);
+    process_byte(index - sample_offset, input, output);
     for (int i = 0; i < countof(output); i++) {
         if (output[i] & 1)
             fprintf(stderr, "Start bit was not zero\n");
