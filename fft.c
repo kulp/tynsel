@@ -155,6 +155,11 @@ int main(int argc, char* argv[])
         return -1;
     }
 
+    if (optind >= argc) {
+        fprintf(stderr, "No files specified to process\n");
+        return -1;
+    }
+
     SF_INFO sinfo = { 0 };
     SNDFILE *sf = sf_open(argv[optind], SFM_READ, &sinfo);
 
