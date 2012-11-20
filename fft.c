@@ -8,6 +8,8 @@
 #include <fftw3.h>
 #include <sndfile.h>
 
+#define ROUND_FACTOR(X,By) (((X) + (By) - 1) / (By))
+
 #define BUFFER_SIZE 16384
 #define SIZE 512
 
@@ -17,10 +19,10 @@ static int sample_rate = 44100;
 #define HIGHEND         (freqs[3] + PERBIN)
 #define BAUD_RATE       300
 #define SAMPLES_PER_BIT ((double)sample_rate / BAUD_RATE)
-#define START_BITS      1
-#define DATA_BITS       8
-#define PARITY_BITS     0
-#define STOP_BITS       2
+static int START_BITS  = 1,
+           DATA_BITS   = 8,
+           PARITY_BITS = 0,
+           STOP_BITS   = 2;
 #define ALL_BITS        (START_BITS + DATA_BITS + PARITY_BITS + STOP_BITS)
 
 #define countof(X) (sizeof (X) / sizeof (X)[0])
@@ -116,7 +118,8 @@ int process_byte(size_t size, double input[size], int output[size / (size_t)SAMP
 
         if (verbosity > 2) {
             printf("Guess : channel %zd bit %zd\n", channel, bit);
-            printf("output[%zd] = %#x\n", word, output[word]);
+            int width = ROUND_FACTOR(ALL_BITS, 4);
+            printf("output[%zd] = 0x%0*x\n", word, width, output[word]);
         }
 
         fftw_destroy_plan(plan_forward);
@@ -133,9 +136,13 @@ int main(int argc, char* argv[])
     int sample_offset = 0;
 
     int ch;
-    while ((ch = getopt(argc, argv, "s:O:v")) != -1) {
+    while ((ch = getopt(argc, argv, "S:T:P:D:s:O:v")) != -1) {
         switch (ch) {
-            case 's': sample_rate = strtol(optarg, NULL, 0); break;
+            case 'S': START_BITS    = strtol(optarg, NULL, 0); break;
+            case 'T': STOP_BITS     = strtol(optarg, NULL, 0); break;
+            case 'P': PARITY_BITS   = strtol(optarg, NULL, 0); break;
+            case 'D': DATA_BITS     = strtol(optarg, NULL, 0); break;
+            case 's': sample_rate   = strtol(optarg, NULL, 0); break;
             case 'O': sample_offset = strtol(optarg, NULL, 0); break;
             case 'v': verbosity++; break;
             default: fprintf(stderr, "args error before argument index %d\n", optind); return -1;
@@ -168,15 +175,17 @@ int main(int argc, char* argv[])
         printf("samples per bit is %4.0f\n", SAMPLES_PER_BIT);
     }
 
-    int output[(index + (size_t)SAMPLES_PER_BIT - 1) / (size_t)SAMPLES_PER_BIT / ALL_BITS];
+    int output[ ROUND_FACTOR( ROUND_FACTOR(index, (size_t)SAMPLES_PER_BIT), ALL_BITS ) ];
 
     process_byte(index - sample_offset, input, output);
     for (int i = 0; i < countof(output); i++) {
-        if (output[i] & 1)
-            fprintf(stderr, "Start bit was not zero\n");
+        if (output[i] & ((1 << START_BITS) - 1))
+            fprintf(stderr, "Start bit%s %s not zero\n",
+                    START_BITS > 1 ? "s" : "", START_BITS > 1 ? "were" : "was");
         if (output[i] >> (START_BITS + DATA_BITS) != (1 << STOP_BITS) - 1)
             fprintf(stderr, "Stop bits were not one\n");
-        printf("output[%zd] = 0x%02x\n", i, (output[i] >> 1) & 0xff);
+        int width = ROUND_FACTOR(DATA_BITS, 4);
+        printf("output[%zd] = 0x%0*x\n", i, width, (output[i] >> START_BITS) & ((1u << DATA_BITS) - 1));
     }
 
     sf_close(sf);
