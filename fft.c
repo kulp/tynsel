@@ -19,11 +19,11 @@ static int sample_rate = 44100;
 #define HIGHEND         (freqs[3] + PERBIN)
 #define BAUD_RATE       300
 #define SAMPLES_PER_BIT ((double)sample_rate / BAUD_RATE)
-static int START_BITS  = 1,
-           DATA_BITS   = 8,
-           PARITY_BITS = 0,
-           STOP_BITS   = 2;
-#define ALL_BITS        (START_BITS + DATA_BITS + PARITY_BITS + STOP_BITS)
+static int start_bits  = 1,
+           data_bits   = 8,
+           parity_bits = 0,
+           stop_bits   = 2;
+#define ALL_BITS        (start_bits + data_bits + parity_bits + stop_bits)
 
 #define countof(X) (sizeof (X) / sizeof (X)[0])
 
@@ -138,10 +138,10 @@ int main(int argc, char* argv[])
     int ch;
     while ((ch = getopt(argc, argv, "S:T:P:D:s:O:v")) != -1) {
         switch (ch) {
-            case 'S': START_BITS    = strtol(optarg, NULL, 0); break;
-            case 'T': STOP_BITS     = strtol(optarg, NULL, 0); break;
-            case 'P': PARITY_BITS   = strtol(optarg, NULL, 0); break;
-            case 'D': DATA_BITS     = strtol(optarg, NULL, 0); break;
+            case 'S': start_bits    = strtol(optarg, NULL, 0); break;
+            case 'T': stop_bits     = strtol(optarg, NULL, 0); break;
+            case 'P': parity_bits   = strtol(optarg, NULL, 0); break;
+            case 'D': data_bits     = strtol(optarg, NULL, 0); break;
             case 's': sample_rate   = strtol(optarg, NULL, 0); break;
             case 'O': sample_offset = strtol(optarg, NULL, 0); break;
             case 'v': verbosity++; break;
@@ -179,13 +179,13 @@ int main(int argc, char* argv[])
 
     process_byte(index - sample_offset, input, output);
     for (int i = 0; i < countof(output); i++) {
-        if (output[i] & ((1 << START_BITS) - 1))
+        if (output[i] & ((1 << start_bits) - 1))
             fprintf(stderr, "Start bit%s %s not zero\n",
-                    START_BITS > 1 ? "s" : "", START_BITS > 1 ? "were" : "was");
-        if (output[i] >> (START_BITS + DATA_BITS) != (1 << STOP_BITS) - 1)
+                    start_bits > 1 ? "s" : "", start_bits > 1 ? "were" : "was");
+        if (output[i] >> (start_bits + data_bits) != (1 << stop_bits) - 1)
             fprintf(stderr, "Stop bits were not one\n");
-        int width = ROUND_FACTOR(DATA_BITS, 4);
-        printf("output[%zd] = 0x%0*x\n", i, width, (output[i] >> START_BITS) & ((1u << DATA_BITS) - 1));
+        int width = ROUND_FACTOR(data_bits, 4);
+        printf("output[%zd] = 0x%0*x\n", i, width, (output[i] >> start_bits) & ((1u << data_bits) - 1));
     }
 
     sf_close(sf);
