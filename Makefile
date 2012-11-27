@@ -3,9 +3,10 @@ CFLAGS += -g -O0
 endif
 
 fft: CPPFLAGS += -std=c99
-fft: LDLIBS += -lfftw3 -lsndfile
+fft: LDLIBS += -lfftw3
+gen fft: LDLIBS += -lsndfile
 
-all: fft
+all: fft gen
 
 clean:
-	rm -f *.o fft
+	rm -f *.o fft gen
