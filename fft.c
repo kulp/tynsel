@@ -160,7 +160,7 @@ int main(int argc, char* argv[])
         return -1;
     }
 
-    SF_INFO sinfo = { 0 };
+    SF_INFO sinfo = { .format = 0 };
     SNDFILE *sf = sf_open(argv[optind], SFM_READ, &sinfo);
 
     double _input[(size_t)SAMPLES_PER_BIT * 2 + BUFFER_SIZE];
