@@ -11,18 +11,21 @@
 #define ROUND_FACTOR(X,By) (((X) + (By) - 1) / (By))
 
 #define BUFFER_SIZE 16384
-#define SIZE 512
 
 static int sample_rate = 44100;
-#define PERBIN          ((double)sample_rate / SIZE)
-#define LOWEND          (freqs[2] - PERBIN)
-#define HIGHEND         (freqs[3] + PERBIN)
-#define BAUD_RATE       300
-#define SAMPLES_PER_BIT ((double)sample_rate / BAUD_RATE)
+// TODO make baud_rate configurable
+static const int baud_rate = 300;
+static const int fft_size = 512;
+
 static int start_bits  = 1,
            data_bits   = 8,
            parity_bits = 0,
            stop_bits   = 2;
+
+#define LOWEND          (freqs[2] - PERBIN)
+#define HIGHEND         (freqs[3] + PERBIN)
+#define PERBIN          ((double)sample_rate / fft_size)
+#define SAMPLES_PER_BIT ((double)sample_rate / baud_rate)
 #define ALL_BITS        (start_bits + data_bits + parity_bits + stop_bits)
 
 #define countof(X) (sizeof (X) / sizeof (X)[0])
@@ -38,7 +41,7 @@ static size_t get_max_magnitude(fftw_complex *fft_result)
 {
     size_t maxi = 0;
     double max = -1;
-    for (size_t i = 0; i < SIZE; i++) {
+    for (size_t i = 0; i < fft_size; i++) {
         double mag = sqrt(pow(fft_result[i][0],2) + pow(fft_result[i][1],2));
         if (verbosity > 3) {
             printf("fft_result[%zd] = { %2.2f, %2.2f }\n", i, fft_result[i][0], fft_result[i][1]);
@@ -73,6 +76,8 @@ static size_t get_nearest_freq(double freq)
 }
 
 // TODO remove bit_base ? what is it for ?
+// TODO get_max_magnitude() inherently is single-channel due to LOWEND and
+// HIGHEND ; so why do we "detect" channel ?
 int process_bit(size_t bit_base, fftw_complex *fft_result, int *channel, int *bit)
 {
     size_t maxi = get_max_magnitude(fft_result);
@@ -93,8 +98,8 @@ int process_bit(size_t bit_base, fftw_complex *fft_result, int *channel, int *bi
 
 int process_byte(size_t size, double input[size], int output[size / (size_t)SAMPLES_PER_BIT / ALL_BITS])
 {
-    fftw_complex *data       = fftw_malloc(SIZE * sizeof *data);
-    fftw_complex *fft_result = fftw_malloc(SIZE * sizeof *fft_result);
+    fftw_complex *data       = fftw_malloc(fft_size * sizeof *data);
+    fftw_complex *fft_result = fftw_malloc(fft_size * sizeof *fft_result);
 
     for (int biti = 0; biti < size / SAMPLES_PER_BIT; biti++) {
         int word = biti / ALL_BITS;
@@ -102,11 +107,11 @@ int process_byte(size_t size, double input[size], int output[size / (size_t)SAMP
         if (wordbit == 0)
             output[word] = 0;
 
-        fftw_plan plan_forward = fftw_plan_dft_1d(SIZE, data, fft_result, FFTW_FORWARD, FFTW_ESTIMATE);
+        fftw_plan plan_forward = fftw_plan_dft_1d(fft_size, data, fft_result, FFTW_FORWARD, FFTW_ESTIMATE);
 
         size_t bit_base = biti * SAMPLES_PER_BIT;
 
-        for (int i = 0; i < SIZE; i++) {
+        for (int i = 0; i < fft_size; i++) {
             data[i][0] = i < SAMPLES_PER_BIT ? input[bit_base + i] : 0.;
             data[i][1] = 0.;
         }
@@ -177,7 +182,7 @@ int main(int argc, char* argv[])
     if (verbosity) {
         printf("read %zd items\n", index);
         printf("sample rate is %4d Hz\n", sample_rate);
-        printf("baud rate is %4d\n", BAUD_RATE);
+        printf("baud rate is %4d\n", baud_rate);
         printf("samples per bit is %4.0f\n", SAMPLES_PER_BIT);
     }
 

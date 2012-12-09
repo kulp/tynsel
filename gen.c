@@ -4,13 +4,15 @@
 #include <math.h>
 
 static int sample_rate = 44100;
-#define PERBIN          ((double)sample_rate / SIZE)
-#define BAUD_RATE       300
-#define SAMPLES_PER_BIT ((double)sample_rate / BAUD_RATE)
+// TODO make baud_rate configurable
+static const int baud_rate = 300;
 static unsigned start_bits  = 1,
                 data_bits   = 8,
                 parity_bits = 0,
                 stop_bits   = 2;
+
+#define PERBIN          ((double)sample_rate / SIZE)
+#define SAMPLES_PER_BIT ((double)sample_rate / baud_rate)
 
 #define countof(X) (sizeof (X) / sizeof (X)[0])
 
@@ -26,14 +28,16 @@ static int put_bit(SNDFILE *sf, double freq, int *last_quadrant, double *last_sa
     double inverse = asin(*last_sample);
     switch (*last_quadrant) {
         case 0: break;
-        case 1: inverse = M_PI - inverse; break;        // mirror around pi/2
+        case 1:                                         // mirror around pi/2
         case 2: inverse = M_PI - inverse; break;        // mirror around 3*pi/2
         case 3: inverse = 2 * M_PI + inverse; break;    // mirror around 2pi
         default: abort();
     }
     double inverse_prop = inverse / (2 * M_PI);
     double samples_per_cycle = sample_rate / freq;
-    int sample_offset = round(inverse_prop * samples_per_cycle) + 1; // XXX explain +1 offset
+    // sample_offset gets +1 because we need to start at the *next* sample,
+    // otherwise a sample will be duplicated
+    int sample_offset = round(inverse_prop * samples_per_cycle) + 1;
 
     for (unsigned sample_index = sample_offset; sample_index < SAMPLES_PER_BIT + sample_offset; sample_index++) {
         int quadrant = (sample_index - floor(sample_index / samples_per_cycle) * samples_per_cycle) / samples_per_cycle * 4;
@@ -122,7 +126,7 @@ int main(int argc, char* argv[])
     if (verbosity) {
         printf("read %zd items\n", index);
         printf("sample rate is %4d Hz\n", sample_rate);
-        printf("baud rate is %4d\n", BAUD_RATE);
+        printf("baud rate is %4d\n", baud_rate);
         printf("samples per bit is %4.0f\n", SAMPLES_PER_BIT);
     }
 
