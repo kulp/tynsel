@@ -47,11 +47,11 @@ static int put_bit(SNDFILE *sf, double freq, double gain, int *last_quadrant, do
     double samples_per_cycle = sample_rate / freq;
     // sample_offset gets +1 because we need to start at the *next* sample,
     // otherwise a sample will be duplicated
-    int sample_offset = round(inverse_prop * samples_per_cycle) + 1;
+    double sample_offset = inverse_prop * samples_per_cycle + 1;
 
-    for (unsigned sample_index = sample_offset; sample_index < SAMPLES_PER_BIT + sample_offset; sample_index++) {
+    for (double sample_index = sample_offset; sample_index < SAMPLES_PER_BIT + sample_offset; sample_index++) {
         int quadrant = (sample_index - floor(sample_index / samples_per_cycle) * samples_per_cycle) / samples_per_cycle * 4;
-        double proportion = (double)sample_index / sample_rate;
+        double proportion = sample_index / sample_rate;
         double radians = proportion * 2. * M_PI;
         double sample = sin(radians * freq) * gain;
 
