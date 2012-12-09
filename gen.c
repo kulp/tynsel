@@ -23,7 +23,7 @@ static const double freqs[2][2] = {
 
 static int verbosity;
 
-static int put_bit(SNDFILE *sf, double freq, int *last_quadrant, double *last_sample)
+static int put_bit(SNDFILE *sf, double freq, double gain, int *last_quadrant, double *last_sample)
 {
     double inverse = asin(*last_sample);
     switch (*last_quadrant) {
@@ -43,7 +43,7 @@ static int put_bit(SNDFILE *sf, double freq, int *last_quadrant, double *last_sa
         int quadrant = (sample_index - floor(sample_index / samples_per_cycle) * samples_per_cycle) / samples_per_cycle * 4;
         double proportion = (double)sample_index / sample_rate;
         double radians = proportion * 2. * M_PI;
-        double sample = sin(radians * freq);
+        double sample = sin(radians * freq) * gain;
 
         sf_write_double(sf, &sample, 1);
 
@@ -58,11 +58,13 @@ int main(int argc, char* argv[])
 {
     const char *output_file = NULL;
     unsigned channel = 1;
+    double gain = 1.;
 
     int ch;
-    while ((ch = getopt(argc, argv, "C:S:T:P:D:s:o:v")) != -1) {
+    while ((ch = getopt(argc, argv, "C:G:S:T:P:D:s:o:v")) != -1) {
         switch (ch) {
             case 'C': channel       = strtol(optarg, NULL, 0); break;
+            case 'G': gain          = strtod(optarg, NULL);    break;
             case 'S': start_bits    = strtol(optarg, NULL, 0); break;
             case 'T': stop_bits     = strtol(optarg, NULL, 0); break;
             case 'P': parity_bits   = strtol(optarg, NULL, 0); break;
@@ -107,19 +109,19 @@ int main(int argc, char* argv[])
         printf("writing byte %#x\n", byte);
 
         for (unsigned bit_index = 0; bit_index < start_bits; bit_index++) {
-            put_bit(sf, freqs[channel][0], &last_quadrant, &last_sample);
+            put_bit(sf, freqs[channel][0], gain, &last_quadrant, &last_sample);
         }
 
         for (unsigned bit_index = 0; bit_index < data_bits; bit_index++) {
             unsigned bit = !!(byte & (1 << bit_index));
             double freq = freqs[channel][bit];
-            put_bit(sf, freq, &last_quadrant, &last_sample);
+            put_bit(sf, freq, gain, &last_quadrant, &last_sample);
         }
 
         // TODO parity bits
 
         for (unsigned bit_index = 0; bit_index < stop_bits; bit_index++) {
-            put_bit(sf, freqs[channel][1], &last_quadrant, &last_sample);
+            put_bit(sf, freqs[channel][1], gain, &last_quadrant, &last_sample);
         }
     }
 
