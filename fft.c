@@ -61,7 +61,7 @@ static size_t get_nearest_freq(double freq)
     if (verbosity)
         printf("midpoint frequency is %4.0f\n", freq);
 
-    for (int i = 0; i < countof(freqs); i++) {
+    for (unsigned i = 0; i < countof(freqs); i++) {
         double t = fabs(freq - freqs[i]);
         if (t < min) {
             min = t;
@@ -72,6 +72,7 @@ static size_t get_nearest_freq(double freq)
     return mini;
 }
 
+// TODO remove bit_base ? what is it for ?
 int process_bit(size_t bit_base, fftw_complex *fft_result, int *channel, int *bit)
 {
     size_t maxi = get_max_magnitude(fft_result);
@@ -183,7 +184,7 @@ int main(int argc, char* argv[])
     int output[ ROUND_FACTOR( ROUND_FACTOR(index, (size_t)SAMPLES_PER_BIT), ALL_BITS ) ];
 
     process_byte(index - sample_offset, input, output);
-    for (int i = 0; i < countof(output); i++) {
+    for (unsigned i = 0; i < countof(output); i++) {
         if (output[i] & ((1 << start_bits) - 1))
             fprintf(stderr, "Start bit%s %s not zero\n",
                     start_bits > 1 ? "s" : "", start_bits > 1 ? "were" : "was");
