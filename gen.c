@@ -16,6 +16,16 @@ static unsigned start_bits  = 1,
 
 #define countof(X) (sizeof (X) / sizeof (X)[0])
 
+#if DEBUG
+#define debug_int(thing) printf(#thing " = %d\n", thing)
+#define debug_double(thing) printf(#thing " = %f\n", thing)
+#define debug_nl() puts("")
+#else
+#define debug_int(...)
+#define debug_double(...)
+#define debug_nl(...)
+#endif
+
 static const double freqs[2][2] = {
     { 1070., 1270. },
     { 2025., 2225. },
@@ -31,7 +41,7 @@ static int put_bit(SNDFILE *sf, double freq, double gain, int *last_quadrant, do
         case 1:                                         // mirror around pi/2
         case 2: inverse = M_PI - inverse; break;        // mirror around 3*pi/2
         case 3: inverse = 2 * M_PI + inverse; break;    // mirror around 2pi
-        default: abort();
+        default: abort(); // TODO just return 1 once we check put_bit()'s return value
     }
     double inverse_prop = inverse / (2 * M_PI);
     double samples_per_cycle = sample_rate / freq;

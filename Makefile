@@ -1,5 +1,6 @@
 ifneq ($(DEBUG),)
 CFLAGS += -g -O0
+CPPFLAGS += -DDEBUG
 endif
 
 CFLAGS += -Wall -Wextra -Wunused
