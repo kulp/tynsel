@@ -35,7 +35,7 @@ static int verbosity;
 
 static int put_bit(SNDFILE *sf, double freq, double gain, int *last_quadrant, double *last_sample)
 {
-    double inverse = asin(*last_sample);
+    double inverse = asin(*last_sample / gain);
     switch (*last_quadrant) {
         case 0: break;
         case 1:                                         // mirror around pi/2
