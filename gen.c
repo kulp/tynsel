@@ -7,26 +7,51 @@ static int sample_rate = 44100;
 #define PERBIN          ((double)sample_rate / SIZE)
 #define BAUD_RATE       300
 #define SAMPLES_PER_BIT ((double)sample_rate / BAUD_RATE)
-static int start_bits  = 1,
-           data_bits   = 8,
-           parity_bits = 0,
-           stop_bits   = 2;
-#define ALL_BITS        (start_bits + data_bits + parity_bits + stop_bits)
+static unsigned start_bits  = 1,
+                data_bits   = 8,
+                parity_bits = 0,
+                stop_bits   = 2;
 
 #define countof(X) (sizeof (X) / sizeof (X)[0])
 
 static const double freqs[2][2] = {
     { 1070., 1270. },
-    //{ 2025., 2225. },
-    { 1350., 1850. },
+    { 2025., 2225. },
 };
 
 static int verbosity;
 
+static int put_bit(SNDFILE *sf, double freq, int *last_quadrant, double *last_sample)
+{
+    double inverse = asin(*last_sample);
+    switch (*last_quadrant) {
+        case 0: break;
+        case 1: inverse = M_PI - inverse; break;        // mirror around pi/2
+        case 2: inverse = M_PI - inverse; break;        // mirror around 3*pi/2
+        case 3: inverse = 2 * M_PI + inverse; break;    // mirror around 2pi
+        default: abort();
+    }
+    double inverse_prop = inverse / (2 * M_PI);
+    double samples_per_cycle = sample_rate / freq;
+    int sample_offset = round(inverse_prop * samples_per_cycle) + 1; // XXX explain +1 offset
+
+    for (unsigned sample_index = sample_offset; sample_index < SAMPLES_PER_BIT + sample_offset; sample_index++) {
+        int quadrant = (sample_index - floor(sample_index / samples_per_cycle) * samples_per_cycle) / samples_per_cycle * 4;
+        double proportion = (double)sample_index / sample_rate;
+        double radians = proportion * 2. * M_PI;
+        double sample = sin(radians * freq);
+
+        sf_write_double(sf, &sample, 1);
+
+        *last_quadrant = quadrant;
+        *last_sample = sample;
+    }
+
+    return 0;
+}
+
 int main(int argc, char* argv[])
 {
-    int sample_offset = 0;
-
     const char *output_file = NULL;
     unsigned channel = 1;
 
@@ -62,10 +87,11 @@ int main(int argc, char* argv[])
     };
     SNDFILE *sf = sf_open(output_file, SFM_WRITE, &sinfo);
 
-    sf_count_t count = 0;
     size_t index = 0;
 
-    for (unsigned byte_index = 0; byte_index < argc - optind; byte_index++) {
+    double last_sample = 0.;
+    int last_quadrant = 0;
+    for (unsigned byte_index = 0; byte_index < (unsigned)argc - optind; byte_index++) {
         char *next = NULL;
         char *thing = argv[byte_index + optind];
         unsigned byte = strtol(thing, &next, 0);
@@ -74,65 +100,24 @@ int main(int argc, char* argv[])
             return -1;
         }
 
-        double last_sample = 0.;
-        int last_quadrant = 0;
-        double last_freq = 0.;
-        double last_offset = 0.;
-        double leftover = 0.;
-        double left = 0.;
+        printf("writing byte %#x\n", byte);
+
+        for (unsigned bit_index = 0; bit_index < start_bits; bit_index++) {
+            put_bit(sf, freqs[channel][0], &last_quadrant, &last_sample);
+        }
+
         for (unsigned bit_index = 0; bit_index < data_bits; bit_index++) {
             unsigned bit = !!(byte & (1 << bit_index));
             double freq = freqs[channel][bit];
-            double inverse = asin(last_sample);
-            //double offset = (inverse - last_offset) / freq;
-            //double offset = asin(last_sample) + (.5 * M_1_PI * last_quadrant);
-            // thanks to Forest Belton for helping me with the maths
-            //  t = (B_1*t_c + C_1 - C_2)/B_2
-            // where
-            //       t   is the new offset
-            //       B_1 is last_freq / sample_rate
-            //       B_2 is freq / sample_rate
-            //       t_c is SAMPLES_PER_BIT
-            //       C_1 is last_offset
-            //       C_2 is 0
+            put_bit(sf, freq, &last_quadrant, &last_sample);
+        }
 
-            double offset = (last_freq / freq) * SAMPLES_PER_BIT + last_offset + left;
-            //double offset = 0;
-            double samples_per_cycle = sample_rate / freq;
-            printf("samples_per_cycle = %f\n", samples_per_cycle);
-            printf("used = %f\n", samples_per_cycle * SAMPLES_PER_BIT);
+        // TODO parity bits
 
-            for (unsigned sample_index = 0; sample_index < SAMPLES_PER_BIT; sample_index++) {
-                int quadrant = sample_index * 4 / SAMPLES_PER_BIT;
-                int slope = 1 - (quadrant % 2 * 2); // +1 or -1
-                double proportion = (double)sample_index / sample_rate;
-                double radians = proportion * 2. * M_PI;
-                double sample = sin(radians * freq + offset);
-
-                sf_write_double(sf, &sample, 1);
-
-                last_quadrant = quadrant;
-                last_sample = sample;
-            }
-
-            //leftover = SAMPLES_PER_BIT - ((unsigned)(SAMPLES_PER_BIT / samples_per_cycle) * samples_per_cycle);
-            double ipart;
-            double frac = modf(SAMPLES_PER_BIT / samples_per_cycle, &ipart);
-            left = samples_per_cycle * frac;
-            printf("samples left = %f\n", left);
-            printf("leftover = %f\n", leftover);
-            last_offset = offset;
-            last_freq = freq;
-            #if 0
-            sf_write_double(sf, (double[]){ -1 }, 1);
-            sf_write_double(sf, (double[]){ -1 }, 1);
-            sf_write_double(sf, (double[]){ -1 }, 1);
-            sf_write_double(sf, (double[]){ -1 }, 1);
-            #endif
+        for (unsigned bit_index = 0; bit_index < stop_bits; bit_index++) {
+            put_bit(sf, freqs[channel][1], &last_quadrant, &last_sample);
         }
     }
-
-    //count = sf_read_double(sf, &_input[(size_t)SAMPLES_PER_BIT + index++], 1);
 
     if (verbosity) {
         printf("read %zd items\n", index);
