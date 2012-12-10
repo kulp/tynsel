@@ -1,3 +1,5 @@
+#include "common.h"
+
 #include <stdlib.h>
 #include <getopt.h>
 #include <sndfile.h>
@@ -13,18 +15,6 @@ static unsigned start_bits  = 1,
 
 #define PERBIN          ((double)sample_rate / SIZE)
 #define SAMPLES_PER_BIT ((double)sample_rate / baud_rate)
-
-#define countof(X) (sizeof (X) / sizeof (X)[0])
-
-#if DEBUG
-#define debug_int(thing) printf(#thing " = %d\n", thing)
-#define debug_double(thing) printf(#thing " = %f\n", thing)
-#define debug_nl() puts("")
-#else
-#define debug_int(...)
-#define debug_double(...)
-#define debug_nl(...)
-#endif
 
 static const double freqs[2][2] = {
     { 1070., 1270. },

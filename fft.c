@@ -1,3 +1,5 @@
+#include "common.h"
+
 #include <stdio.h>
 #include <math.h>
 #include <float.h>
@@ -27,8 +29,6 @@ static int start_bits  = 1,
 #define PERBIN          ((double)sample_rate / fft_size)
 #define SAMPLES_PER_BIT ((double)sample_rate / baud_rate)
 #define ALL_BITS        (start_bits + data_bits + parity_bits + stop_bits)
-
-#define countof(X) (sizeof (X) / sizeof (X)[0])
 
 static const double freqs[] = {
     1070., 1270.,
