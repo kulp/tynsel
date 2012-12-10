@@ -96,7 +96,7 @@ int process_bit(size_t bit_base, fftw_complex *fft_result, int *channel, int *bi
     return 0;
 }
 
-int process_byte(size_t size, double input[size], int output[size / (size_t)SAMPLES_PER_BIT / ALL_BITS])
+int process_byte(size_t size, double input[size], int output[size / (size_t)SAMPLES_PER_BIT / ALL_BITS], double *offset)
 {
     fftw_complex *data       = fftw_malloc(fft_size * sizeof *data);
     fftw_complex *fft_result = fftw_malloc(fft_size * sizeof *fft_result);
@@ -109,7 +109,10 @@ int process_byte(size_t size, double input[size], int output[size / (size_t)SAMP
 
         fftw_plan plan_forward = fftw_plan_dft_1d(fft_size, data, fft_result, FFTW_FORWARD, FFTW_ESTIMATE);
 
-        size_t bit_base = biti * SAMPLES_PER_BIT;
+        double dbb = biti * SAMPLES_PER_BIT + *offset;
+        size_t bit_base = floor(dbb);
+        double piece = dbb - bit_base;
+        *offset += piece;
 
         for (int i = 0; i < fft_size; i++) {
             data[i][0] = i < SAMPLES_PER_BIT ? input[bit_base + i] : 0.;
@@ -139,7 +142,7 @@ int process_byte(size_t size, double input[size], int output[size / (size_t)SAMP
 
 int main(int argc, char* argv[])
 {
-    int sample_offset = 0;
+    double sample_offset = 0;
 
     int ch;
     while ((ch = getopt(argc, argv, "S:T:P:D:s:O:v")) != -1) {
@@ -149,14 +152,14 @@ int main(int argc, char* argv[])
             case 'P': parity_bits   = strtol(optarg, NULL, 0); break;
             case 'D': data_bits     = strtol(optarg, NULL, 0); break;
             case 's': sample_rate   = strtol(optarg, NULL, 0); break;
-            case 'O': sample_offset = strtol(optarg, NULL, 0); break;
+            case 'O': sample_offset = strtod(optarg, NULL);    break;
             case 'v': verbosity++; break;
             default: fprintf(stderr, "args error before argument index %d\n", optind); return -1;
         }
     }
 
-    if (abs(sample_offset) > SAMPLES_PER_BIT) {
-        fprintf(stderr, "sample offset (%d) > samples per bit (%4.1f)\n",
+    if (fabs(sample_offset) > SAMPLES_PER_BIT) {
+        fprintf(stderr, "sample offset (%f) > samples per bit (%4.1f)\n",
                 sample_offset, SAMPLES_PER_BIT);
         return -1;
     }
@@ -171,7 +174,7 @@ int main(int argc, char* argv[])
 
     double _input[(size_t)SAMPLES_PER_BIT * 2 + BUFFER_SIZE];
     memset(_input, 0, sizeof _input);
-    double *input = &_input[(size_t)SAMPLES_PER_BIT + sample_offset];
+    double *input = &_input[(size_t)SAMPLES_PER_BIT + (size_t)sample_offset];
 
     sf_count_t count = 0;
     size_t index = 0;
@@ -188,7 +191,9 @@ int main(int argc, char* argv[])
 
     int output[ ROUND_FACTOR( ROUND_FACTOR(index, (size_t)SAMPLES_PER_BIT), ALL_BITS ) ];
 
-    process_byte(index - sample_offset, input, output);
+    // TODO merge `offset` and `sample_offset`
+    double offset = 0.;
+    process_byte(index - sample_offset, input, output, &offset);
     for (unsigned i = 0; i < countof(output); i++) {
         if (output[i] & ((1 << start_bits) - 1))
             fprintf(stderr, "Start bit%s %s not zero\n",
