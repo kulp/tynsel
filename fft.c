@@ -110,9 +110,8 @@ int process_byte(size_t size, double input[size], int output[size / (size_t)SAMP
         fftw_plan plan_forward = fftw_plan_dft_1d(fft_size, data, fft_result, FFTW_FORWARD, FFTW_ESTIMATE);
 
         double dbb = biti * SAMPLES_PER_BIT + *offset;
-        size_t bit_base = floor(dbb);
-        double piece = dbb - bit_base;
-        *offset += piece;
+        size_t bit_base = dbb;
+        *offset += dbb - bit_base;
 
         for (int i = 0; i < fft_size; i++) {
             data[i][0] = i < SAMPLES_PER_BIT ? input[bit_base + i] : 0.;
