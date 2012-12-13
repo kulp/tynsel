@@ -7,7 +7,7 @@ CFLAGS += -Wall -Wextra -Wunused
 
 fft: CPPFLAGS += -std=c99
 fft: LDLIBS += -lfftw3
-gen fft: LDLIBS += -lsndfile
+g711 gen fft: LDLIBS += -lsndfile
 
 all: fft gen
 
