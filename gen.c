@@ -23,7 +23,19 @@ static const double freqs[2][2] = {
 
 static int verbosity;
 
-static int put_bit(SNDFILE *sf, double freq, double gain, int *last_quadrant, double *last_sample)
+static int put_sample(SNDFILE *sf, double freq, double gain, double sample_index, double *last_sample)
+{
+    double proportion = sample_index / sample_rate;
+    double radians = proportion * 2. * M_PI;
+    double sample = sin(radians * freq) * gain;
+
+    int rc = sf_write_double(sf, &sample, 1);
+    *last_sample = sample;
+
+    return rc;
+}
+
+static int put_bit(SNDFILE *sf, double freq, double gain, int *last_quadrant, double *last_sample, double *adjust)
 {
     double inverse = asin(*last_sample / gain);
     switch (*last_quadrant) {
@@ -39,17 +51,16 @@ static int put_bit(SNDFILE *sf, double freq, double gain, int *last_quadrant, do
     // otherwise a sample will be duplicated
     double sample_offset = inverse_prop * samples_per_cycle + 1;
 
-    for (double sample_index = sample_offset; sample_index < SAMPLES_PER_BIT + sample_offset; sample_index++) {
-        int quadrant = (sample_index - floor(sample_index / samples_per_cycle) * samples_per_cycle) / samples_per_cycle * 4;
-        double proportion = sample_index / sample_rate;
-        double radians = proportion * 2. * M_PI;
-        double sample = sin(radians * freq) * gain;
-
-        sf_write_double(sf, &sample, 1);
-
-        *last_quadrant = quadrant;
-        *last_sample = sample;
+    double sidx;
+    for (sidx = sample_offset; sidx < SAMPLES_PER_BIT + sample_offset + *adjust; sidx++) {
+        put_sample(sf, freq, gain, sidx, last_sample);
     }
+
+    *adjust -= (sidx - sample_offset) - SAMPLES_PER_BIT;
+
+    // TODO explain what is happening here
+    double si = SAMPLES_PER_BIT + sample_offset - 1;
+    *last_quadrant = (si - floor(si / samples_per_cycle) * samples_per_cycle) / samples_per_cycle * 4;
 
     return 0;
 }
@@ -95,6 +106,7 @@ int main(int argc, char* argv[])
 
     size_t index = 0;
 
+    double adjust = 0.;
     double last_sample = 0.;
     int last_quadrant = 0;
     for (unsigned byte_index = 0; byte_index < (unsigned)argc - optind; byte_index++) {
@@ -109,19 +121,19 @@ int main(int argc, char* argv[])
         printf("writing byte %#x\n", byte);
 
         for (unsigned bit_index = 0; bit_index < start_bits; bit_index++) {
-            put_bit(sf, freqs[channel][0], gain, &last_quadrant, &last_sample);
+            put_bit(sf, freqs[channel][0], gain, &last_quadrant, &last_sample, &adjust);
         }
 
         for (unsigned bit_index = 0; bit_index < data_bits; bit_index++) {
             unsigned bit = !!(byte & (1 << bit_index));
             double freq = freqs[channel][bit];
-            put_bit(sf, freq, gain, &last_quadrant, &last_sample);
+            put_bit(sf, freq, gain, &last_quadrant, &last_sample, &adjust);
         }
 
         // TODO parity bits
 
         for (unsigned bit_index = 0; bit_index < stop_bits; bit_index++) {
-            put_bit(sf, freqs[channel][1], gain, &last_quadrant, &last_sample);
+            put_bit(sf, freqs[channel][1], gain, &last_quadrant, &last_sample, &adjust);
         }
     }
 

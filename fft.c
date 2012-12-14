@@ -101,7 +101,8 @@ int process_byte(size_t size, double input[size], int output[size / (size_t)SAMP
     fftw_complex *data       = fftw_malloc(fft_size * sizeof *data);
     fftw_complex *fft_result = fftw_malloc(fft_size * sizeof *fft_result);
 
-    for (int biti = 0; biti < size / SAMPLES_PER_BIT; biti++) {
+    int biti = 0;
+    for (double dbb = *offset; dbb < size + *offset; dbb += SAMPLES_PER_BIT, biti++) {
         int word = biti / ALL_BITS;
         int wordbit = biti % ALL_BITS;
         if (wordbit == 0)
@@ -109,7 +110,6 @@ int process_byte(size_t size, double input[size], int output[size / (size_t)SAMP
 
         fftw_plan plan_forward = fftw_plan_dft_1d(fft_size, data, fft_result, FFTW_FORWARD, FFTW_ESTIMATE);
 
-        double dbb = biti * SAMPLES_PER_BIT + *offset;
         size_t bit_base = dbb;
         *offset += dbb - bit_base;
 
