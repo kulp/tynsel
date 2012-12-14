@@ -168,6 +168,11 @@ int main(int argc, char* argv[])
 
     SF_INFO sinfo = { .format = 0 };
     SNDFILE *sf = sf_open(argv[optind], SFM_READ, &sinfo);
+    // getting the sample rate from the file means right now the `-s' option on
+    // the command line has no effect. In the future it might be removed, or it
+    // might be necessary when the audio input has no accompanying sample-rate
+    // information.
+    sample_rate = sinfo.samplerate;
 
     double *_input = calloc((size_t)SAMPLES_PER_BIT * 2 + BUFFER_SIZE, sizeof *_input);
     double *input = &_input[(size_t)SAMPLES_PER_BIT + (size_t)sample_offset];
