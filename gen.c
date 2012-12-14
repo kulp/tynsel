@@ -58,8 +58,8 @@ static int put_bit(SNDFILE *sf, double freq, double gain, int *last_quadrant, do
 
     *adjust -= (sidx - sample_offset) - SAMPLES_PER_BIT;
 
+    double si = sidx - 1; // undo last iteration of for-loop
     // TODO explain what is happening here
-    double si = SAMPLES_PER_BIT + sample_offset - 1;
     *last_quadrant = (si - floor(si / samples_per_cycle) * samples_per_cycle) / samples_per_cycle * 4;
 
     return 0;
