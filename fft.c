@@ -12,7 +12,7 @@
 
 #define ROUND_FACTOR(X,By) (((X) + (By) - 1) / (By))
 
-#define BUFFER_SIZE 16384
+#define BUFFER_SIZE 16384 * 16
 
 static int sample_rate = 44100;
 // TODO make baud_rate configurable
