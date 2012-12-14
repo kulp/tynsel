@@ -171,8 +171,7 @@ int main(int argc, char* argv[])
     SF_INFO sinfo = { .format = 0 };
     SNDFILE *sf = sf_open(argv[optind], SFM_READ, &sinfo);
 
-    double _input[(size_t)SAMPLES_PER_BIT * 2 + BUFFER_SIZE];
-    memset(_input, 0, sizeof _input);
+    double *_input = calloc((size_t)SAMPLES_PER_BIT * 2 + BUFFER_SIZE, sizeof *_input);
     double *input = &_input[(size_t)SAMPLES_PER_BIT + (size_t)sample_offset];
 
     sf_count_t count = 0;
@@ -180,6 +179,9 @@ int main(int argc, char* argv[])
     do {
         count = sf_read_double(sf, &_input[(size_t)SAMPLES_PER_BIT + index++], 1);
     } while (count && index < BUFFER_SIZE);
+
+    if (index >= BUFFER_SIZE)
+        fprintf(stderr, "Warning, ran out of buffer space before reaching end of file\n");
 
     if (verbosity) {
         printf("read %zd items\n", index);
@@ -204,6 +206,8 @@ int main(int argc, char* argv[])
     }
 
     sf_close(sf);
+
+    free(_input);
 
     fftw_cleanup();
 
