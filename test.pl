@@ -13,7 +13,8 @@ for my $trial (1 .. $trials) {
 
     my @bytes = map { int rand 256 } 1 .. $length;
     system("./gen -s $rate -o $fname $genopts @bytes");
-    my @lines = (qx(./fft -s $rate $fname 2> /dev/null))[0 .. scalar $#bytes];
+    system("./g711 $fname $fname.g711.wav");
+    my @lines = (qx(./fft -s $rate $fname.g711.wav 2> /dev/null))[0 .. scalar $#bytes];
     chomp, s/^.*= //, $_ = hex $_ for @lines;
     check(\@lines, \@bytes);
 }
