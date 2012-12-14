@@ -24,7 +24,7 @@ static int start_bits  = 1,
            parity_bits = 0,
            stop_bits   = 2;
 
-#define LOWEND          (freqs[2] - PERBIN)
+#define LOWEND          (freqs[0] - PERBIN)
 #define HIGHEND         (freqs[3] + PERBIN)
 #define PERBIN          ((double)sample_rate / fft_size)
 #define SAMPLES_PER_BIT ((double)sample_rate / baud_rate)
@@ -76,8 +76,6 @@ static size_t get_nearest_freq(double freq)
 }
 
 // TODO remove bit_base ? what is it for ?
-// TODO get_max_magnitude() inherently is single-channel due to LOWEND and
-// HIGHEND ; so why do we "detect" channel ?
 int process_bit(size_t bit_base, fftw_complex *fft_result, int *channel, int *bit)
 {
     size_t maxi = get_max_magnitude(fft_result);
