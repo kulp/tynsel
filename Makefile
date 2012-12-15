@@ -13,17 +13,17 @@ g711 gen fft: LDLIBS += -lsndfile
 
 all: fft gen sip
 
-# detect gives us the TARGET_NAME for linking
-detect: LDLIBS =
-detect: CPPFLAGS =
-sip: | detect
+# pjtarget gives us the TARGET_NAME for linking
+pjtarget: LDLIBS =
+pjtarget: CPPFLAGS =
+sip: | pjtarget
 
 # If TARGET_NAME hasn't been set, reinvoke make to get the dependency ordering
 # right.
 ifeq ($(TARGET_NAME),)
 .PHONY: sip
 sip:
-	$(MAKE) $@ TARGET_NAME="$(shell ./detect)"
+	$(MAKE) $@ TARGET_NAME="$(shell ./pjtarget)"
 endif
 
 LDLIBS_Darwin += \
@@ -71,5 +71,5 @@ sip : DEFINE += SIP_DOMAIN='"$(SIP_DOMAIN)"' \
                 #
 
 clean:
-	rm -f *.o fft gen g711 sip detect
+	rm -f *.o fft gen g711 sip pjtarget
 
