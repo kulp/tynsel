@@ -18,6 +18,7 @@ test: gen fft
 	./test.pl
 
 fft: decode.o
+fft gen: audio.o
 
 # pjtarget gives us the TARGET_NAME for linking
 pjtarget: LDLIBS =

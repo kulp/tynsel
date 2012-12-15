@@ -20,22 +20,8 @@
  * IN THE SOFTWARE.
  */
 
-#ifndef DECODE_H_
-#define DECODE_H_
-
-#include "audio.h"
-#include <stddef.h>
-
-struct decode_state {
-    struct audio_state audio;
-    int verbosity;
+const double bell103_freqs[2][2] = {
+    { 1070., 1270. },
+    { 2025., 2225. },
 };
-
-int decode_byte(struct decode_state *s, size_t size, double input[size], int output[], double *offset, int channel);
-int decode_data(struct decode_state *s, size_t count, double input[count]);
-void decode_cleanup(void);
-
-#define SAMPLES_PER_BIT(s) ((double)s->audio.sample_rate / s->audio.baud_rate)
-
-#endif
 

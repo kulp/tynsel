@@ -21,30 +21,16 @@
  */
 
 #define _XOPEN_SOURCE 600
+#include "encode.h"
 #include "common.h"
 
 #include <stdlib.h>
 #include <getopt.h>
-#include <sndfile.h>
 #include <math.h>
+#include <string.h>
+#include <errno.h>
 
-static int sample_rate = 44100;
-// TODO make baud_rate configurable
-static const int baud_rate = 300;
-static unsigned start_bits  = 1,
-                data_bits   = 8,
-                parity_bits = 0,
-                stop_bits   = 2;
-
-#define PERBIN          ((double)sample_rate / SIZE)
-#define SAMPLES_PER_BIT ((double)sample_rate / baud_rate)
-
-static const double freqs[2][2] = {
-    { 1070., 1270. },
-    { 2025., 2225. },
-};
-
-static int verbosity;
+#define SAMPLES_PER_BIT ((double)s->audio.sample_rate / s->audio.baud_rate)
 
 struct put_state {
     int last_quadrant;
@@ -52,37 +38,37 @@ struct put_state {
     double adjust;
 };
 
-static int put_sample(SNDFILE *sf, double freq, double gain, double sample_index, struct put_state *state)
+static int encode_sample(struct encode_state *s, double freq, double sample_index, struct put_state *state)
 {
-    double proportion = sample_index / sample_rate;
+    double proportion = sample_index / s->audio.sample_rate;
     double radians = proportion * 2. * M_PI;
-    double sample = sin(radians * freq) * gain;
+    double sample = sin(radians * freq) * s->gain;
 
-    int rc = sf_write_double(sf, &sample, 1);
+    int rc = sf_write_double(s->sf, &sample, 1);
     state->last_sample = sample;
 
     return rc;
 }
 
-static int put_bit(SNDFILE *sf, double freq, double gain, struct put_state *state)
+static int encode_bit(struct encode_state *s, double freq, struct put_state *state)
 {
-    double inverse = asin(state->last_sample / gain);
+    double inverse = asin(state->last_sample / s->gain);
     switch (state->last_quadrant) {
         case 0: break;
         case 1:                                         // mirror around pi/2
         case 2: inverse = M_PI - inverse; break;        // mirror around 3*pi/2
         case 3: inverse = 2 * M_PI + inverse; break;    // mirror around 2pi
-        default: abort(); // TODO just return 1 once we check put_bit()'s return value
+        default: abort(); // TODO just return 1 once we check encode_bit()'s return value
     }
     double inverse_prop = inverse / (2 * M_PI);
-    double samples_per_cycle = sample_rate / freq;
+    double samples_per_cycle = s->audio.sample_rate / freq;
     // sample_offset gets +1 because we need to start at the *next* sample,
     // otherwise a sample will be duplicated
     double sample_offset = inverse_prop * samples_per_cycle + 1;
 
     double sidx;
     for (sidx = sample_offset; sidx < SAMPLES_PER_BIT + sample_offset + state->adjust; sidx++) {
-        put_sample(sf, freq, gain, sidx, state);
+        encode_sample(s, freq, sidx, state);
     }
 
     state->adjust -= (sidx - sample_offset) - SAMPLES_PER_BIT;
@@ -94,46 +80,70 @@ static int put_bit(SNDFILE *sf, double freq, double gain, struct put_state *stat
     return 0;
 }
 
-int main(int argc, char* argv[])
+static int parse_opts(struct encode_state *s, int argc, char *argv[], const char **filename)
 {
-    const char *output_file = NULL;
-    unsigned channel = 1;
-    double gain = 1.;
-
     int ch;
     while ((ch = getopt(argc, argv, "C:G:S:T:P:D:s:o:v")) != -1) {
         switch (ch) {
-            case 'C': channel       = strtol(optarg, NULL, 0); break;
-            case 'G': gain          = strtod(optarg, NULL);    break;
-            case 'S': start_bits    = strtol(optarg, NULL, 0); break;
-            case 'T': stop_bits     = strtol(optarg, NULL, 0); break;
-            case 'P': parity_bits   = strtol(optarg, NULL, 0); break;
-            case 'D': data_bits     = strtol(optarg, NULL, 0); break;
-            case 's': sample_rate   = strtol(optarg, NULL, 0); break;
-            case 'o': output_file   = optarg;                  break;
-            case 'v': verbosity++; break;
+            case 'C': s->channel             = strtol(optarg, NULL, 0); break;
+            case 'G': s->gain                = strtod(optarg, NULL);    break;
+            case 'S': s->audio.start_bits    = strtol(optarg, NULL, 0); break;
+            case 'T': s->audio.stop_bits     = strtol(optarg, NULL, 0); break;
+            case 'P': s->audio.parity_bits   = strtol(optarg, NULL, 0); break;
+            case 'D': s->audio.data_bits     = strtol(optarg, NULL, 0); break;
+            case 's': s->audio.sample_rate   = strtol(optarg, NULL, 0); break;
+            case 'o': *filename              = optarg;                  break;
+            case 'v': s->verbosity++;                                   break;
             default: fprintf(stderr, "args error before argument index %d\n", optind); return -1;
         }
     }
 
-    if (channel > countof(freqs)) {
-        fprintf(stderr, "Invalid channel %d\n", channel);
-        return -1;
-    }
+    return 0;
+}
 
+int main(int argc, char* argv[])
+{
+    const char *output_file = NULL;
+    struct encode_state _s = {
+        .audio = {
+            .sample_rate = 44100,
+            .baud_rate   = 300, // TODO make baud_rate configurable
+            .start_bits  = 1,
+            .data_bits   = 8,
+            .parity_bits = 0,
+            .stop_bits   = 2,
+            .freqs       = bell103_freqs,
+        },
+        .verbosity = 0,
+        .channel   = 1,
+        .gain      = 0.5,
+    }, *s = &_s;
+
+    int rc = parse_opts(s, argc, argv, &output_file);
+    if (rc)
+        return rc;
     if (!output_file) {
         fprintf(stderr, "No file specified to generate -- use `-o'\n");
         return -1;
     }
 
-    SF_INFO sinfo = {
-        .samplerate = sample_rate,
-        .channels   = 1,
-        .format     = SF_FORMAT_WAV | SF_FORMAT_PCM_16,
-    };
-    SNDFILE *sf = sf_open(output_file, SFM_WRITE, &sinfo);
+    if (s->channel > 1) {
+        fprintf(stderr, "Invalid channel %d\n", s->channel);
+        return -1;
+    }
 
-    size_t index = 0;
+    {
+        SF_INFO sinfo = {
+            .samplerate = s->audio.sample_rate,
+            .channels   = 1,
+            .format     = SF_FORMAT_WAV | SF_FORMAT_PCM_16,
+        };
+        s->sf = sf_open(output_file, SFM_WRITE, &sinfo);
+        if (!s->sf) {
+            fprintf(stderr, "Failed to open `%s' : %s\n", output_file, strerror(errno));
+            exit(EXIT_FAILURE);
+        }
+    }
 
     struct put_state state = { .last_quadrant = 0 };
     for (unsigned byte_index = 0; byte_index < (unsigned)argc - optind; byte_index++) {
@@ -147,31 +157,24 @@ int main(int argc, char* argv[])
 
         printf("writing byte %#x\n", byte);
 
-        for (unsigned bit_index = 0; bit_index < start_bits; bit_index++) {
-            put_bit(sf, freqs[channel][0], gain, &state);
+        for (int bit_index = 0; bit_index < s->audio.start_bits; bit_index++) {
+            encode_bit(s, s->audio.freqs[s->channel][0], &state);
         }
 
-        for (unsigned bit_index = 0; bit_index < data_bits; bit_index++) {
+        for (int bit_index = 0; bit_index < s->audio.data_bits; bit_index++) {
             unsigned bit = !!(byte & (1 << bit_index));
-            double freq = freqs[channel][bit];
-            put_bit(sf, freq, gain, &state);
+            double freq = s->audio.freqs[s->channel][bit];
+            encode_bit(s, freq, &state);
         }
 
         // TODO parity bits
 
-        for (unsigned bit_index = 0; bit_index < stop_bits; bit_index++) {
-            put_bit(sf, freqs[channel][1], gain, &state);
+        for (int bit_index = 0; bit_index < s->audio.stop_bits; bit_index++) {
+            encode_bit(s, s->audio.freqs[s->channel][1], &state);
         }
     }
 
-    if (verbosity) {
-        printf("read %zd items\n", index);
-        printf("sample rate is %4d Hz\n", sample_rate);
-        printf("baud rate is %4d\n", baud_rate);
-        printf("samples per bit is %4.0f\n", SAMPLES_PER_BIT);
-    }
-
-    sf_close(sf);
+    sf_close(s->sf);
 
     return 0;
 }

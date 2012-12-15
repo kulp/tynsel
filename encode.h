@@ -20,22 +20,21 @@
  * IN THE SOFTWARE.
  */
 
-#ifndef DECODE_H_
-#define DECODE_H_
+#ifndef ENCODE_H_
+#define ENCODE_H_
 
 #include "audio.h"
-#include <stddef.h>
 
-struct decode_state {
+#include <stddef.h>
+#include <sndfile.h>
+
+struct encode_state {
     struct audio_state audio;
     int verbosity;
+    unsigned channel;
+    double gain;
+    SNDFILE *sf;
 };
-
-int decode_byte(struct decode_state *s, size_t size, double input[size], int output[], double *offset, int channel);
-int decode_data(struct decode_state *s, size_t count, double input[count]);
-void decode_cleanup(void);
-
-#define SAMPLES_PER_BIT(s) ((double)s->audio.sample_rate / s->audio.baud_rate)
 
 #endif
 

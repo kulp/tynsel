@@ -29,10 +29,10 @@
 
 #define ROUND_FACTOR(X,By) (((X) + (By) - 1) / (By))
 
-#define LOWEND          (s->freqs[0][0] - PERBIN)
-#define HIGHEND         (s->freqs[1][1] + PERBIN)
-#define PERBIN          ((double)s->sample_rate / fft_size)
-#define ALL_BITS        (s->start_bits + s->data_bits + s->parity_bits + s->stop_bits)
+#define LOWEND          (s->audio.freqs[0][0] - PERBIN)
+#define HIGHEND         (s->audio.freqs[1][1] + PERBIN)
+#define PERBIN          ((double)s->audio.sample_rate / fft_size)
+#define ALL_BITS        (s->audio.start_bits + s->audio.data_bits + s->audio.parity_bits + s->audio.stop_bits)
 
 static const unsigned fft_size = 512;
 
@@ -71,7 +71,7 @@ static void get_nearest_freq(struct decode_state *s, double freq, int *ch, int *
 
     for (unsigned chan = minch; chan <= maxch; chan++) {
         for (unsigned i = 0; i < 2; i++) {
-            double t = fabs(freq - s->freqs[chan][i]);
+            double t = fabs(freq - s->audio.freqs[chan][i]);
             if (t < min) {
                 min = t;
                 *ch = chan;
@@ -90,7 +90,7 @@ int decode_bit(struct decode_state *s, fftw_complex *fft_result, int *channel, i
     if (*channel >= 0 && *channel < 2)
 	minch = maxch = *channel;
 
-    size_t maxi = get_max_magnitude(s, fft_result, s->freqs[minch][0], s->freqs[maxch][1]);
+    size_t maxi = get_max_magnitude(s, fft_result, s->audio.freqs[minch][0], s->audio.freqs[maxch][1]);
 
     if (s->verbosity) {
         printf("bucket with greatest magnitude was %zd, which corresponds to frequency range [%4.0f, %4.0f)\n",
@@ -150,17 +150,17 @@ int decode_data(struct decode_state *s, size_t count, double input[count])
 {
     int output[ (size_t)(count / SAMPLES_PER_BIT(s) / ALL_BITS) ];
 
-    // TODO merge `offset` and `s->sample_offset`
+    // TODO merge `offset` and `s->audio.sample_offset`
     double offset = 0.;
-    decode_byte(s, count - s->sample_offset, input, output, &offset, -1);
+    decode_byte(s, count - s->audio.sample_offset, input, output, &offset, -1);
     for (size_t i = 0; i < countof(output); i++) {
-        if (output[i] & ((1 << s->start_bits) - 1))
+        if (output[i] & ((1 << s->audio.start_bits) - 1))
             fprintf(stderr, "Start bit%s %s not zero\n",
-                    s->start_bits > 1 ? "s" : "", s->start_bits > 1 ? "were" : "was");
-        if (output[i] >> (ALL_BITS - s->stop_bits) != (1 << s->stop_bits) - 1)
+                    s->audio.start_bits > 1 ? "s" : "", s->audio.start_bits > 1 ? "were" : "was");
+        if (output[i] >> (ALL_BITS - s->audio.stop_bits) != (1 << s->audio.stop_bits) - 1)
             fprintf(stderr, "Stop bits were not one\n");
-        int width = ROUND_FACTOR(s->data_bits, 4);
-        printf("output[%zd] = 0x%0*x\n", i, width, (output[i] >> s->start_bits) & ((1u << s->data_bits) - 1));
+        int width = ROUND_FACTOR(s->audio.data_bits, 4);
+        printf("output[%zd] = 0x%0*x\n", i, width, (output[i] >> s->audio.start_bits) & ((1u << s->audio.data_bits) - 1));
     }
 
     return 0;
