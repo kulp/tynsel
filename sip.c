@@ -38,6 +38,7 @@
  * This program will quit once it has completed a single call.
  */
 
+#define PJMEDIA_CONF_USE_SWITCH_BOARD 1
 #include <pjsua-lib/pjsua.h>
 
 #define THIS_FILE       "APP"
@@ -88,13 +89,8 @@ static void on_call_media_state(pjsua_call_id call_id)
     struct mydata *me = pjsua_acc_get_user_data(ci.acc_id);
 
     if (ci.media_status == PJSUA_CALL_MEDIA_ACTIVE) {
-        // When media is active, connect call to sound device.
-        pjsua_conf_connect(ci.conf_slot, 0);
-        pjsua_conf_connect(0, ci.conf_slot);
-        // TODO move the conf_connect somewhere more reasonable
         pjsua_conf_connect(me->play_port, ci.conf_slot);
         pjsua_conf_connect(ci.conf_slot, me->rec_port);
-        printf(">>> conf_slot = %d\n", ci.conf_slot);
     }
 }
 

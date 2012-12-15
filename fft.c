@@ -15,10 +15,10 @@
 
 #define BUFFER_SIZE 16384 * 16
 
-static int sample_rate = 44100;
+static unsigned sample_rate = 44100;
 // TODO make baud_rate configurable
-static const int baud_rate = 300;
-static const int fft_size = 512;
+static const unsigned baud_rate = 300;
+static const unsigned fft_size = 512;
 
 static int start_bits  = 1,
            data_bits   = 8,
@@ -111,7 +111,7 @@ int process_byte(size_t size, double input[size], int output[size / (size_t)SAMP
         size_t bit_base = dbb;
         *offset += dbb - bit_base;
 
-        for (int i = 0; i < fft_size; i++) {
+        for (size_t i = 0; i < fft_size; i++) {
             data[i][0] = i < SAMPLES_PER_BIT ? input[bit_base + i] : 0.;
             data[i][1] = 0.;
         }
@@ -123,9 +123,9 @@ int process_byte(size_t size, double input[size], int output[size / (size_t)SAMP
         output[word] |= bit << wordbit;
 
         if (verbosity > 2) {
-            printf("Guess : channel %zd bit %zd\n", channel, bit);
+            printf("Guess : channel %d bit %d\n", channel, bit);
             int width = ROUND_FACTOR(ALL_BITS, 4);
-            printf("output[%zd] = 0x%0*x\n", word, width, output[word]);
+            printf("output[%d] = 0x%0*x\n", word, width, output[word]);
         }
 
         fftw_destroy_plan(plan_forward);
@@ -203,7 +203,7 @@ int main(int argc, char* argv[])
     // TODO merge `offset` and `sample_offset`
     double offset = 0.;
     process_byte(index - sample_offset, input, output, &offset);
-    for (unsigned i = 0; i < countof(output); i++) {
+    for (size_t i = 0; i < countof(output); i++) {
         if (output[i] & ((1 << start_bits) - 1))
             fprintf(stderr, "Start bit%s %s not zero\n",
                     start_bits > 1 ? "s" : "", start_bits > 1 ? "were" : "was");
