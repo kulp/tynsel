@@ -19,7 +19,7 @@ struct decode_state {
     const double (*freqs)[2];
 };
 
-int decode_byte(struct decode_state *s, size_t size, double input[size], int output[], double *offset);
+int decode_byte(struct decode_state *s, size_t size, double input[size], int output[], double *offset, int channel);
 int decode_data(struct decode_state *s, size_t count, double input[count]);
 void decode_cleanup(void);
 

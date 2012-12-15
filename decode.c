@@ -12,7 +12,7 @@
 #define PERBIN          ((double)s->sample_rate / s->fft_size)
 #define ALL_BITS        (s->start_bits + s->data_bits + s->parity_bits + s->stop_bits)
 
-static size_t get_max_magnitude(struct decode_state *s, fftw_complex *fft_result)
+static size_t get_max_magnitude(struct decode_state *s, fftw_complex *fft_result, double low, double high)
 {
     size_t maxi = 0;
     double max = -1;
@@ -22,7 +22,7 @@ static size_t get_max_magnitude(struct decode_state *s, fftw_complex *fft_result
             printf("fft_result[%zd] = { %2.2f, %2.2f }\n", i, fft_result[i][0], fft_result[i][1]);
             printf("magnitude[%zd] = { %6.2f }\n", i, mag);
         }
-        if (mag > max && (LOWEND / PERBIN) <= i && i <= (HIGHEND / PERBIN)) {
+        if (mag > max && ((low - PERBIN) / PERBIN) <= i && i <= ((high + PERBIN) / PERBIN)) {
             max = mag;
             maxi = i;
         }
@@ -38,7 +38,14 @@ static void get_nearest_freq(struct decode_state *s, double freq, int *ch, int *
     if (s->verbosity)
         printf("midpoint frequency is %4.0f\n", freq);
 
-    for (unsigned chan = 0; chan < 2; chan++) {
+    unsigned minch = 0,
+	     maxch = 1;
+
+    // If we were given a channel, contrain to that one
+    if (*ch >= 0 && *ch < 2)
+	minch = maxch = *ch;
+
+    for (unsigned chan = minch; chan <= maxch; chan++) {
         for (unsigned i = 0; i < 2; i++) {
             double t = fabs(freq - s->freqs[chan][i]);
             if (t < min) {
@@ -52,7 +59,14 @@ static void get_nearest_freq(struct decode_state *s, double freq, int *ch, int *
 
 int decode_bit(struct decode_state *s, fftw_complex *fft_result, int *channel, int *bit)
 {
-    size_t maxi = get_max_magnitude(s, fft_result);
+    unsigned minch = 0,
+	     maxch = 1;
+
+    // If we were given a channel, contrain to that one
+    if (*channel >= 0 && *channel < 2)
+	minch = maxch = *channel;
+
+    size_t maxi = get_max_magnitude(s, fft_result, s->freqs[minch][0], s->freqs[maxch][1]);
 
     if (s->verbosity) {
         printf("bucket with greatest magnitude was %zd, which corresponds to frequency range [%4.0f, %4.0f)\n",
@@ -65,7 +79,7 @@ int decode_bit(struct decode_state *s, fftw_complex *fft_result, int *channel, i
     return 0;
 }
 
-int decode_byte(struct decode_state *s, size_t size, double input[size], int output[ (size_t)(size / SAMPLES_PER_BIT(s) / ALL_BITS) ], double *offset)
+int decode_byte(struct decode_state *s, size_t size, double input[size], int output[ (size_t)(size / SAMPLES_PER_BIT(s) / ALL_BITS) ], double *offset, int channel)
 {
     fftw_complex *data       = fftw_malloc(s->fft_size * sizeof *data);
     fftw_complex *fft_result = fftw_malloc(s->fft_size * sizeof *fft_result);
@@ -89,7 +103,7 @@ int decode_byte(struct decode_state *s, size_t size, double input[size], int out
 
         fftw_execute(plan_forward);
 
-        int channel, bit;
+        int bit;
         decode_bit(s, fft_result, &channel, &bit);
         output[word] |= bit << wordbit;
 
@@ -114,7 +128,7 @@ int decode_data(struct decode_state *s, size_t count, double input[count])
 
     // TODO merge `offset` and `s->sample_offset`
     double offset = 0.;
-    decode_byte(s, count - s->sample_offset, input, output, &offset);
+    decode_byte(s, count - s->sample_offset, input, output, &offset, -1);
     for (size_t i = 0; i < countof(output); i++) {
         if (output[i] & ((1 << s->start_bits) - 1))
             fprintf(stderr, "Start bit%s %s not zero\n",
