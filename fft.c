@@ -138,6 +138,88 @@ int process_byte(struct detect_state *s, size_t size, double input[size], int ou
     return 0;
 }
 
+int process_data(struct detect_state *s, size_t count, double input[count])
+{
+    int output[ (size_t)(count / SAMPLES_PER_BIT / ALL_BITS) ];
+
+    // TODO merge `offset` and `s->sample_offset`
+    double offset = 0.;
+    process_byte(s, count - s->sample_offset, input, output, &offset);
+    for (size_t i = 0; i < countof(output); i++) {
+        if (output[i] & ((1 << s->start_bits) - 1))
+            fprintf(stderr, "Start bit%s %s not zero\n",
+                    s->start_bits > 1 ? "s" : "", s->start_bits > 1 ? "were" : "was");
+        if (output[i] >> (ALL_BITS - s->stop_bits) != (1 << s->stop_bits) - 1)
+            fprintf(stderr, "Stop bits were not one\n");
+        int width = ROUND_FACTOR(s->data_bits, 4);
+        printf("output[%zd] = 0x%0*x\n", i, width, (output[i] >> s->start_bits) & ((1u << s->data_bits) - 1));
+    }
+
+    return 0;
+}
+
+static int read_file(struct detect_state *s, const char *filename, size_t size, double input[size])
+{
+    size_t index = 0;
+    SNDFILE *sf = NULL;
+    {
+        SF_INFO sinfo = { .format = 0 };
+        sf = sf_open(filename, SFM_READ, &sinfo);
+        if (!sf) {
+            fprintf(stderr, "Failed to open `%s' : %s\n", filename, strerror(errno));
+            exit(EXIT_FAILURE);
+        }
+
+        // getting the sample rate from the file means right now the `-s' option on
+        // the command line has no effect. In the future it might be removed, or it
+        // might be necessary when the audio input has no accompanying sample-rate
+        // information.
+        s->sample_rate = sinfo.samplerate;
+    }
+
+    {
+        sf_count_t count = 0;
+        do {
+            count = sf_read_double(sf, &input[(size_t)SAMPLES_PER_BIT + index++], 1);
+        } while (count && index < BUFFER_SIZE);
+
+        if (index >= BUFFER_SIZE)
+            fprintf(stderr, "Warning, ran out of buffer space before reaching end of file\n");
+
+        sf_close(sf);
+    }
+
+    return index;
+}
+
+static int parse_opts(struct detect_state *s, int argc, char *argv[], const char **filename)
+{
+    int ch;
+    while ((ch = getopt(argc, argv, "S:T:P:D:s:O:v")) != -1) {
+        switch (ch) {
+            case 'S': s->start_bits    = strtol(optarg, NULL, 0); break;
+            case 'T': s->stop_bits     = strtol(optarg, NULL, 0); break;
+            case 'P': s->parity_bits   = strtol(optarg, NULL, 0); break;
+            case 'D': s->data_bits     = strtol(optarg, NULL, 0); break;
+            case 's': s->sample_rate   = strtol(optarg, NULL, 0); break;
+            case 'O': s->sample_offset = strtod(optarg, NULL);    break;
+            case 'v': s->verbosity++; break;
+            default: fprintf(stderr, "args error before argument index %d\n", optind); return -1;
+        }
+    }
+
+    if (fabs(s->sample_offset) > SAMPLES_PER_BIT) {
+        fprintf(stderr, "sample offset (%f) > samples per bit (%4.1f)\n",
+                s->sample_offset, SAMPLES_PER_BIT);
+        return -1;
+    }
+
+    if (optind < argc)
+        *filename = argv[optind];
+
+    return 0;
+}
+
 int main(int argc, char* argv[])
 {
     struct detect_state _s = {
@@ -152,88 +234,25 @@ int main(int argc, char* argv[])
         .freqs       = bell103_freqs,
     }, *s = &_s;
 
-    {
-        int ch;
-        while ((ch = getopt(argc, argv, "S:T:P:D:s:O:v")) != -1) {
-            switch (ch) {
-                case 'S': s->start_bits    = strtol(optarg, NULL, 0); break;
-                case 'T': s->stop_bits     = strtol(optarg, NULL, 0); break;
-                case 'P': s->parity_bits   = strtol(optarg, NULL, 0); break;
-                case 'D': s->data_bits     = strtol(optarg, NULL, 0); break;
-                case 's': s->sample_rate   = strtol(optarg, NULL, 0); break;
-                case 'O': s->sample_offset = strtod(optarg, NULL);    break;
-                case 'v': s->verbosity++; break;
-                default: fprintf(stderr, "args error before argument index %d\n", optind); return -1;
-            }
-        }
-
-        if (fabs(s->sample_offset) > SAMPLES_PER_BIT) {
-            fprintf(stderr, "sample offset (%f) > samples per bit (%4.1f)\n",
-                    s->sample_offset, SAMPLES_PER_BIT);
-            return -1;
-        }
-
-        if (optind >= argc) {
-            fprintf(stderr, "No files specified to process\n");
-            return -1;
-        }
-    }
-
-    SNDFILE *sf = NULL;
-    {
-        SF_INFO sinfo = { .format = 0 };
-        sf = sf_open(argv[optind], SFM_READ, &sinfo);
-        if (!sf) {
-            fprintf(stderr, "Failed to open `%s' : %s\n", argv[optind], strerror(errno));
-            exit(EXIT_FAILURE);
-        }
-
-        // getting the sample rate from the file means right now the `-s' option on
-        // the command line has no effect. In the future it might be removed, or it
-        // might be necessary when the audio input has no accompanying sample-rate
-        // information.
-        s->sample_rate = sinfo.samplerate;
+    const char *filename = NULL;
+    parse_opts(s, argc, argv, &filename);
+    if (!filename) {
+        fprintf(stderr, "No files specified to process\n");
+        return -1;
     }
 
     double *_input = calloc((size_t)SAMPLES_PER_BIT * 2 + BUFFER_SIZE, sizeof *_input);
     double *input = &_input[(size_t)SAMPLES_PER_BIT + (size_t)s->sample_offset];
-
-    size_t index = 0;
-    {
-        sf_count_t count = 0;
-        do {
-            count = sf_read_double(sf, &_input[(size_t)SAMPLES_PER_BIT + index++], 1);
-        } while (count && index < BUFFER_SIZE);
-
-        if (index >= BUFFER_SIZE)
-            fprintf(stderr, "Warning, ran out of buffer space before reaching end of file\n");
-
-        sf_close(sf);
-    }
+    size_t count = read_file(s, argv[optind], sizeof _input, _input);
 
     if (s->verbosity) {
-        printf("read %zd items\n", index);
+        printf("read %zd items\n", count);
         printf("sample rate is %4d Hz\n", s->sample_rate);
         printf("baud rate is %4d\n", s->baud_rate);
         printf("samples per bit is %4.0f\n", SAMPLES_PER_BIT);
     }
 
-    {
-        int output[ (size_t)(index / SAMPLES_PER_BIT / ALL_BITS) ];
-
-        // TODO merge `offset` and `s->sample_offset`
-        double offset = 0.;
-        process_byte(s, index - s->sample_offset, input, output, &offset);
-        for (size_t i = 0; i < countof(output); i++) {
-            if (output[i] & ((1 << s->start_bits) - 1))
-                fprintf(stderr, "Start bit%s %s not zero\n",
-                        s->start_bits > 1 ? "s" : "", s->start_bits > 1 ? "were" : "was");
-            if (output[i] >> (ALL_BITS - s->stop_bits) != (1 << s->stop_bits) - 1)
-                fprintf(stderr, "Stop bits were not one\n");
-            int width = ROUND_FACTOR(s->data_bits, 4);
-            printf("output[%zd] = 0x%0*x\n", i, width, (output[i] >> s->start_bits) & ((1u << s->data_bits) - 1));
-        }
-    }
+    process_data(s, count, input);
 
     free(_input);
     fftw_cleanup();
