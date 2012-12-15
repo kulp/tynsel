@@ -76,8 +76,7 @@ static size_t get_nearest_freq(double freq)
     return mini;
 }
 
-// TODO remove bit_base ? what is it for ?
-int process_bit(size_t bit_base, fftw_complex *fft_result, int *channel, int *bit)
+int process_bit(fftw_complex *fft_result, int *channel, int *bit)
 {
     size_t maxi = get_max_magnitude(fft_result);
 
@@ -120,7 +119,7 @@ int process_byte(size_t size, double input[size], int output[size / (size_t)SAMP
         fftw_execute(plan_forward);
 
         int channel, bit;
-        process_bit(bit_base, fft_result, &channel, &bit);
+        process_bit(fft_result, &channel, &bit);
         output[word] |= bit << wordbit;
 
         if (verbosity > 2) {

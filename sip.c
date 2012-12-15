@@ -146,7 +146,7 @@ int main(int argc, char *argv[])
     pjsua_acc_id acc_id;
     pj_status_t status;
 
-    struct mydata me = { 0 };
+    struct mydata me = { .play_port = 0 };
 
     /* Create pjsua first! */
     status = pjsua_create();
