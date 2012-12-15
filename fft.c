@@ -6,6 +6,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <getopt.h>
+#include <errno.h>
 
 #include <fftw3.h>
 #include <sndfile.h>
@@ -168,6 +169,11 @@ int main(int argc, char* argv[])
 
     SF_INFO sinfo = { .format = 0 };
     SNDFILE *sf = sf_open(argv[optind], SFM_READ, &sinfo);
+    if (!sf) {
+        fprintf(stderr, "Failed to open `%s' : %s\n", argv[optind], strerror(errno));
+        exit(EXIT_FAILURE);
+    }
+
     // getting the sample rate from the file means right now the `-s' option on
     // the command line has no effect. In the future it might be removed, or it
     // might be necessary when the audio input has no accompanying sample-rate
