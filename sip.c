@@ -1,5 +1,5 @@
-/* $Id: simple_pjsua.c 3553 2011-05-05 06:14:19Z nanang $ */
 /* 
+ * Copyright (C) 2012-     Darren Kulp (http://kulp.ch/)
  * Copyright (C) 2008-2011 Teluu Inc. (http://www.teluu.com)
  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
  *
@@ -16,26 +16,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA 
- */
-
-/**
- * simple_pjsua.c
- *
- * This is a very simple but fully featured SIP user agent, with the 
- * following capabilities:
- *  - SIP registration
- *  - Making and receiving call
- *  - Audio/media to sound device.
- *
- * Usage:
- *  - To make outgoing call, start simple_pjsua with the URL of remote
- *    destination to contact.
- *    E.g.:
- *       simpleua sip:user@remote
- *
- *  - Incoming calls will automatically be answered with 200.
- *
- * This program will quit once it has completed a single call.
  */
 
 #define PJMEDIA_CONF_USE_SWITCH_BOARD 1
