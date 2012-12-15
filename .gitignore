@@ -1,0 +1,9 @@
+*.aup
+*.wav
+*_data/
+fft
+gen
+g711
+Makefile.sipsettings
+detect
+sip
