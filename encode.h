@@ -36,5 +36,7 @@ struct encode_state {
     SNDFILE *sf;
 };
 
+int encode_bytes(struct encode_state *s, size_t byte_count, unsigned bytes[byte_count]);
+
 #endif
 

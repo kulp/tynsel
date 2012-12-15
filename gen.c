@@ -26,59 +26,8 @@
 
 #include <stdlib.h>
 #include <getopt.h>
-#include <math.h>
 #include <string.h>
 #include <errno.h>
-
-#define SAMPLES_PER_BIT ((double)s->audio.sample_rate / s->audio.baud_rate)
-
-struct put_state {
-    int last_quadrant;
-    double last_sample;
-    double adjust;
-};
-
-static int encode_sample(struct encode_state *s, double freq, double sample_index, struct put_state *state)
-{
-    double proportion = sample_index / s->audio.sample_rate;
-    double radians = proportion * 2. * M_PI;
-    double sample = sin(radians * freq) * s->gain;
-
-    int rc = sf_write_double(s->sf, &sample, 1);
-    state->last_sample = sample;
-
-    return rc;
-}
-
-static int encode_bit(struct encode_state *s, double freq, struct put_state *state)
-{
-    double inverse = asin(state->last_sample / s->gain);
-    switch (state->last_quadrant) {
-        case 0: break;
-        case 1:                                         // mirror around pi/2
-        case 2: inverse = M_PI - inverse; break;        // mirror around 3*pi/2
-        case 3: inverse = 2 * M_PI + inverse; break;    // mirror around 2pi
-        default: abort(); // TODO just return 1 once we check encode_bit()'s return value
-    }
-    double inverse_prop = inverse / (2 * M_PI);
-    double samples_per_cycle = s->audio.sample_rate / freq;
-    // sample_offset gets +1 because we need to start at the *next* sample,
-    // otherwise a sample will be duplicated
-    double sample_offset = inverse_prop * samples_per_cycle + 1;
-
-    double sidx;
-    for (sidx = sample_offset; sidx < SAMPLES_PER_BIT + sample_offset + state->adjust; sidx++) {
-        encode_sample(s, freq, sidx, state);
-    }
-
-    state->adjust -= (sidx - sample_offset) - SAMPLES_PER_BIT;
-
-    double si = sidx - 1; // undo last iteration of for-loop
-    // TODO explain what is happening here
-    state->last_quadrant = (si - floor(si / samples_per_cycle) * samples_per_cycle) / samples_per_cycle * 4;
-
-    return 0;
-}
 
 static int parse_opts(struct encode_state *s, int argc, char *argv[], const char **filename)
 {
@@ -145,34 +94,21 @@ int main(int argc, char* argv[])
         }
     }
 
-    struct put_state state = { .last_quadrant = 0 };
-    for (unsigned byte_index = 0; byte_index < (unsigned)argc - optind; byte_index++) {
+    size_t byte_count = argc - optind;
+    unsigned bytes[byte_count];
+    for (unsigned byte_index = 0; byte_index < byte_count; byte_index++) {
         char *next = NULL;
         char *thing = argv[byte_index + optind];
-        unsigned byte = strtol(thing, &next, 0);
+        bytes[byte_index] = strtol(thing, &next, 0);
         if (next == thing) {
             fprintf(stderr, "Error parsing argument at index %d, `%s'\n", optind, thing);
             return -1;
         }
-
-        printf("writing byte %#x\n", byte);
-
-        for (int bit_index = 0; bit_index < s->audio.start_bits; bit_index++) {
-            encode_bit(s, s->audio.freqs[s->channel][0], &state);
-        }
-
-        for (int bit_index = 0; bit_index < s->audio.data_bits; bit_index++) {
-            unsigned bit = !!(byte & (1 << bit_index));
-            double freq = s->audio.freqs[s->channel][bit];
-            encode_bit(s, freq, &state);
-        }
-
-        // TODO parity bits
-
-        for (int bit_index = 0; bit_index < s->audio.stop_bits; bit_index++) {
-            encode_bit(s, s->audio.freqs[s->channel][1], &state);
-        }
     }
+
+    rc = encode_bytes(s, byte_count, bytes);
+    if (rc)
+        fprintf(stderr, "Error while encoding %zd bytes : %s\n", byte_count, strerror(errno));
 
     sf_close(s->sf);
 
