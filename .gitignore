@@ -7,3 +7,4 @@ g711
 Makefile.sipsettings
 detect
 sip
+*.o

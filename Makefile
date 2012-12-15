@@ -11,6 +11,8 @@ gen fft: CPPFLAGS += -std=c99
 fft: LDLIBS += -lfftw3
 g711 gen fft: LDLIBS += -lsndfile
 
+fft: decode.o
+
 all: fft gen sip
 
 # pjtarget gives us the TARGET_NAME for linking
