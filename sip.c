@@ -43,7 +43,8 @@
 #define THIS_FILE       "APP"
 
 struct mydata {
-    pjsua_conf_port_id wav_port;
+    pjsua_conf_port_id play_port;
+    pjsua_conf_port_id rec_port;
 };
 
 /* Callback called by the library upon receiving incoming call */
@@ -91,7 +92,8 @@ static void on_call_media_state(pjsua_call_id call_id)
         pjsua_conf_connect(ci.conf_slot, 0);
         pjsua_conf_connect(0, ci.conf_slot);
         // TODO move the conf_connect somewhere more reasonable
-        pjsua_conf_connect(me->wav_port, ci.conf_slot);
+        pjsua_conf_connect(me->play_port, ci.conf_slot);
+        pjsua_conf_connect(ci.conf_slot, me->rec_port);
         printf(">>> conf_slot = %d\n", ci.conf_slot);
     }
 }
@@ -107,7 +109,7 @@ static void error_exit(const char *title, pj_status_t status)
 static int set_up_wav_player(pjsua_conf_port_id *wav_port)
 {
     pjsua_player_id wav_id;
-    unsigned play_options = 0;
+    unsigned play_options = PJMEDIA_FILE_NO_LOOP;
     pj_str_t str = pj_str("data.wav");
     pj_status_t status = pjsua_player_create(&str,
             play_options, &wav_id);
@@ -115,6 +117,21 @@ static int set_up_wav_player(pjsua_conf_port_id *wav_port)
         return 1;
 
     *wav_port = pjsua_player_get_conf_port(wav_id);
+
+    return 0;
+}
+
+static int set_up_wav_recorder(pjsua_conf_port_id *wav_port)
+{
+    pjsua_recorder_id wav_id;
+    unsigned record_options = 0;
+    pj_str_t str = pj_str("data-out.wav");
+    pj_status_t status = pjsua_recorder_create(&str,
+            0, NULL, -1, record_options, &wav_id);
+    if (status != PJ_SUCCESS)
+        return 1;
+
+    *wav_port = pjsua_recorder_get_conf_port(wav_id);
 
     return 0;
 }
@@ -198,9 +215,12 @@ int main(int argc, char *argv[])
         pjsua_acc_set_user_data(acc_id, &me);
     }
 
-    pjsua_conf_port_id wav_port;
-    int rc = set_up_wav_player(&wav_port);
-    me.wav_port = wav_port;
+    pjsua_conf_port_id play_port, rec_port;
+    int rc = 0;
+    rc = set_up_wav_player(&play_port);
+    rc = set_up_wav_recorder(&rec_port);
+    me.play_port = play_port;
+    me.rec_port = rec_port;
 
     /* If URL is specified, make call to the URL. */
     if (argc > 1) {
