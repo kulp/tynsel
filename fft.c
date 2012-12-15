@@ -106,7 +106,6 @@ int main(int argc, char* argv[])
     struct decode_state _s = {
         .sample_rate = 44100,
         .baud_rate   = 300, // TODO make baud_rate configurable
-        .fft_size    = 512,
         .start_bits  = 1,
         .data_bits   = 8,
         .parity_bits = 0,

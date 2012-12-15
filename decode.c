@@ -31,14 +31,16 @@
 
 #define LOWEND          (s->freqs[0][0] - PERBIN)
 #define HIGHEND         (s->freqs[1][1] + PERBIN)
-#define PERBIN          ((double)s->sample_rate / s->fft_size)
+#define PERBIN          ((double)s->sample_rate / fft_size)
 #define ALL_BITS        (s->start_bits + s->data_bits + s->parity_bits + s->stop_bits)
+
+static const unsigned fft_size = 512;
 
 static size_t get_max_magnitude(struct decode_state *s, fftw_complex *fft_result, double low, double high)
 {
     size_t maxi = 0;
     double max = -1;
-    for (size_t i = 0; i < s->fft_size; i++) {
+    for (size_t i = 0; i < fft_size; i++) {
         double mag = sqrt(pow(fft_result[i][0],2) + pow(fft_result[i][1],2));
         if (s->verbosity > 3) {
             printf("fft_result[%zd] = { %2.2f, %2.2f }\n", i, fft_result[i][0], fft_result[i][1]);
@@ -103,8 +105,8 @@ int decode_bit(struct decode_state *s, fftw_complex *fft_result, int *channel, i
 
 int decode_byte(struct decode_state *s, size_t size, double input[size], int output[ (size_t)(size / SAMPLES_PER_BIT(s) / ALL_BITS) ], double *offset, int channel)
 {
-    fftw_complex *data       = fftw_malloc(s->fft_size * sizeof *data);
-    fftw_complex *fft_result = fftw_malloc(s->fft_size * sizeof *fft_result);
+    fftw_complex *data       = fftw_malloc(fft_size * sizeof *data);
+    fftw_complex *fft_result = fftw_malloc(fft_size * sizeof *fft_result);
 
     int biti = 0;
     for (double dbb = *offset; dbb < size + *offset; dbb += SAMPLES_PER_BIT(s), biti++) {
@@ -113,12 +115,12 @@ int decode_byte(struct decode_state *s, size_t size, double input[size], int out
         if (wordbit == 0)
             output[word] = 0;
 
-        fftw_plan plan_forward = fftw_plan_dft_1d(s->fft_size, data, fft_result, FFTW_FORWARD, FFTW_ESTIMATE);
+        fftw_plan plan_forward = fftw_plan_dft_1d(fft_size, data, fft_result, FFTW_FORWARD, FFTW_ESTIMATE);
 
         size_t bit_base = dbb;
         *offset += dbb - bit_base;
 
-        for (size_t i = 0; i < s->fft_size; i++) {
+        for (size_t i = 0; i < fft_size; i++) {
             data[i][0] = i < SAMPLES_PER_BIT(s) ? input[bit_base + i] : 0.;
             data[i][1] = 0.;
         }

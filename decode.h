@@ -29,7 +29,6 @@ struct decode_state {
     unsigned sample_rate;
     double sample_offset;
     const unsigned baud_rate;
-    const unsigned fft_size;
 
     int start_bits,
         data_bits,
