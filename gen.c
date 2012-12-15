@@ -29,6 +29,8 @@
 #include <string.h>
 #include <errno.h>
 
+#include <sndfile.h>
+
 static int parse_opts(struct encode_state *s, int argc, char *argv[], const char **filename)
 {
     int ch;
@@ -50,6 +52,12 @@ static int parse_opts(struct encode_state *s, int argc, char *argv[], const char
     return 0;
 }
 
+static int sample_callback(struct audio_state *a, double sample, void *userdata)
+{
+    (void)a;
+    return sf_write_double(userdata, &sample, 1);
+}
+
 int main(int argc, char* argv[])
 {
     const char *output_file = NULL;
@@ -66,6 +74,7 @@ int main(int argc, char* argv[])
         .verbosity = 0,
         .channel   = 1,
         .gain      = 0.5,
+        .cb.sample = sample_callback,
     }, *s = &_s;
 
     int rc = parse_opts(s, argc, argv, &output_file);
@@ -87,8 +96,8 @@ int main(int argc, char* argv[])
             .channels   = 1,
             .format     = SF_FORMAT_WAV | SF_FORMAT_PCM_16,
         };
-        s->sf = sf_open(output_file, SFM_WRITE, &sinfo);
-        if (!s->sf) {
+        SNDFILE *sf = s->cb.userdata = sf_open(output_file, SFM_WRITE, &sinfo);
+        if (!sf) {
             fprintf(stderr, "Failed to open `%s' : %s\n", output_file, strerror(errno));
             exit(EXIT_FAILURE);
         }

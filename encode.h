@@ -34,6 +34,10 @@ struct encode_state {
     unsigned channel;
     double gain;
     SNDFILE *sf;
+    struct {
+	void *userdata;
+	int (*sample)(struct audio_state *a, double sample, void *userdata);
+    } cb;
 };
 
 int encode_bytes(struct encode_state *s, size_t byte_count, unsigned bytes[byte_count]);

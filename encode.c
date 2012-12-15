@@ -38,7 +38,7 @@ static int encode_sample(struct encode_state *s, double freq, double sample_inde
     double radians = proportion * 2. * M_PI;
     double sample = sin(radians * freq) * s->gain;
 
-    int rc = sf_write_double(s->sf, &sample, 1);
+    int rc = s->cb.sample(&s->audio, sample, s->cb.userdata);
     state->last_sample = sample;
 
     return rc;
