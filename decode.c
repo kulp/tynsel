@@ -50,7 +50,7 @@ static void get_nearest_freq(struct decode_state *s, double freq, int *ch, int *
     }
 }
 
-int process_bit(struct decode_state *s, fftw_complex *fft_result, int *channel, int *bit)
+int decode_bit(struct decode_state *s, fftw_complex *fft_result, int *channel, int *bit)
 {
     size_t maxi = get_max_magnitude(s, fft_result);
 
@@ -65,7 +65,7 @@ int process_bit(struct decode_state *s, fftw_complex *fft_result, int *channel, 
     return 0;
 }
 
-int process_byte(struct decode_state *s, size_t size, double input[size], int output[ (size_t)(size / SAMPLES_PER_BIT(s) / ALL_BITS) ], double *offset)
+int decode_byte(struct decode_state *s, size_t size, double input[size], int output[ (size_t)(size / SAMPLES_PER_BIT(s) / ALL_BITS) ], double *offset)
 {
     fftw_complex *data       = fftw_malloc(s->fft_size * sizeof *data);
     fftw_complex *fft_result = fftw_malloc(s->fft_size * sizeof *fft_result);
@@ -90,7 +90,7 @@ int process_byte(struct decode_state *s, size_t size, double input[size], int ou
         fftw_execute(plan_forward);
 
         int channel, bit;
-        process_bit(s, fft_result, &channel, &bit);
+        decode_bit(s, fft_result, &channel, &bit);
         output[word] |= bit << wordbit;
 
         if (s->verbosity > 2) {
@@ -108,13 +108,13 @@ int process_byte(struct decode_state *s, size_t size, double input[size], int ou
     return 0;
 }
 
-int process_data(struct decode_state *s, size_t count, double input[count])
+int decode_data(struct decode_state *s, size_t count, double input[count])
 {
     int output[ (size_t)(count / SAMPLES_PER_BIT(s) / ALL_BITS) ];
 
     // TODO merge `offset` and `s->sample_offset`
     double offset = 0.;
-    process_byte(s, count - s->sample_offset, input, output, &offset);
+    decode_byte(s, count - s->sample_offset, input, output, &offset);
     for (size_t i = 0; i < countof(output); i++) {
         if (output[i] & ((1 << s->start_bits) - 1))
             fprintf(stderr, "Start bit%s %s not zero\n",

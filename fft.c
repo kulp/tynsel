@@ -111,7 +111,7 @@ int main(int argc, char* argv[])
         printf("samples per bit is %4.0f\n", SAMPLES_PER_BIT(s));
     }
 
-    process_data(s, count, input);
+    decode_data(s, count, input);
 
     free(_input);
     decode_cleanup();

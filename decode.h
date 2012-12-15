@@ -19,7 +19,8 @@ struct decode_state {
     const double (*freqs)[2];
 };
 
-int process_data(struct decode_state *s, size_t count, double input[count]);
+int decode_byte(struct decode_state *s, size_t size, double input[size], int output[], double *offset);
+int decode_data(struct decode_state *s, size_t count, double input[count]);
 void decode_cleanup(void);
 
 #define SAMPLES_PER_BIT(s) ((double)s->sample_rate / s->baud_rate)
