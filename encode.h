@@ -26,17 +26,15 @@
 #include "audio.h"
 
 #include <stddef.h>
-#include <sndfile.h>
 
 struct encode_state {
     struct audio_state audio;
     int verbosity;
     unsigned channel;
     double gain;
-    SNDFILE *sf;
     struct {
 	void *userdata;
-	int (*sample)(struct audio_state *a, double sample, void *userdata);
+	int (*put_samples)(struct audio_state *a, size_t count, double sample[count], void *userdata);
     } cb;
 };
 

@@ -23,6 +23,7 @@
 #include "encode.h"
 
 #include <math.h>
+#include <stdio.h>
 
 #define SAMPLES_PER_BIT ((double)s->audio.sample_rate / s->audio.baud_rate)
 
@@ -38,7 +39,7 @@ static int encode_sample(struct encode_state *s, double freq, double sample_inde
     double radians = proportion * 2. * M_PI;
     double sample = sin(radians * freq) * s->gain;
 
-    int rc = s->cb.sample(&s->audio, sample, s->cb.userdata);
+    int rc = s->cb.put_samples(&s->audio, 1, &sample, s->cb.userdata);
     state->last_sample = sample;
 
     return rc;

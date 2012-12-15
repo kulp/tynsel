@@ -52,10 +52,10 @@ static int parse_opts(struct encode_state *s, int argc, char *argv[], const char
     return 0;
 }
 
-static int sample_callback(struct audio_state *a, double sample, void *userdata)
+static int sample_callback(struct audio_state *a, size_t count, double samples[count], void *userdata)
 {
     (void)a;
-    return sf_write_double(userdata, &sample, 1);
+    return sf_write_double(userdata, samples, count);
 }
 
 int main(int argc, char* argv[])
@@ -74,7 +74,7 @@ int main(int argc, char* argv[])
         .verbosity = 0,
         .channel   = 1,
         .gain      = 0.5,
-        .cb.sample = sample_callback,
+        .cb.put_samples = sample_callback,
     }, *s = &_s;
 
     int rc = parse_opts(s, argc, argv, &output_file);
@@ -90,13 +90,14 @@ int main(int argc, char* argv[])
         return -1;
     }
 
+    SNDFILE *sf;
     {
         SF_INFO sinfo = {
             .samplerate = s->audio.sample_rate,
             .channels   = 1,
             .format     = SF_FORMAT_WAV | SF_FORMAT_PCM_16,
         };
-        SNDFILE *sf = s->cb.userdata = sf_open(output_file, SFM_WRITE, &sinfo);
+        sf = s->cb.userdata = sf_open(output_file, SFM_WRITE, &sinfo);
         if (!sf) {
             fprintf(stderr, "Failed to open `%s' : %s\n", output_file, strerror(errno));
             exit(EXIT_FAILURE);
@@ -119,7 +120,7 @@ int main(int argc, char* argv[])
     if (rc)
         fprintf(stderr, "Error while encoding %zd bytes : %s\n", byte_count, strerror(errno));
 
-    sf_close(s->sf);
+    sf_close(sf);
 
     return 0;
 }
