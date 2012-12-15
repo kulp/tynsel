@@ -208,7 +208,7 @@ int main(int argc, char* argv[])
         if (output[i] & ((1 << start_bits) - 1))
             fprintf(stderr, "Start bit%s %s not zero\n",
                     start_bits > 1 ? "s" : "", start_bits > 1 ? "were" : "was");
-        if (output[i] >> (start_bits + data_bits) != (1 << stop_bits) - 1)
+        if (output[i] >> (ALL_BITS - stop_bits) != (1 << stop_bits) - 1)
             fprintf(stderr, "Stop bits were not one\n");
         int width = ROUND_FACTOR(data_bits, 4);
         printf("output[%zd] = 0x%0*x\n", i, width, (output[i] >> start_bits) & ((1u << data_bits) - 1));
