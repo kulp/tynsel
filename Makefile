@@ -7,7 +7,7 @@ CPPFLAGS += $(patsubst %,-D%,$(DEFINE))
 
 CFLAGS += -Wall -Wextra -Wunused
 
-fft: CPPFLAGS += -std=c99
+gen fft: CPPFLAGS += -std=c99
 fft: LDLIBS += -lfftw3
 g711 gen fft: LDLIBS += -lsndfile
 
@@ -17,7 +17,13 @@ all: fft gen sip
 detect: LDLIBS =
 detect: CPPFLAGS =
 sip: | detect
-sip: TARGET_NAME = $(shell ./detect)
+
+# If TARGET_NAME hasn't been set, reinvoke make to get the dependency ordering
+# right.
+ifeq ($(TARGET_NAME),)
+sip:
+	$(MAKE) $@ TARGET_NAME="$(shell ./detect)"
+endif
 
 LDLIBS_Darwin += \
                -framework CoreAudio \
@@ -32,13 +38,11 @@ sip: LDLIBS := \
                -lpjsip-simple-$(TARGET_NAME) \
                -lpjsip-$(TARGET_NAME) \
                -lpjmedia-codec-$(TARGET_NAME) \
-               -lpjmedia-videodev-$(TARGET_NAME) \
                -lpjmedia-$(TARGET_NAME) \
                -lpjmedia-audiodev-$(TARGET_NAME) \
                -lpjnath-$(TARGET_NAME) \
                -lpjlib-util-$(TARGET_NAME) \
                -lresample-$(TARGET_NAME) \
-               -lmilenage-$(TARGET_NAME) \
                -lsrtp-$(TARGET_NAME) \
                -lgsmcodec-$(TARGET_NAME) \
                -lspeex-$(TARGET_NAME) \
@@ -54,13 +58,12 @@ sip: LDLIBS := \
 			   #
 
 -include Makefile.sipsettings
-
-DEFINE += SIP_DOMAIN='"$(SIP_DOMAIN)"' \
-          SIP_USER='"$(SIP_USER)"' \
-          SIP_PASSWD='"$(SIP_PASSWD)"' \
-          STUN_SERVER='"$(STUN_SERVER)"' \
-          #
+sip : DEFINE += SIP_DOMAIN='"$(SIP_DOMAIN)"' \
+                SIP_USER='"$(SIP_USER)"' \
+                SIP_PASSWD='"$(SIP_PASSWD)"' \
+                STUN_SERVER='"$(STUN_SERVER)"' \
+                #
 
 clean:
-	rm -f *.o fft gen sip detect
+	rm -f *.o fft gen g711 sip detect
 

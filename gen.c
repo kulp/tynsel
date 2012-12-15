@@ -1,3 +1,4 @@
+#define _XOPEN_SOURCE 600
 #include "common.h"
 
 #include <stdlib.h>
