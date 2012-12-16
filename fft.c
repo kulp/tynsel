@@ -38,8 +38,8 @@ static int read_file(struct decode_state *s, const char *filename, size_t size, 
 {
     size_t index = 0;
     SNDFILE *sf = NULL;
+    SF_INFO sinfo = { .format = 0 };
     {
-        SF_INFO sinfo = { .format = 0 };
         sf = sf_open(filename, SFM_READ, &sinfo);
         if (!sf) {
             fprintf(stderr, "Failed to open `%s' : %s\n", filename, strerror(errno));
@@ -56,8 +56,14 @@ static int read_file(struct decode_state *s, const char *filename, size_t size, 
     {
         sf_count_t count = 0;
         do {
-            count = sf_read_double(sf, &input[(size_t)SAMPLES_PER_BIT(s) + index++], 1);
+            double tmp[sinfo.channels];
+            count = sf_read_double(sf, tmp, sinfo.channels);
+            size_t where = (size_t)SAMPLES_PER_BIT(s) + index++;
+            input[where] = tmp[0];
         } while (count && index < BUFFER_SIZE);
+
+        if (sf_error(sf))
+            sf_perror(sf);
 
         if (index >= BUFFER_SIZE)
             fprintf(stderr, "Warning, ran out of buffer space before reaching end of file\n");
