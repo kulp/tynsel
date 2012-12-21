@@ -20,22 +20,16 @@
  * IN THE SOFTWARE.
  */
 
-#ifndef DECODE_H_
-#define DECODE_H_
+#ifndef DECODERS_H_
+#define DECODERS_H_
 
-#include "audio.h"
-#include <stddef.h>
+#include "decode.h"
 
-struct decode_state {
-    struct audio_state audio;
-    int verbosity;
-};
+typedef int bit_recogniser(struct decode_state *s, size_t size, double samples[size], int *channel, int *bit, float *probability);
 
-int decode_byte(struct decode_state *s, size_t size, double input[size], int output[], double *offset, int channel);
-int decode_data(struct decode_state *s, size_t count, double input[count]);
-void decode_cleanup(void);
-
-#define SAMPLES_PER_BIT(s) ((double)s->audio.sample_rate / s->audio.baud_rate)
+extern bit_recogniser *bit_recognisers[];
+extern size_t bit_recognisers_size;
 
 #endif
+
 

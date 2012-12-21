@@ -21,7 +21,7 @@ DECODERS = \
 		   naive.c \
 		   #
 
-fft: decode.o $(DECODERS)
+fft: decode.o $(DECODERS) decoders.c
 gen: encode.o
 fft gen: audio.o
 

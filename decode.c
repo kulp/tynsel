@@ -21,14 +21,13 @@
  */
 
 #include "decode.h"
+#include "decoders.h"
 #include "common.h"
 
 #include <math.h>
 #include <fftw3.h>
 #include <float.h>
 #include <stdlib.h>
-
-extern bit_recogniser decode_bit_naive;
 
 #define ROUND_FACTOR(X,By) (((X) + (By) - 1) / (By))
 #define ALL_BITS        (s->audio.start_bits + s->audio.data_bits + s->audio.parity_bits + s->audio.stop_bits)
@@ -63,9 +62,17 @@ int decode_byte(struct decode_state *s, size_t size, double input[size], int out
         for (size_t i = 0; i < fft_size; i++)
             result_samples[i] = sqrt(pow(fft_result[i][0],2) + pow(fft_result[i][1],2));
 
-        int bit;
-        float prob = 0.;
-        decode_bit_naive(s, size, result_samples, &channel, &bit, &prob);
+        // probable_bit is the sum of the probabilities for each bit,
+        // disregarding channel ; positive for 1, negative for 0.
+        double probable_bit = 0.;
+        for (size_t i = 0; i < bit_recognisers_size; i++) {
+            int bit;
+            float prob = 0.;
+            bit_recogniser *rec = bit_recognisers[i];
+            rec(s, size, result_samples, &channel, &bit, &prob);
+            probable_bit += (bit * 2 - 1) * prob;
+        }
+        int bit = probable_bit > 0;
         output[word] |= bit << wordbit;
 
         if (s->verbosity > 2) {
