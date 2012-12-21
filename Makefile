@@ -17,7 +17,11 @@ all: fft gen sip
 test: gen fft
 	./test.pl
 
-fft: decode.o
+DECODERS = \
+		   naive.c \
+		   #
+
+fft: decode.o $(DECODERS)
 gen: encode.o
 fft gen: audio.o
 

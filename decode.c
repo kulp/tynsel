@@ -28,81 +28,12 @@
 #include <float.h>
 #include <stdlib.h>
 
-#define ROUND_FACTOR(X,By) (((X) + (By) - 1) / (By))
+extern bit_recogniser decode_bit_naive;
 
-#define LOWEND          (s->audio.freqs[0][0] - PERBIN)
-#define HIGHEND         (s->audio.freqs[1][1] + PERBIN)
-#define PERBIN          ((double)s->audio.sample_rate / fft_size)
+#define ROUND_FACTOR(X,By) (((X) + (By) - 1) / (By))
 #define ALL_BITS        (s->audio.start_bits + s->audio.data_bits + s->audio.parity_bits + s->audio.stop_bits)
 
-static const unsigned fft_size = 512;
-
-static size_t get_max_magnitude(struct decode_state *s, double *samples, double low, double high)
-{
-    size_t maxi = 0;
-    double max = -1;
-    for (size_t i = 0; i < fft_size; i++) {
-        double mag = samples[i];
-        if (s->verbosity > 3) {
-            printf("magnitude[%zd] = { %6.2f }\n", i, mag);
-        }
-        if (mag > max && ((low - PERBIN) / PERBIN) <= i && i <= ((high + PERBIN) / PERBIN)) {
-            max = mag;
-            maxi = i;
-        }
-    }
-
-    return maxi;
-}
-
-static void get_nearest_freq(struct decode_state *s, double freq, int *ch, int *f)
-{
-    double min = DBL_MAX;
-
-    if (s->verbosity)
-        printf("midpoint frequency is %4.0f\n", freq);
-
-    unsigned minch = 0,
-	     maxch = 1;
-
-    // If we were given a channel, contrain to that one
-    if (*ch >= 0 && *ch < 2)
-	minch = maxch = *ch;
-
-    for (unsigned chan = minch; chan <= maxch; chan++) {
-        for (unsigned i = 0; i < 2; i++) {
-            double t = fabs(freq - s->audio.freqs[chan][i]);
-            if (t < min) {
-                min = t;
-                *ch = chan;
-                *f = i;
-            }
-        }
-    }
-}
-
-int decode_bit(struct decode_state *s, double *samples, int *channel, int *bit, float *prob)
-{
-    unsigned minch = 0,
-	     maxch = 1;
-
-    // If we were given a channel, contrain to that one
-    if (*channel >= 0 && *channel < 2)
-	minch = maxch = *channel;
-
-    size_t maxi = get_max_magnitude(s, samples, s->audio.freqs[minch][0], s->audio.freqs[maxch][1]);
-
-    if (s->verbosity) {
-        printf("bucket with greatest magnitude was %zd, which corresponds to frequency range [%4.0f, %4.0f)\n",
-                maxi, PERBIN * maxi, PERBIN * (maxi + 1));
-    }
-
-    double freq = maxi * PERBIN + (PERBIN / 2.);
-    get_nearest_freq(s, freq, channel, bit);
-    *prob = 1; // XXX give a real probability
-
-    return 0;
-}
+static size_t fft_size = 512;
 
 int decode_byte(struct decode_state *s, size_t size, double input[size], int output[ (size_t)(size / SAMPLES_PER_BIT(s) / ALL_BITS) ], double *offset, int channel)
 {
@@ -129,12 +60,12 @@ int decode_byte(struct decode_state *s, size_t size, double input[size], int out
 
         fftw_execute(plan_forward);
 
-	for (size_t i = 0; i < fft_size; i++)
-	    result_samples[i] = sqrt(pow(fft_result[i][0],2) + pow(fft_result[i][1],2));
+        for (size_t i = 0; i < fft_size; i++)
+            result_samples[i] = sqrt(pow(fft_result[i][0],2) + pow(fft_result[i][1],2));
 
         int bit;
-	float prob = 0.;
-        decode_bit(s, result_samples, &channel, &bit, &prob);
+        float prob = 0.;
+        decode_bit_naive(s, size, result_samples, &channel, &bit, &prob);
         output[word] |= bit << wordbit;
 
         if (s->verbosity > 2) {

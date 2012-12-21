@@ -31,7 +31,7 @@ struct decode_state {
     int verbosity;
 };
 
-typedef int bit_recogniser(struct decode_state *s, double samples[], int *channel, int *bit, float *probability);
+typedef int bit_recogniser(struct decode_state *s, size_t size, double samples[size], int *channel, int *bit, float *probability);
 
 int decode_byte(struct decode_state *s, size_t size, double input[size], int output[], double *offset, int channel);
 int decode_data(struct decode_state *s, size_t count, double input[count]);
