@@ -26,6 +26,7 @@
 #include <math.h>
 #include <fftw3.h>
 #include <float.h>
+#include <stdlib.h>
 
 #define ROUND_FACTOR(X,By) (((X) + (By) - 1) / (By))
 
@@ -36,14 +37,13 @@
 
 static const unsigned fft_size = 512;
 
-static size_t get_max_magnitude(struct decode_state *s, fftw_complex *fft_result, double low, double high)
+static size_t get_max_magnitude(struct decode_state *s, double *samples, double low, double high)
 {
     size_t maxi = 0;
     double max = -1;
     for (size_t i = 0; i < fft_size; i++) {
-        double mag = sqrt(pow(fft_result[i][0],2) + pow(fft_result[i][1],2));
+        double mag = samples[i];
         if (s->verbosity > 3) {
-            printf("fft_result[%zd] = { %2.2f, %2.2f }\n", i, fft_result[i][0], fft_result[i][1]);
             printf("magnitude[%zd] = { %6.2f }\n", i, mag);
         }
         if (mag > max && ((low - PERBIN) / PERBIN) <= i && i <= ((high + PERBIN) / PERBIN)) {
@@ -81,7 +81,7 @@ static void get_nearest_freq(struct decode_state *s, double freq, int *ch, int *
     }
 }
 
-int decode_bit(struct decode_state *s, fftw_complex *fft_result, int *channel, int *bit)
+int decode_bit(struct decode_state *s, double *samples, int *channel, int *bit, float *prob)
 {
     unsigned minch = 0,
 	     maxch = 1;
@@ -90,7 +90,7 @@ int decode_bit(struct decode_state *s, fftw_complex *fft_result, int *channel, i
     if (*channel >= 0 && *channel < 2)
 	minch = maxch = *channel;
 
-    size_t maxi = get_max_magnitude(s, fft_result, s->audio.freqs[minch][0], s->audio.freqs[maxch][1]);
+    size_t maxi = get_max_magnitude(s, samples, s->audio.freqs[minch][0], s->audio.freqs[maxch][1]);
 
     if (s->verbosity) {
         printf("bucket with greatest magnitude was %zd, which corresponds to frequency range [%4.0f, %4.0f)\n",
@@ -99,6 +99,7 @@ int decode_bit(struct decode_state *s, fftw_complex *fft_result, int *channel, i
 
     double freq = maxi * PERBIN + (PERBIN / 2.);
     get_nearest_freq(s, freq, channel, bit);
+    *prob = 1; // XXX give a real probability
 
     return 0;
 }
@@ -107,6 +108,7 @@ int decode_byte(struct decode_state *s, size_t size, double input[size], int out
 {
     fftw_complex *data       = fftw_malloc(fft_size * sizeof *data);
     fftw_complex *fft_result = fftw_malloc(fft_size * sizeof *fft_result);
+    double *result_samples   = malloc(fft_size * sizeof *result_samples);
 
     int biti = 0;
     for (double dbb = *offset; dbb < size + *offset; dbb += SAMPLES_PER_BIT(s), biti++) {
@@ -127,8 +129,12 @@ int decode_byte(struct decode_state *s, size_t size, double input[size], int out
 
         fftw_execute(plan_forward);
 
+	for (size_t i = 0; i < fft_size; i++)
+	    result_samples[i] = sqrt(pow(fft_result[i][0],2) + pow(fft_result[i][1],2));
+
         int bit;
-        decode_bit(s, fft_result, &channel, &bit);
+	float prob = 0.;
+        decode_bit(s, result_samples, &channel, &bit, &prob);
         output[word] |= bit << wordbit;
 
         if (s->verbosity > 2) {
@@ -140,8 +146,9 @@ int decode_byte(struct decode_state *s, size_t size, double input[size], int out
         fftw_destroy_plan(plan_forward);
     }
 
-    fftw_free(data);
+    free(result_samples);
     fftw_free(fft_result);
+    fftw_free(data);
 
     return 0;
 }
