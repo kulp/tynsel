@@ -20,6 +20,8 @@
  * IN THE SOFTWARE.
  */
 
+#define _XOPEN_SOURCE 600
+
 #include "encode.h"
 
 #include <math.h>
