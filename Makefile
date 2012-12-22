@@ -18,8 +18,8 @@ test: gen fft
 	./test.pl
 
 DECODERS = \
-		   naive.c \
-		   #
+           naive.c \
+           #
 
 fft: decode.o $(DECODERS) decoders.c
 gen: encode.o

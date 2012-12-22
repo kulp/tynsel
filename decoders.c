@@ -23,11 +23,11 @@
 #include "common.h"
 #include "decoders.h"
 
-extern bit_recogniser decode_bit_naive;
+bit_recogniser decode_bit_naive;
 
-bit_recogniser *bit_recognisers[] = {
+bit_recogniser * const bit_recognisers[] = {
     decode_bit_naive,
 };
 
-size_t bit_recognisers_size = countof(bit_recognisers);
+const size_t bit_recognisers_size = countof(bit_recognisers);
 

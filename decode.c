@@ -32,7 +32,7 @@
 #define ROUND_FACTOR(X,By) (((X) + (By) - 1) / (By))
 #define ALL_BITS        (s->audio.start_bits + s->audio.data_bits + s->audio.parity_bits + s->audio.stop_bits)
 
-static size_t fft_size = 512;
+static const size_t fft_size = 512;
 
 int decode_byte(struct decode_state *s, size_t size, double input[size], int output[ (size_t)(size / SAMPLES_PER_BIT(s) / ALL_BITS) ], double *offset, int channel)
 {
@@ -69,7 +69,7 @@ int decode_byte(struct decode_state *s, size_t size, double input[size], int out
             int bit;
             float prob = 0.;
             bit_recogniser *rec = bit_recognisers[i];
-            rec(s, size, result_samples, &channel, &bit, &prob);
+            rec(s, fft_size, result_samples, &channel, &bit, &prob);
             probable_bit += (bit * 2 - 1) * prob;
         }
         int bit = probable_bit > 0;
