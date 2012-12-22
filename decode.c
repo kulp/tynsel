@@ -70,6 +70,8 @@ int decode_byte(struct decode_state *s, size_t size, double input[size], int out
             double prob = 0.;
             bit_recogniser *rec = bit_recognisers[i];
             rec(s, fft_size, result_samples, &channel, &bit, &prob);
+            if (s->verbosity > 4)
+                printf("bit recogniser %zd has prob %f for %d\n", i, prob, bit);
             probable_bit += (bit * 2 - 1) * prob;
         }
         int bit = probable_bit > 0;
