@@ -29,8 +29,9 @@
 #include <float.h>
 #include <stdlib.h>
 
-#define ROUND_FACTOR(X,By) (((X) + (By) - 1) / (By))
-#define ALL_BITS        (s->audio.start_bits + s->audio.data_bits + s->audio.parity_bits + s->audio.stop_bits)
+#define ROUND_FACTOR(X,By)  (((X) + (By) - 1) / (By))
+#define ALL_BITS            (s->audio.start_bits + s->audio.data_bits + s->audio.parity_bits + s->audio.stop_bits)
+#define BIT_PROB_THRESHOLD  0.1
 
 static const size_t fft_size = 512;
 
@@ -75,6 +76,10 @@ int decode_byte(struct decode_state *s, size_t size, double input[size], int out
             probable_bit += (bit * 2 - 1) * prob;
         }
         int bit = probable_bit > 0;
+        if (fabs(probable_bit) < BIT_PROB_THRESHOLD) {
+            fprintf(stderr, "Bit probability %f below threshold %f\n", probable_bit, BIT_PROB_THRESHOLD);
+            // TODO optionally return error code
+        }
         output[word] |= bit << wordbit;
 
         if (s->verbosity > 2) {
