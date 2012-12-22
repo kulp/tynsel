@@ -17,10 +17,15 @@ all: fft gen sip
 test: gen fft
 	./test.pl
 
+INCLUDE += src src/recognisers
+vpath %.c src src/recognisers
+
 DECODERS = \
            naive.c \
            higher.c \
            #
+
+CPPFLAGS += $(patsubst %,-I%,$(INCLUDE))
 
 fft: decode.o $(DECODERS) decoders.c
 gen: encode.o
@@ -39,17 +44,17 @@ sip:
 	$(MAKE) $@ TARGET_NAME="$(shell ./pjtarget)"
 endif
 
-LDLIBS_Darwin += \
-                 -framework CoreAudio \
-                 -framework CoreServices \
-                 -framework AudioUnit \
-                 -framework AudioToolbox \
-                 #
+sip: LDLIBS_Darwin += \
+                      -framework CoreAudio \
+                      -framework CoreServices \
+                      -framework AudioUnit \
+                      -framework AudioToolbox \
+                      #
 
-LDLIBS_Linux +=  \
-                 -lrt \
-                 -lasound \
-                 #
+sip: LDLIBS_Linux +=  \
+                      -lrt \
+                      -lasound \
+                      #
 
 sip: LDLIBS := 	\
                 -lpjsua-$(TARGET_NAME) \
