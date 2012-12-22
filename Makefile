@@ -23,6 +23,7 @@ vpath %.c src src/recognisers
 DECODERS = \
            naive.c \
            higher.c \
+           gsl.c \
            #
 
 CPPFLAGS += $(patsubst %,-I%,$(INCLUDE))
@@ -30,6 +31,7 @@ CPPFLAGS += $(patsubst %,-I%,$(INCLUDE))
 fft: decode.o $(DECODERS) decoders.c
 gen: encode.o
 fft gen: audio.o
+fft: LDLIBS += $(shell pkg-config --libs gsl)
 
 # pjtarget gives us the TARGET_NAME for linking
 pjtarget: LDLIBS =
