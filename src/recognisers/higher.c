@@ -49,6 +49,7 @@ int decode_bit_higher(struct decode_state *s, size_t size, double samples[size],
         int relevant = mag[idx] > maxmag;
         if (relevant) {
             maxmag = mag[idx];
+            *channel = ch;
             *bit = idx;
             // "Probability" is the ratio of difference to total magnitude.
             *prob = (mag[idx] - mag[1 - idx]) / mag[idx];
