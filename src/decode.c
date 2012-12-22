@@ -30,6 +30,7 @@
 #include <stdlib.h>
 
 #define ROUND_FACTOR(X,By)  (((X) + (By) - 1) / (By))
+#define ROUND_HALF(X,By)    (((X) + (By / 2)) / (By))
 #define ALL_BITS            (s->audio.start_bits + s->audio.data_bits + s->audio.parity_bits + s->audio.stop_bits)
 #define BIT_PROB_THRESHOLD  0.1
 
@@ -100,7 +101,7 @@ int decode_byte(struct decode_state *s, size_t size, double input[size], int out
 
 int decode_data(struct decode_state *s, size_t count, double input[count])
 {
-    int output[ (size_t)(count / SAMPLES_PER_BIT(s) / ALL_BITS) ];
+    int output[ (size_t)(ROUND_HALF(count / SAMPLES_PER_BIT(s), ALL_BITS)) ];
 
     // TODO merge `offset` and `s->audio.sample_offset`
     double offset = 0.;
