@@ -28,7 +28,7 @@ bit_recogniser decode_bit_naive,
                decode_bit_gsl;
 
 bit_recogniser * const bit_recognisers[] = {
-    decode_bit_naive,
+    //decode_bit_naive,
     decode_bit_higher,
     decode_bit_gsl,
 };
