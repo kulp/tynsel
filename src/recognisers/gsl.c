@@ -29,6 +29,9 @@
 
 #define PERBIN          ((double)s->audio.sample_rate / size)
 
+// fit_degree is ((degree of the equation) + 1)
+static const unsigned fit_degree = 3;
+
 static double evaluate(int vecsize, gsl_vector *vec, double x)
 {
     double result = 0.;
@@ -41,7 +44,6 @@ static double evaluate(int vecsize, gsl_vector *vec, double x)
 
 int decode_bit_gsl(struct decode_state *s, size_t size, double samples[size], int *channel, int *bit, double *prob)
 {
-    //int ch = *channel = 1; // XXX detect channel
     unsigned minch = 0,
              maxch = 1;
 
@@ -61,13 +63,15 @@ int decode_bit_gsl(struct decode_state *s, size_t size, double samples[size], in
         // Adapted from doc/examples/fitting2.c in the GSL 1.9 distribution
         // Thus this file is under the GNU GPL (probably : the original file has
         // no specific COPYING information).
-        gsl_vector *c = gsl_vector_alloc(3);
+        gsl_vector *c = gsl_vector_alloc(fit_degree);
         {
-            gsl_matrix *X = gsl_matrix_alloc(n, 3);
+            gsl_matrix *X = gsl_matrix_alloc(n, fit_degree);
             gsl_vector *y = gsl_vector_alloc(n);
             gsl_vector *w = gsl_vector_alloc(n);
 
-            gsl_matrix *cov = gsl_matrix_alloc(3, 3);
+            // XXX not sure what the parameters to the covariant alloc should
+            // be
+            gsl_matrix *cov = gsl_matrix_alloc(fit_degree, fit_degree);
 
             for (unsigned i = 0; i < n; i++) {
                 unsigned ii = minbucket + i;
@@ -75,16 +79,15 @@ int decode_bit_gsl(struct decode_state *s, size_t size, double samples[size], in
                 double yi = samples[ii];
                 double ei = yi / 100.; // XXX use a real error if we can compute one
 
-                gsl_matrix_set(X, i, 0, 1.);
-                gsl_matrix_set(X, i, 1, xi);
-                gsl_matrix_set(X, i, 2, xi * xi);
+                for (unsigned p = 0; p < fit_degree; p++)
+                    gsl_matrix_set(X, i, p, pow(xi, p));
 
                 gsl_vector_set(y, i, yi);
                 gsl_vector_set(w, i, 1. / (ei * ei));
             }
 
             double chisq;
-            gsl_multifit_linear_workspace *work = gsl_multifit_linear_alloc(n, 3);
+            gsl_multifit_linear_workspace *work = gsl_multifit_linear_alloc(n, fit_degree);
             gsl_multifit_wlinear(X, w, y, c, cov, &chisq, work);
             gsl_multifit_linear_free(work);
 
@@ -94,7 +97,7 @@ int decode_bit_gsl(struct decode_state *s, size_t size, double samples[size], in
             gsl_matrix_free(cov);
         }
 
-        double y[] = { evaluate(3, c, freq[0]), evaluate(3, c, freq[1]) };
+        double y[] = { evaluate(fit_degree, c, freq[0]), evaluate(fit_degree, c, freq[1]) };
         int idx = y[1] > y[0];
         double tprob = (y[idx] - y[1 - idx]) / y[idx];
         if (tprob > maxprob) {
