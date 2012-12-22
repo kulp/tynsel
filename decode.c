@@ -67,7 +67,7 @@ int decode_byte(struct decode_state *s, size_t size, double input[size], int out
         double probable_bit = 0.;
         for (size_t i = 0; i < bit_recognisers_size; i++) {
             int bit;
-            float prob = 0.;
+            double prob = 0.;
             bit_recogniser *rec = bit_recognisers[i];
             rec(s, fft_size, result_samples, &channel, &bit, &prob);
             probable_bit += (bit * 2 - 1) * prob;

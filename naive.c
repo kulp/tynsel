@@ -74,7 +74,7 @@ static void get_nearest_freq(struct decode_state *s, double freq, int *ch, int *
     }
 }
 
-int decode_bit_naive(struct decode_state *s, size_t size, double samples[size], int *channel, int *bit, float *prob)
+int decode_bit_naive(struct decode_state *s, size_t size, double samples[size], int *channel, int *bit, double *prob)
 {
     unsigned minch = 0,
              maxch = 1;

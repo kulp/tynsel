@@ -25,7 +25,7 @@
 
 #include "decode.h"
 
-typedef int bit_recogniser(struct decode_state *s, size_t size, double samples[size], int *channel, int *bit, float *probability);
+typedef int bit_recogniser(struct decode_state *s, size_t size, double samples[size], int *channel, int *bit, double *probability);
 
 extern bit_recogniser * const bit_recognisers[];
 extern const size_t bit_recognisers_size;
