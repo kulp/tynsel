@@ -19,6 +19,7 @@ test: gen fft
 
 DECODERS = \
            naive.c \
+           higher.c \
            #
 
 fft: decode.o $(DECODERS) decoders.c
