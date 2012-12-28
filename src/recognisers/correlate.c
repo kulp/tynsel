@@ -41,14 +41,11 @@ static double rms(size_t size, const double samples[size])
 // scalar result of multiplying arrays `a` and `b`
 static double mult(size_t size, const double a[size], const double b[size])
 {
-    //double temp[size];
     double sum = 0.;
 
     for (size_t i = 0; i < size; i++)
         sum += a[i] * b[i];
-        //temp[i] = a[i] * b[i];
 
-    //return sqrt(rms(size, temp));
     return sum;
 }
 
@@ -57,7 +54,6 @@ static int correlate(size_t size, const double /* in */ a[size], const double /*
     for (size_t i = 0; i < size; i++)
         c[i] = mult(size - i, a, &b[i]);
 
-    //return rms(size, c);
     return 0;
 }
 
@@ -82,13 +78,9 @@ int decode_bit_correlate(struct decode_state *s, size_t size, const double sampl
             }
             correlate(size, samples, pure, temp);
             double energy = energies[ch][idx] = rms(size, temp);
-            int relevant = energy > maxmag;
-            if (relevant) {
+            if (energy > maxmag) {
                 *channel = ch;
                 *bit = idx;
-                //*prob = (energy - maxmag) / energy;
-                // TODO justify this sqrt()
-                //*prob = sqrt((energy - maxmag) / energy);
                 *prob = 1 - (maxmag / energy);
                 maxmag = energy;
             }
