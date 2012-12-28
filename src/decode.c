@@ -34,13 +34,13 @@
 #define ALL_BITS            (s->audio.start_bits + s->audio.data_bits + s->audio.parity_bits + s->audio.stop_bits)
 #define BIT_PROB_THRESHOLD  0.1
 
-static const size_t fft_size = 512;
+static const size_t window_size = 512;
 
 int decode_byte(struct decode_state *s, size_t size, double input[size], int output[ (size_t)(size / SAMPLES_PER_BIT(s) / ALL_BITS) ], double *offset, int channel)
 {
-    fftw_complex *data       = fftw_malloc(fft_size * sizeof *data);
-    fftw_complex *fft_result = fftw_malloc(fft_size * sizeof *fft_result);
-    double *result_samples   = malloc(fft_size * sizeof *result_samples);
+    fftw_complex *data       = fftw_malloc(window_size * sizeof *data);
+    fftw_complex *fft_result = fftw_malloc(window_size * sizeof *fft_result);
+    double *result_samples   = malloc(window_size * sizeof *result_samples);
 
     int biti = 0;
     for (double dbb = *offset; dbb < size + *offset; dbb += SAMPLES_PER_BIT(s), biti++) {
@@ -49,19 +49,19 @@ int decode_byte(struct decode_state *s, size_t size, double input[size], int out
         if (wordbit == 0)
             output[word] = 0;
 
-        fftw_plan plan_forward = fftw_plan_dft_1d(fft_size, data, fft_result, FFTW_FORWARD, FFTW_ESTIMATE);
+        fftw_plan plan_forward = fftw_plan_dft_1d(window_size, data, fft_result, FFTW_FORWARD, FFTW_ESTIMATE);
 
         size_t bit_base = dbb;
         *offset += dbb - bit_base;
 
-        for (size_t i = 0; i < fft_size; i++) {
+        for (size_t i = 0; i < window_size; i++) {
             data[i][0] = i < SAMPLES_PER_BIT(s) ? input[bit_base + i] : 0.;
             data[i][1] = 0.;
         }
 
         fftw_execute(plan_forward);
 
-        for (size_t i = 0; i < fft_size; i++)
+        for (size_t i = 0; i < window_size; i++)
             result_samples[i] = sqrt(pow(fft_result[i][0],2) + pow(fft_result[i][1],2));
 
         // probable_bit is the sum of the probabilities for each bit,
@@ -70,8 +70,9 @@ int decode_byte(struct decode_state *s, size_t size, double input[size], int out
         for (size_t i = 0; i < bit_recognisers_size; i++) {
             int bit;
             double prob = 0.;
-            bit_recogniser *rec = bit_recognisers[i];
-            rec(s, fft_size, result_samples, &channel, &bit, &prob);
+            const struct bit_recogniser_rec *rec = &bit_recognisers[i];
+            double *dat = (rec->flags & FFT_DATA) ? result_samples : &input[bit_base];
+            rec->rec(s, window_size, dat, &channel, &bit, &prob);
             if (s->verbosity > 4)
                 printf("bit recogniser %zd has prob %f for %d\n", i, prob, bit);
             probable_bit += (bit * 2 - 1) * prob;

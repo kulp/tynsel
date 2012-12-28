@@ -25,9 +25,14 @@
 
 #include "decode.h"
 
-typedef int bit_recogniser(struct decode_state *s, size_t size, double samples[size], int *channel, int *bit, double *probability);
+#define FFT_DATA 1
 
-extern bit_recogniser * const bit_recognisers[];
+typedef int bit_recogniser(struct decode_state *s, size_t size, const double samples[size], int *channel, int *bit, double *probability);
+
+extern const struct bit_recogniser_rec {
+    bit_recogniser *rec;
+    int flags;
+} bit_recognisers[];
 extern const size_t bit_recognisers_size;
 
 #endif

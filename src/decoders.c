@@ -25,12 +25,14 @@
 
 bit_recogniser decode_bit_naive,
                decode_bit_higher,
+               decode_bit_correlate,
                decode_bit_gsl;
 
-bit_recogniser * const bit_recognisers[] = {
-    //decode_bit_naive,
-    decode_bit_higher,
-    decode_bit_gsl,
+const struct bit_recogniser_rec bit_recognisers[] = {
+    //{ decode_bit_naive, 0 },
+    { decode_bit_higher, FFT_DATA },
+    { decode_bit_correlate, 0 },
+    { decode_bit_gsl, FFT_DATA },
 };
 
 const size_t bit_recognisers_size = countof(bit_recognisers);
