@@ -23,6 +23,7 @@ vpath %.c src src/recognisers
 DECODERS = \
            naive.c \
            higher.c \
+           correlate.c \
            gsl.c \
            #
 
