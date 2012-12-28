@@ -52,7 +52,7 @@ static int encode_bit(struct encode_state *s, double freq, struct put_state *sta
     double inverse = asin(state->last_sample / s->gain);
     switch (state->last_quadrant) {
         case 0: break;
-        case 1:                                         // mirror around pi/2
+        case 1: /* FALLTHROUGH */                       // mirror around pi/2
         case 2: inverse = M_PI - inverse; break;        // mirror around 3*pi/2
         case 3: inverse = 2 * M_PI + inverse; break;    // mirror around 2pi
         default: return 1;

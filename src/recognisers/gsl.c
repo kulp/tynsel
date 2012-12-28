@@ -42,7 +42,7 @@ static double evaluate(int vecsize, gsl_vector *vec, double x)
     return result;
 }
 
-int decode_bit_gsl(struct decode_state *s, size_t size, double samples[size], int *channel, int *bit, double *prob)
+int decode_bit_gsl(struct decode_state *s, size_t size, const double samples[size], int *channel, int *bit, double *prob)
 {
     unsigned minch = 0,
              maxch = 1;

@@ -30,7 +30,7 @@
 
 #define PERBIN          ((double)s->audio.sample_rate / size)
 
-int decode_bit_higher(struct decode_state *s, size_t size, double samples[size], int *channel, int *bit, double *prob)
+int decode_bit_higher(struct decode_state *s, size_t size, const double samples[size], int *channel, int *bit, double *prob)
 {
     unsigned minch = 0,
              maxch = 1;
