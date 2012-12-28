@@ -73,23 +73,15 @@ int decode_bit_correlate(struct decode_state *s, size_t size, const double sampl
     double maxmag = 0;
     double energies[maxch - minch + 1][2];
 
-    if (s->verbosity > 5)
-        for (size_t si = 0; si < size; si++)
-            printf("samples[%zd] = %f\n", si, samples[si]);
-
     for (unsigned ch = minch; ch <= maxch; ch++) {
         for (unsigned idx = 0; idx < 2; idx++) {
             double pure[size], temp[size];
             // TODO cache pure waves
             for (size_t si = 0; si < size; si++) {
                 pure[si] = sin(2 * M_PI * si / s->audio.sample_rate * s->audio.freqs[ch][idx]);
-                if (s->verbosity > 5)
-                    printf("pure[%zd] = %f\n", si, pure[si]);
             }
             correlate(size, samples, pure, temp);
             double energy = energies[ch][idx] = rms(size, temp);
-            if (s->verbosity > 3)
-                printf("energy of %d/%d = %f\n", ch, idx, energy);
             int relevant = energy > maxmag;
             if (relevant) {
                 *channel = ch;
