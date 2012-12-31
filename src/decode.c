@@ -29,6 +29,8 @@
 #include <float.h>
 #include <stdlib.h>
 
+#include <sys/time.h>
+
 #define ROUND_FACTOR(X,By)  (((X) + (By) - 1) / (By))
 #define ROUND_HALF(X,By)    (((X) + (By / 2)) / (By))
 #define ALL_BITS            (s->audio.start_bits + s->audio.data_bits + s->audio.parity_bits + s->audio.stop_bits)
@@ -77,9 +79,13 @@ int decode_byte(struct decode_state *s, size_t size, double input[size], int out
             double prob = 0.;
             const struct bit_recogniser_rec *rec = &bit_recognisers[i];
             double *dat = (rec->flags & FFT_DATA) ? result_samples : &input[bit_base];
+            struct timeval before, after, result;
+            gettimeofday(&before, NULL);
             rec->rec(s, window_size, dat, &channel, &bit, &prob);
+            gettimeofday(&after, NULL);
+            timersub(&after, &before, &result);
             if (s->verbosity > 4)
-                printf("bit recogniser %zd has prob %f for %d\n", i, prob, bit);
+                printf("bit recogniser %zd has prob %f for %d in %ld.%06ds\n", i, prob, bit, result.tv_sec, result.tv_usec);
             probable_bit += (bit * 2 - 1) * prob;
             p *= prob;
         }
