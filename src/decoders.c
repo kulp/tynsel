@@ -31,7 +31,8 @@ bit_recogniser decode_bit_naive,
 const struct bit_recogniser_rec bit_recognisers[] = {
     //{ decode_bit_naive, 0 },
     { decode_bit_higher, FFT_DATA },
-    { decode_bit_correlate, 0 },
+    // correlate is by far the slowest recogniser
+    //{ decode_bit_correlate, 0 },
     { decode_bit_gsl, FFT_DATA },
 };
 
