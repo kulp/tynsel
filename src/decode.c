@@ -38,9 +38,7 @@
 
 static const size_t window_size = 512;
 
-// TODO rename decode_byte() to decode_bits() since its length is not fixed to
-// a byte
-int decode_byte(struct decode_state *s, size_t size, double input[size], int output[ (size_t)(size / SAMPLES_PER_BIT(s) / ALL_BITS) ], double *offset, int channel, double *prob)
+int decode_bits(struct decode_state *s, size_t size, double input[size], int output[ (size_t)(size / SAMPLES_PER_BIT(s) / ALL_BITS) ], double *offset, int channel, double *prob)
 {
     fftw_complex *data       = fftw_malloc(window_size * sizeof *data);
     fftw_complex *fft_result = fftw_malloc(window_size * sizeof *fft_result);
@@ -130,8 +128,8 @@ static int find_edge(struct decode_state *s, int channel, int *offset, double in
     for (double bs_off = 0.; bs_off < count; bs_off += SAMPLES_PER_BIT(s)) {
         //size_t bit = bs_off / SAMPLES_PER_BIT(s);
         for (size_t samp_off = 0; samp_off < SAMPLES_PER_BIT(s) - input_offset; samp_off++) {
-            decode_byte(s, 2 * SAMPLES_PER_BIT(s), &input[(size_t)bs_off + samp_off], &scratch, &input_offset, channel, &prob);
-            //prob = sqrt(prob); // geometric mean, since decode_byte() produces a product
+            decode_bits(s, 2 * SAMPLES_PER_BIT(s), &input[(size_t)bs_off + samp_off], &scratch, &input_offset, channel, &prob);
+            //prob = sqrt(prob); // geometric mean, since decode_bits() produces a product
             // find the point where probability is at its highest and the decoded
             // two-bit number is 0b01 (i.e. a 1-to-0 edge)
             if (scratch != 1)
@@ -171,7 +169,7 @@ int decode_data(struct decode_state *s, size_t count, double input[count])
     size_t effective_count = count - edge_offset - offset;
     int output[ (size_t)(ROUND_HALF(effective_count / SAMPLES_PER_BIT(s), ALL_BITS)) ];
 
-    decode_byte(s, effective_count - s->audio.sample_offset, &input[edge_offset], output, &offset, channel, NULL);
+    decode_bits(s, effective_count - s->audio.sample_offset, &input[edge_offset], output, &offset, channel, NULL);
 
     for (size_t i = 0; i < countof(output); i++) {
         if (output[i] & ((1 << s->audio.start_bits) - 1))
