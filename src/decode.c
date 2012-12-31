@@ -154,8 +154,6 @@ static int find_edge(struct decode_state *s, int channel, int *offset, double in
 
 int decode_data(struct decode_state *s, size_t count, double input[count])
 {
-    int output[ (size_t)(ROUND_HALF(count / SAMPLES_PER_BIT(s), ALL_BITS)) ];
-
     // TODO merge `offset` and `s->audio.sample_offset`
     double offset = 0.;
     int edge_offset = -1;
@@ -170,7 +168,10 @@ int decode_data(struct decode_state *s, size_t count, double input[count])
         return -1;
     }
 
-    decode_byte(s, count - (s->audio.sample_offset + (edge_offset + offset)), &input[edge_offset], output, &offset, channel, NULL);
+    size_t effective_count = count - edge_offset - offset;
+    int output[ (size_t)(ROUND_HALF(effective_count / SAMPLES_PER_BIT(s), ALL_BITS)) ];
+
+    decode_byte(s, effective_count - s->audio.sample_offset, &input[edge_offset], output, &offset, channel, NULL);
 
     for (size_t i = 0; i < countof(output); i++) {
         if (output[i] & ((1 << s->audio.start_bits) - 1))
