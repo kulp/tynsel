@@ -118,18 +118,18 @@ int decode_bits(struct decode_state *s, size_t size, double input[size], int out
 // finds a 1-0 (high-freq to low-freq) edge naïvely : by finding a local
 // maximum in the bit-recognising probability functions over a span of two
 // bits' worth of samples
-static int find_edge(struct decode_state *s, int channel, int *offset, double input_offset, size_t count, double input[count])
+static int find_edge(struct decode_state *s, int channel, double *offset, size_t count, double input[count])
 {
+    double input_offset = *offset;
+    double scratch_offset = input_offset;
     int scratch = 0;
     double maxprob = 0.;
     int maxoff = -1;
     double prob = -1.;
 
     for (double bs_off = 0.; bs_off < count; bs_off += SAMPLES_PER_BIT(s)) {
-        //size_t bit = bs_off / SAMPLES_PER_BIT(s);
         for (size_t samp_off = 0; samp_off < SAMPLES_PER_BIT(s) - input_offset; samp_off++) {
-            decode_bits(s, 2 * SAMPLES_PER_BIT(s), &input[(size_t)bs_off + samp_off], &scratch, &input_offset, channel, &prob);
-            //prob = sqrt(prob); // geometric mean, since decode_bits() produces a product
+            decode_bits(s, 2 * SAMPLES_PER_BIT(s), &input[(size_t)bs_off + samp_off], &scratch, &scratch_offset, channel, &prob);
             // find the point where probability is at its highest and the decoded
             // two-bit number is 0b01 (i.e. a 1-to-0 edge)
             if (scratch != 1)
@@ -145,7 +145,7 @@ static int find_edge(struct decode_state *s, int channel, int *offset, double in
         }
     }
 
-    *offset = maxoff - input_offset; // don't double-count
+    *offset += maxoff;
 
     return 0;
 }
@@ -154,22 +154,20 @@ int decode_data(struct decode_state *s, size_t count, double input[count])
 {
     // TODO merge `offset` and `s->audio.sample_offset`
     double offset = 0.;
-    int edge_offset = -1;
     int channel = -1;
+    int rc = 0;
 
-    find_edge(s, channel, &edge_offset, offset, count, input);
-    if (s->verbosity > 4)
-        printf("edge offset is %d sample(s)\n", edge_offset);
-
-    if (edge_offset < 0) {
+    rc = find_edge(s, channel, &offset, count, input);
+    if (rc) {
         fprintf(stderr, "Failed to find any byte starts ; aborting\n");
         return -1;
-    }
+    } else if (s->verbosity > 4)
+        printf("edge offset is %.0f sample(s)\n", offset);
 
-    size_t effective_count = count - edge_offset - offset;
+    size_t effective_count = count - offset;
     int output[ (size_t)(ROUND_HALF(effective_count / SAMPLES_PER_BIT(s), ALL_BITS)) ];
 
-    decode_bits(s, effective_count - s->audio.sample_offset, &input[edge_offset], output, &offset, channel, NULL);
+    decode_bits(s, effective_count - s->audio.sample_offset, input, output, &offset, channel, NULL);
 
     for (size_t i = 0; i < countof(output); i++) {
         if (output[i] & ((1 << s->audio.start_bits) - 1))
