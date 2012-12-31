@@ -66,8 +66,9 @@ int decode_bit_correlate(struct decode_state *s, size_t size, const double sampl
     if (*channel >= 0 && *channel < 2)
         minch = maxch = *channel;
 
-    double maxmag = 0;
-    double energies[maxch - minch + 1][2];
+    // TODO track second-highest magnitude properly so we don't get 1.0
+    // probability if the first frequency we check is the right one.
+    double max[2] = { 0 }; // max[0] is highest, max[1] is second highest
 
     for (unsigned ch = minch; ch <= maxch; ch++) {
         for (unsigned idx = 0; idx < 2; idx++) {
@@ -77,13 +78,19 @@ int decode_bit_correlate(struct decode_state *s, size_t size, const double sampl
                 pure[si] = sin(2 * M_PI * si / s->audio.sample_rate * s->audio.freqs[ch][idx]);
             }
             correlate(size, samples, pure, temp);
-            double energy = energies[ch][idx] = rms(size, temp);
-            if (energy > maxmag) {
+            double energy = rms(size, temp);
+            if (s->verbosity > 5)
+                printf("(energy, max[0], max[1]) = (%f,%f,%f)\n", energy, max[0], max[1]);
+            if (energy >= max[0]) {
                 *channel = ch;
                 *bit = idx;
-                *prob = 1 - (maxmag / energy);
-                maxmag = energy;
+                max[1] = max[0];
+                max[0] = energy;
+            } else if (energy > max[1]) {
+                max[1] = energy;
             }
+
+            *prob = 1 - (max[1] / max[0]);
         }
     }
 
