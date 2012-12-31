@@ -31,7 +31,7 @@ struct decode_state {
     int verbosity;
 };
 
-int decode_byte(struct decode_state *s, size_t size, double input[size], int output[], double *offset, int channel);
+int decode_byte(struct decode_state *s, size_t size, double input[size], int output[], double *offset, int channel, double *prob);
 int decode_data(struct decode_state *s, size_t count, double input[count]);
 void decode_cleanup(void);
 

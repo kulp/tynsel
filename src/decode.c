@@ -36,14 +36,19 @@
 
 static const size_t window_size = 512;
 
-int decode_byte(struct decode_state *s, size_t size, double input[size], int output[ (size_t)(size / SAMPLES_PER_BIT(s) / ALL_BITS) ], double *offset, int channel)
+// TODO rename decode_byte() to decode_bits() since its length is not fixed to
+// a byte
+int decode_byte(struct decode_state *s, size_t size, double input[size], int output[ (size_t)(size / SAMPLES_PER_BIT(s) / ALL_BITS) ], double *offset, int channel, double *prob)
 {
     fftw_complex *data       = fftw_malloc(window_size * sizeof *data);
     fftw_complex *fft_result = fftw_malloc(window_size * sizeof *fft_result);
     double *result_samples   = malloc(window_size * sizeof *result_samples);
 
+    double p = 1.; // total probability for a string of bits
     int biti = 0;
-    for (double dbb = *offset; dbb < size + *offset; dbb += SAMPLES_PER_BIT(s), biti++) {
+    double end = size + *offset;
+    // require more than a half-bit's worth of samples
+    for (double dbb = *offset; end - dbb > SAMPLES_PER_BIT(s) / 2; dbb += SAMPLES_PER_BIT(s), biti++) {
         int word = biti / ALL_BITS;
         int wordbit = biti % ALL_BITS;
         if (wordbit == 0)
@@ -76,8 +81,11 @@ int decode_byte(struct decode_state *s, size_t size, double input[size], int out
             if (s->verbosity > 4)
                 printf("bit recogniser %zd has prob %f for %d\n", i, prob, bit);
             probable_bit += (bit * 2 - 1) * prob;
+            p *= prob;
         }
         int bit = probable_bit > 0;
+        if (s->verbosity > 4)
+            printf("Bit probability product is %f for %d (raw %f)\n", fabs(probable_bit), bit, probable_bit);
         if (fabs(probable_bit) < BIT_PROB_THRESHOLD) {
             fprintf(stderr, "Bit probability %f below threshold %f\n", probable_bit, BIT_PROB_THRESHOLD);
             // TODO optionally return error code
@@ -97,6 +105,44 @@ int decode_byte(struct decode_state *s, size_t size, double input[size], int out
     fftw_free(fft_result);
     fftw_free(data);
 
+    if (prob)
+        *prob = p;
+
+    return 0;
+}
+
+// finds a 1-0 (high-freq to low-freq) edge naïvely : by finding a local
+// maximum in the bit-recognising probability functions over a span of two
+// bits' worth of samples
+static int find_edge(struct decode_state *s, int channel, int *offset, double input_offset, size_t count, double input[count])
+{
+    int scratch = 0;
+    double maxprob = 0.;
+    int maxoff = -1;
+    double prob = -1.;
+
+    for (double bs_off = 0.; bs_off < count; bs_off += SAMPLES_PER_BIT(s)) {
+        //size_t bit = bs_off / SAMPLES_PER_BIT(s);
+        for (size_t samp_off = 0; samp_off < SAMPLES_PER_BIT(s) - input_offset; samp_off++) {
+            decode_byte(s, 2 * SAMPLES_PER_BIT(s), &input[(size_t)bs_off + samp_off], &scratch, &input_offset, channel, &prob);
+            //prob = sqrt(prob); // geometric mean, since decode_byte() produces a product
+            // find the point where probability is at its highest and the decoded
+            // two-bit number is 0b01 (i.e. a 1-to-0 edge)
+            if (scratch != 1)
+                break;
+
+            if (prob > maxprob) {
+                maxprob = prob;
+                // add one bit's worth because we look two ahead to find the
+                // start bit and if we don't adjust it, we will be returning
+                // the offset for the bit prior to the start bit
+                maxoff = bs_off + samp_off + SAMPLES_PER_BIT(s);
+            }
+        }
+    }
+
+    *offset = maxoff - input_offset; // don't double-count
+
     return 0;
 }
 
@@ -106,7 +152,20 @@ int decode_data(struct decode_state *s, size_t count, double input[count])
 
     // TODO merge `offset` and `s->audio.sample_offset`
     double offset = 0.;
-    decode_byte(s, count - s->audio.sample_offset, input, output, &offset, -1);
+    int edge_offset = -1;
+    int channel = -1;
+
+    find_edge(s, channel, &edge_offset, offset, count, input);
+    if (s->verbosity > 4)
+        printf("edge offset is %d sample(s)\n", edge_offset);
+
+    if (edge_offset < 0) {
+        fprintf(stderr, "Failed to find any byte starts ; aborting\n");
+        return -1;
+    }
+
+    decode_byte(s, count - (s->audio.sample_offset + (edge_offset + offset)), &input[edge_offset], output, &offset, channel, NULL);
+
     for (size_t i = 0; i < countof(output); i++) {
         if (output[i] & ((1 << s->audio.start_bits) - 1))
             fprintf(stderr, "Start bit%s %s not zero\n",
