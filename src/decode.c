@@ -121,14 +121,14 @@ int decode_bits(struct decode_state *s, size_t size, double input[size], int out
 static int find_edge(struct decode_state *s, int channel, double *offset, size_t count, double input[count])
 {
     double input_offset = *offset;
-    double scratch_offset = input_offset;
-    int scratch = 0;
     double maxprob = 0.;
     int maxoff = -1;
     double prob = -1.;
 
     for (double bs_off = 0.; bs_off < count; bs_off += SAMPLES_PER_BIT(s)) {
         for (size_t samp_off = 0; samp_off < SAMPLES_PER_BIT(s) - input_offset; samp_off++) {
+            int scratch = 0;
+            double scratch_offset = input_offset;
             decode_bits(s, 2 * SAMPLES_PER_BIT(s), &input[(size_t)bs_off + samp_off], &scratch, &scratch_offset, channel, &prob);
             // find the point where probability is at its highest and the decoded
             // two-bit number is 0b01 (i.e. a 1-to-0 edge)

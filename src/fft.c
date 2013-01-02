@@ -127,9 +127,13 @@ int main(int argc, char* argv[])
         return -1;
     }
 
+    // The first SAMPLES_PER_BIT might be wrong because the sample_rate might
+    // be wrong until the file is read. read_file() mends this and sets up the
+    // correct offset.
     double *_input = calloc((size_t)SAMPLES_PER_BIT(s) * 2 + BUFFER_SIZE, sizeof *_input);
-    double *input = &_input[(size_t)SAMPLES_PER_BIT(s) + (size_t)s->audio.sample_offset];
     size_t count = read_file(s, argv[optind], sizeof _input, _input);
+    // TODO round up fractional samples ?
+    double *input = &_input[(size_t)SAMPLES_PER_BIT(s) + (size_t)s->audio.sample_offset];
 
     if (s->verbosity) {
         printf("read %zd items\n", count);
