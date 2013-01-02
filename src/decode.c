@@ -143,6 +143,10 @@ static int find_edge(struct decode_state *s, int channel, double *offset, size_t
                 maxoff = bs_off + samp_off + SAMPLES_PER_BIT(s);
             }
         }
+
+        // find the first probable peak, not the best one overall
+        if (maxoff > 0)
+            break;
     }
 
     *offset += maxoff;
