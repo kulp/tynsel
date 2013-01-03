@@ -33,12 +33,12 @@
 
 #define ROUND_FACTOR(X,By)  (((X) + (By) - 1) / (By))
 #define ROUND_HALF(X,By)    (((X) + (By / 2)) / (By))
-#define ALL_BITS            (s->audio.start_bits + s->audio.data_bits + s->audio.parity_bits + s->audio.stop_bits)
+#define ALL_BITS(s)         (s->audio.start_bits + s->audio.data_bits + s->audio.parity_bits + s->audio.stop_bits)
 #define BIT_PROB_THRESHOLD  0.1
 
 static const size_t window_size = 512;
 
-int decode_bits(struct decode_state *s, size_t size, double input[size], int output[ (size_t)(size / SAMPLES_PER_BIT(s) / ALL_BITS) ], double *offset, int channel, double *prob)
+int decode_bits(struct decode_state *s, size_t size, double input[size], int output[ (size_t)(size / SAMPLES_PER_BIT(s) / ALL_BITS(s)) ], double *offset, int channel, double *prob)
 {
     fftw_complex *data       = fftw_malloc(window_size * sizeof *data);
     fftw_complex *fft_result = fftw_malloc(window_size * sizeof *fft_result);
@@ -49,8 +49,8 @@ int decode_bits(struct decode_state *s, size_t size, double input[size], int out
     double end = size + *offset;
     // require more than a half-bit's worth of samples
     for (double dbb = *offset; end - dbb > SAMPLES_PER_BIT(s) / 2; dbb += SAMPLES_PER_BIT(s), biti++) {
-        int word = biti / ALL_BITS;
-        int wordbit = biti % ALL_BITS;
+        int word = biti / ALL_BITS(s);
+        int wordbit = biti % ALL_BITS(s);
         if (wordbit == 0)
             output[word] = 0;
 
@@ -98,7 +98,7 @@ int decode_bits(struct decode_state *s, size_t size, double input[size], int out
 
         if (s->verbosity > 2) {
             printf("Guess : channel %d bit %d\n", channel, bit);
-            int width = ROUND_FACTOR(ALL_BITS, 4);
+            int width = ROUND_FACTOR(ALL_BITS(s), 4);
             printf("output[%d] = 0x%0*x\n", word, width, output[word]);
         }
 
@@ -117,7 +117,8 @@ int decode_bits(struct decode_state *s, size_t size, double input[size], int out
 
 // finds a 1-0 (high-freq to low-freq) edge naïvely : by finding a local
 // maximum in the bit-recognising probability functions over a span of two
-// bits' worth of samples
+// bits' worth of samples. increments *offset by the index of the first sample
+// of the start bit (the sample most closely approximating the edge itself).
 static int find_edge(struct decode_state *s, int channel, double *offset, size_t count, double input[count])
 {
     double input_offset = *offset;
@@ -137,9 +138,6 @@ static int find_edge(struct decode_state *s, int channel, double *offset, size_t
 
             if (prob > maxprob) {
                 maxprob = prob;
-                // add one bit's worth because we look two ahead to find the
-                // start bit and if we don't adjust it, we will be returning
-                // the offset for the bit prior to the start bit
                 maxoff = bs_off + samp_off + SAMPLES_PER_BIT(s);
             }
         }
@@ -149,35 +147,71 @@ static int find_edge(struct decode_state *s, int channel, double *offset, size_t
             break;
     }
 
-    *offset += maxoff;
+    if (maxoff >= 0)
+        *offset += maxoff;
 
     return 0;
 }
 
 int decode_data(struct decode_state *s, size_t count, double input[count])
 {
-    // TODO merge `offset` and `s->audio.sample_offset`
-    double offset = 0.;
     int channel = -1;
     int rc = 0;
 
-    rc = find_edge(s, channel, &offset, count, input);
-    if (rc) {
-        fprintf(stderr, "Failed to find any byte starts ; aborting\n");
-        return -1;
-    } else if (s->verbosity > 4)
-        printf("edge offset is %.0f sample(s)\n", offset);
+    // need to keep offset into sample array as a floating-point number
+    // because it is incremented by SAMPLES_PER_BIT(s) which is can be a
+    // non-integer fraction, and accumulating rounding errors can be fatal to
+    // decoding
+    double total_offset = 0.;
+    size_t remaining = count - s->audio.sample_offset;
+    size_t byte_index = 0;
+    int output[ (size_t)(ROUND_HALF(remaining / SAMPLES_PER_BIT(s), ALL_BITS(s))) ];
+    double *startbit = input;   // where to look for next start bit
+    double *stopbit  = input;   // where to look for last stop bit
+    int first = 1;
 
-    size_t effective_count = count - offset;
-    int output[ (size_t)(ROUND_HALF(effective_count / SAMPLES_PER_BIT(s), ALL_BITS)) ];
+    // synchronisation loop : find stop-start edge and decode a byte
+    while (total_offset < remaining) {
+        // byte_sample_offset is the offset for this particular byte
+        double byte_sample_offset = 0.;
+        rc = find_edge(s, channel, &byte_sample_offset, count, stopbit);
 
-    decode_bits(s, effective_count - s->audio.sample_offset, input, output, &offset, channel, NULL);
+        // TODO explain this
+        if (first) {
+            first = 0;
+            // The first time, adjust input pointer to beginning of data
+            total_offset = 0.;
+            startbit += (size_t)byte_sample_offset;
+            remaining -= byte_sample_offset;
+        } else {
+            byte_sample_offset -= SAMPLES_PER_BIT(s);
+            total_offset += byte_sample_offset;
+        }
 
-    for (size_t i = 0; i < countof(output); i++) {
+        if (rc) {
+            fprintf(stderr, "Failed to find any byte starts ; aborting\n");
+            return -1;
+        }
+
+        if (s->verbosity > 4) {
+            printf("edge offset is %.0f sample(s)\n", byte_sample_offset);
+            printf("total offset is %.0f sample(s)\n", total_offset);
+        }
+
+        int byte = -1;
+        const size_t samples_to_decode = ALL_BITS(s) * SAMPLES_PER_BIT(s);
+        decode_bits(s, samples_to_decode, startbit, &byte, &total_offset, channel, NULL);
+
+        output[byte_index++] = byte;
+        total_offset += samples_to_decode;
+        stopbit = &startbit[(size_t)total_offset] - (size_t)SAMPLES_PER_BIT(s);
+    }
+
+    for (size_t i = 0; i < byte_index; i++) {
         if (output[i] & ((1 << s->audio.start_bits) - 1))
             fprintf(stderr, "Start bit%s %s not zero\n",
                     s->audio.start_bits > 1 ? "s" : "", s->audio.start_bits > 1 ? "were" : "was");
-        if (output[i] >> (ALL_BITS - s->audio.stop_bits) != (1 << s->audio.stop_bits) - 1)
+        if (output[i] >> (ALL_BITS(s) - s->audio.stop_bits) != (1 << s->audio.stop_bits) - 1)
             fprintf(stderr, "Stop bits were not one\n");
         int width = ROUND_FACTOR(s->audio.data_bits, 4);
         printf("output[%zd] = 0x%0*x\n", i, width, (output[i] >> s->audio.start_bits) & ((1u << s->audio.data_bits) - 1));

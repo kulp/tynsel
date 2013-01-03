@@ -32,7 +32,7 @@
 
 #include <sndfile.h>
 
-#define BUFFER_SIZE 16384 * 16
+#define BUFFER_SIZE 16384 * 16 * 32
 
 static int read_file(struct decode_state *s, const char *filename, size_t size, double input[size])
 {
