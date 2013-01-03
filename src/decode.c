@@ -28,6 +28,7 @@
 #include <fftw3.h>
 #include <float.h>
 #include <stdlib.h>
+#include <ctype.h>
 
 #include <sys/time.h>
 
@@ -217,7 +218,8 @@ int decode_data(struct decode_state *s, size_t count, double input[count])
         if (output[i] >> (ALL_BITS(s) - s->audio.stop_bits) != (1 << s->audio.stop_bits) - 1)
             fprintf(stderr, "Stop bits were not one\n");
         int width = ROUND_FACTOR(s->audio.data_bits, 4);
-        printf("output[%zd] = 0x%0*x\n", i, width, (output[i] >> s->audio.start_bits) & ((1u << s->audio.data_bits) - 1));
+        int data = (output[i] >> s->audio.start_bits) & ((1u << s->audio.data_bits) - 1);
+        printf("output[%zd] = 0x%0*x ('%c')\n", i, width, data, isprint(data) ? data : ' ');
     }
 
     return 0;
