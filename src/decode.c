@@ -185,7 +185,10 @@ int decode_data(struct decode_state *s, size_t count, double input[count])
             remaining -= byte_sample_offset;
         } else {
             byte_sample_offset -= SAMPLES_PER_BIT(s);
-            total_offset += byte_sample_offset;
+            // The `- 1` is a fencepost adjustment that hasn't yet been
+            // properly justified, but which keeps synch long-term, so here it
+            // stays for now.
+            total_offset += byte_sample_offset - 1;
         }
 
         if (rc) {
