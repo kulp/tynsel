@@ -175,21 +175,26 @@ int decode_data(struct decode_state *s, size_t count, double input[count])
     while (total_offset < remaining) {
         // byte_sample_offset is the offset for this particular byte
         double byte_sample_offset = 0.;
-        rc = find_edge(s, channel, &byte_sample_offset, count, stopbit);
-
-        // TODO explain this
-        if (first) {
-            first = 0;
-            // The first time, adjust input pointer to beginning of data
-            total_offset = 0.;
-            startbit += (size_t)byte_sample_offset;
-            remaining -= byte_sample_offset;
+        if (s->synchronous) {
+            if (!first)
+                total_offset += SAMPLES_PER_BIT(s);
         } else {
-            byte_sample_offset -= SAMPLES_PER_BIT(s);
-            // The `- 1` is a fencepost adjustment that hasn't yet been
-            // properly justified, but which keeps synch long-term, so here it
-            // stays for now.
-            total_offset += byte_sample_offset - 1;
+            rc = find_edge(s, channel, &byte_sample_offset, count, stopbit);
+
+            // TODO explain this
+            if (first) {
+                first = 0;
+                // The first time, adjust input pointer to beginning of data
+                total_offset = 0.;
+                startbit += (size_t)byte_sample_offset;
+                remaining -= byte_sample_offset;
+            } else {
+                byte_sample_offset -= SAMPLES_PER_BIT(s);
+                // The `- 1` is a fencepost adjustment that hasn't yet been
+                // properly justified, but which keeps synch long-term, so here it
+                // stays for now.
+                total_offset += byte_sample_offset - 1;
+            }
         }
 
         if (rc) {

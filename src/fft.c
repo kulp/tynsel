@@ -77,7 +77,7 @@ static int read_file(struct decode_state *s, const char *filename, size_t size, 
 static int parse_opts(struct decode_state *s, int argc, char *argv[], const char **filename)
 {
     int ch;
-    while ((ch = getopt(argc, argv, "S:T:P:D:s:O:v")) != -1) {
+    while ((ch = getopt(argc, argv, "S:T:P:D:s:O:vE")) != -1) {
         switch (ch) {
             case 'S': s->audio.start_bits    = strtol(optarg, NULL, 0); break;
             case 'T': s->audio.stop_bits     = strtol(optarg, NULL, 0); break;
@@ -85,6 +85,7 @@ static int parse_opts(struct decode_state *s, int argc, char *argv[], const char
             case 'D': s->audio.data_bits     = strtol(optarg, NULL, 0); break;
             case 's': s->audio.sample_rate   = strtol(optarg, NULL, 0); break;
             case 'O': s->audio.sample_offset = strtod(optarg, NULL);    break;
+            case 'E': s->synchronous         = 1;                       break;
             case 'v': s->verbosity++; break;
             default: fprintf(stderr, "args error before argument index %d\n", optind); return -1;
         }

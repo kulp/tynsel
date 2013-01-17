@@ -29,6 +29,7 @@
 struct decode_state {
     struct audio_state audio;
     int verbosity;
+    int synchronous;
 };
 
 int decode_byte(struct decode_state *s, size_t size, double input[size], int output[], double *offset, int channel, double *prob);
