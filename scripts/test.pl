@@ -35,8 +35,7 @@ for my $trial (1 .. $trials) {
 
     my @bytes = map { int rand 256 } 1 .. $length;
     system("./gen -s $rate -o $fname $genopts @bytes");
-    system("./g711 $fname $fname.g711.wav");
-    my @lines = (qx(./fft -s $rate $fname.g711.wav 2> /dev/null))[0 .. scalar $#bytes];
+    my @lines = (qx(./fft -s $rate $fname.wav 2> /dev/null))[0 .. scalar $#bytes];
     chomp, s/^.*= //, $_ = hex $_ for @lines;
     check(\@lines, \@bytes);
 }
@@ -44,12 +43,17 @@ for my $trial (1 .. $trials) {
 sub check
 {
     my @errors;
-    my $len = $#{ $_[0] };
-    for my $i (0 .. $len) {
-        my ($a, $b) = ($_[0][$i], $_[1][$i]);
-        if ($a != $b) {
-            warn sprintf("Mismatch at element %d of %d : 0x%x vs 0x%x", $i, $len, $a, $b);
-            push @errors, $i;
+    my $len1 = scalar @{ $_[0] };
+    my $len2 = scalar @{ $_[1] };
+    if ($len1 != $len2) {
+        die "Length mismatch : $len1 != $len2";
+    } else {
+        for my $i (0 .. $len1 - 1) {
+            my ($a, $b) = ($_[0][$i], $_[1][$i]);
+            if ($a != $b) {
+                warn sprintf("Mismatch at element %d of %d : 0x%x vs 0x%x", $i, $len1 - 1, $a, $b);
+                push @errors, $i;
+            }
         }
     }
 
