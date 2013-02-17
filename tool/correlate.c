@@ -13,10 +13,7 @@
 
 int read_file(struct audio_state *a, const char *filename, size_t size, double input[size]);
 
-double ref_data[BUFFER_SIZE],
-       tst_data[BUFFER_SIZE];
-
-static int do_fft(int sign, size_t in_size, fftw_complex input[in_size], size_t out_size, fftw_complex output[out_size])
+static int do_fft(int sign, size_t in_size, fftw_complex input[in_size], fftw_complex output[])
 {
     fftw_plan plan = fftw_plan_dft_1d(in_size, input, output, sign, FFTW_ESTIMATE);
     fftw_execute(plan);
@@ -99,8 +96,8 @@ int main(int argc, char *argv[])
                  (*cnj_fft)[WINDOW_SIZE] = fftw_malloc(sizeof *cnj_fft),
                  (*multed )[WINDOW_SIZE] = fftw_malloc(sizeof *multed );
 
-    do_fft(FFTW_FORWARD, ref_size, *ref_data, WINDOW_SIZE, *ref_fft);
-    do_fft(FFTW_FORWARD, tst_size, *tst_data, WINDOW_SIZE, *tst_fft);
+    do_fft(FFTW_FORWARD, WINDOW_SIZE, *ref_data, *ref_fft);
+    do_fft(FFTW_FORWARD, WINDOW_SIZE, *tst_data, *tst_fft);
 
     free(*ref_data);
     free(*tst_data);
@@ -112,15 +109,16 @@ int main(int argc, char *argv[])
     fftw_free(*tst_fft);
     fftw_free(*cnj_fft);
 
-    fftw_complex (*reversed)[tst_size] = fftw_malloc(sizeof *reversed);
+    fftw_complex (*reversed)[WINDOW_SIZE] = fftw_malloc(sizeof *reversed);
+    do_fft(FFTW_BACKWARD, WINDOW_SIZE, *multed, *reversed);
     double (*result)[WINDOW_SIZE] = malloc(sizeof *result);
-    do_fft(FFTW_BACKWARD, countof(*multed), *multed, tst_size, *reversed);
-    realify(tst_size, *reversed, *result);
+    realify(WINDOW_SIZE, *reversed, *result);
 
     double max = 0.;
     size_t imax = 0;
     get_max(tst_size, *result, &max, &imax);
     printf("result[%zd] = %e\n", imax, max);
+    free(*result);
 
     return 0;
 }
