@@ -30,49 +30,7 @@
 #include <errno.h>
 #include <math.h>
 
-#include <sndfile.h>
-
-#define BUFFER_SIZE 16384 * 16 * 32
-
-static int read_file(struct decode_state *s, const char *filename, size_t size, double input[size])
-{
-    size_t index = 0;
-    SNDFILE *sf = NULL;
-    SF_INFO sinfo = { .format = 0 };
-    {
-        sf = sf_open(filename, SFM_READ, &sinfo);
-        if (!sf) {
-            fprintf(stderr, "Failed to open `%s' : %s\n", filename, strerror(errno));
-            exit(EXIT_FAILURE);
-        }
-
-        // getting the sample rate from the file means right now the `-s' option on
-        // the command line has no effect. In the future it might be removed, or it
-        // might be necessary when the audio input has no accompanying sample-rate
-        // information.
-        s->audio.sample_rate = sinfo.samplerate;
-    }
-
-    {
-        sf_count_t count = 0;
-        do {
-            double tmp[sinfo.channels];
-            count = sf_read_double(sf, tmp, sinfo.channels);
-            size_t where = (size_t)SAMPLES_PER_BIT(s) + index++;
-            input[where] = tmp[0];
-        } while (count && index < BUFFER_SIZE);
-
-        if (sf_error(sf))
-            sf_perror(sf);
-
-        if (index >= BUFFER_SIZE)
-            fprintf(stderr, "Warning, ran out of buffer space before reaching end of file\n");
-
-        sf_close(sf);
-    }
-
-    return index;
-}
+int read_file(struct audio_state *a, const char *filename, size_t size, double input[size]);
 
 static int parse_opts(struct decode_state *s, int argc, char *argv[], const char **filename)
 {
@@ -91,9 +49,9 @@ static int parse_opts(struct decode_state *s, int argc, char *argv[], const char
         }
     }
 
-    if (fabs(s->audio.sample_offset) > SAMPLES_PER_BIT(s)) {
+    if (fabs(s->audio.sample_offset) > SAMPLES_PER_BIT(&s->audio)) {
         fprintf(stderr, "sample offset (%f) > samples per bit (%4.1f)\n",
-                s->audio.sample_offset, SAMPLES_PER_BIT(s));
+                s->audio.sample_offset, SAMPLES_PER_BIT(&s->audio));
         return -1;
     }
 
@@ -131,16 +89,16 @@ int main(int argc, char* argv[])
     // The first SAMPLES_PER_BIT might be wrong because the sample_rate might
     // be wrong until the file is read. read_file() mends this and sets up the
     // correct offset.
-    double *_input = calloc((size_t)SAMPLES_PER_BIT(s) * 2 + BUFFER_SIZE, sizeof *_input);
-    size_t count = read_file(s, argv[optind], sizeof _input, _input);
+    double *_input = calloc((size_t)SAMPLES_PER_BIT(&s->audio) * 2 + BUFFER_SIZE, sizeof *_input);
+    size_t count = read_file(&s->audio, argv[optind], sizeof _input, _input);
     // TODO round up fractional samples ?
-    double *input = &_input[(size_t)SAMPLES_PER_BIT(s) + (size_t)s->audio.sample_offset];
+    double *input = &_input[(size_t)SAMPLES_PER_BIT(&s->audio) + (size_t)s->audio.sample_offset];
 
     if (s->verbosity) {
         printf("read %zd items\n", count);
         printf("sample rate is %4d Hz\n", s->audio.sample_rate);
         printf("baud rate is %4d\n", s->audio.baud_rate);
-        printf("samples per bit is %4.0f\n", SAMPLES_PER_BIT(s));
+        printf("samples per bit is %4.0f\n", SAMPLES_PER_BIT(&s->audio));
     }
 
     decode_data(s, count, input);

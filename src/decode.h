@@ -36,7 +36,9 @@ int decode_byte(struct decode_state *s, size_t size, double input[size], int out
 int decode_data(struct decode_state *s, size_t count, double input[count]);
 void decode_cleanup(void);
 
-#define SAMPLES_PER_BIT(s) ((double)s->audio.sample_rate / s->audio.baud_rate)
+#define SAMPLES_PER_BIT(a) ((double)(a)->sample_rate / (a)->baud_rate)
+
+#define BUFFER_SIZE 16384 * 16 * 32
 
 #endif
 

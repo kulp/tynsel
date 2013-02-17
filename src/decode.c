@@ -23,6 +23,7 @@
 #include "decode.h"
 #include "decoders.h"
 #include "common.h"
+#include "audio.h"
 
 #include <math.h>
 #include <fftw3.h>
@@ -39,7 +40,7 @@
 
 static const size_t window_size = 512;
 
-int decode_bits(struct decode_state *s, size_t size, double input[size], int output[ (size_t)(size / SAMPLES_PER_BIT(s) / ALL_BITS(s)) ], double *offset, int channel, double *prob)
+int decode_bits(struct decode_state *s, size_t size, double input[size], int output[ (size_t)(size / SAMPLES_PER_BIT(&s->audio) / ALL_BITS(s)) ], double *offset, int channel, double *prob)
 {
     fftw_complex *data       = fftw_malloc(window_size * sizeof *data);
     fftw_complex *fft_result = fftw_malloc(window_size * sizeof *fft_result);
@@ -49,7 +50,7 @@ int decode_bits(struct decode_state *s, size_t size, double input[size], int out
     int biti = 0;
     double end = size + *offset;
     // require more than a half-bit's worth of samples
-    for (double dbb = *offset; end - dbb > SAMPLES_PER_BIT(s) / 2; dbb += SAMPLES_PER_BIT(s), biti++) {
+    for (double dbb = *offset; end - dbb > SAMPLES_PER_BIT(&s->audio) / 2; dbb += SAMPLES_PER_BIT(&s->audio), biti++) {
         int word = biti / ALL_BITS(s);
         int wordbit = biti % ALL_BITS(s);
         if (wordbit == 0)
@@ -61,7 +62,7 @@ int decode_bits(struct decode_state *s, size_t size, double input[size], int out
         *offset += dbb - bit_base;
 
         for (size_t i = 0; i < window_size; i++) {
-            data[i][0] = i < SAMPLES_PER_BIT(s) ? input[bit_base + i] : 0.;
+            data[i][0] = i < SAMPLES_PER_BIT(&s->audio) ? input[bit_base + i] : 0.;
             data[i][1] = 0.;
         }
 
@@ -127,11 +128,11 @@ static int find_edge(struct decode_state *s, int channel, double *offset, size_t
     int maxoff = -1;
     double prob = -1.;
 
-    for (double bs_off = 0.; bs_off < count; bs_off += SAMPLES_PER_BIT(s)) {
-        for (size_t samp_off = 0; samp_off < SAMPLES_PER_BIT(s) - input_offset; samp_off++) {
+    for (double bs_off = 0.; bs_off < count; bs_off += SAMPLES_PER_BIT(&s->audio)) {
+        for (size_t samp_off = 0; samp_off < SAMPLES_PER_BIT(&s->audio) - input_offset; samp_off++) {
             int scratch = 0;
             double scratch_offset = input_offset;
-            decode_bits(s, 2 * SAMPLES_PER_BIT(s), &input[(size_t)bs_off + samp_off], &scratch, &scratch_offset, channel, &prob);
+            decode_bits(s, 2 * SAMPLES_PER_BIT(&s->audio), &input[(size_t)bs_off + samp_off], &scratch, &scratch_offset, channel, &prob);
             // find the point where probability is at its highest and the decoded
             // two-bit number is 0b01 (i.e. a 1-to-0 edge)
             if (scratch != 1)
@@ -139,7 +140,7 @@ static int find_edge(struct decode_state *s, int channel, double *offset, size_t
 
             if (prob > maxprob) {
                 maxprob = prob;
-                maxoff = bs_off + samp_off + SAMPLES_PER_BIT(s);
+                maxoff = bs_off + samp_off + SAMPLES_PER_BIT(&s->audio);
             }
         }
 
@@ -160,13 +161,13 @@ int decode_data(struct decode_state *s, size_t count, double input[count])
     int rc = 0;
 
     // need to keep offset into sample array as a floating-point number
-    // because it is incremented by SAMPLES_PER_BIT(s) which is can be a
+    // because it is incremented by SAMPLES_PER_BIT(&s->audio) which is can be a
     // non-integer fraction, and accumulating rounding errors can be fatal to
     // decoding
     double total_offset = 0.;
     size_t remaining = count - s->audio.sample_offset;
     size_t byte_index = 0;
-    int output[ (size_t)(ROUND_HALF(remaining / SAMPLES_PER_BIT(s), ALL_BITS(s))) ];
+    int output[ (size_t)(ROUND_HALF(remaining / SAMPLES_PER_BIT(&s->audio), ALL_BITS(s))) ];
     double *startbit = input;   // where to look for next start bit
     double *stopbit  = input;   // where to look for last stop bit
     int first = 1;
@@ -177,7 +178,7 @@ int decode_data(struct decode_state *s, size_t count, double input[count])
         double byte_sample_offset = 0.;
         if (s->synchronous) {
             if (!first)
-                total_offset += SAMPLES_PER_BIT(s);
+                total_offset += SAMPLES_PER_BIT(&s->audio);
         } else {
             rc = find_edge(s, channel, &byte_sample_offset, count, stopbit);
 
@@ -189,7 +190,7 @@ int decode_data(struct decode_state *s, size_t count, double input[count])
                 startbit += (size_t)byte_sample_offset;
                 remaining -= byte_sample_offset;
             } else {
-                byte_sample_offset -= SAMPLES_PER_BIT(s);
+                byte_sample_offset -= SAMPLES_PER_BIT(&s->audio);
                 // The `- 1` is a fencepost adjustment that hasn't yet been
                 // properly justified, but which keeps synch long-term, so here it
                 // stays for now.
@@ -208,12 +209,12 @@ int decode_data(struct decode_state *s, size_t count, double input[count])
         }
 
         int byte = -1;
-        const size_t samples_to_decode = ALL_BITS(s) * SAMPLES_PER_BIT(s);
+        const size_t samples_to_decode = ALL_BITS(s) * SAMPLES_PER_BIT(&s->audio);
         decode_bits(s, samples_to_decode, startbit, &byte, &total_offset, channel, NULL);
 
         output[byte_index++] = byte;
         total_offset += samples_to_decode;
-        stopbit = &startbit[(size_t)total_offset] - (size_t)SAMPLES_PER_BIT(s);
+        stopbit = &startbit[(size_t)total_offset] - (size_t)SAMPLES_PER_BIT(&s->audio);
     }
 
     for (size_t i = 0; i < byte_index; i++) {

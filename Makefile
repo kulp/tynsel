@@ -29,7 +29,7 @@ DECODERS = \
 
 CPPFLAGS += $(patsubst %,-I%,$(INCLUDE))
 
-fft: decode.o $(DECODERS:.c=.o) decoders.o
+fft: decode.o $(DECODERS:.c=.o) decoders.o io.o
 gen: encode.o
 fft gen: audio.o
 fft: LDLIBS += $(shell pkg-config --libs gsl)
