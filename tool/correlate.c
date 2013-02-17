@@ -1,10 +1,11 @@
 #include <stdlib.h>
 #include <fftw3.h>
 #include <math.h>
+#include <float.h>
 
 #include "audio.h"
 
-#define BUFFER_SIZE 16384 * 16 * 32
+#define BUFFER_SIZE 16384
 
 #define WINDOW_SIZE 512
 
@@ -24,36 +25,30 @@ static int do_fft(int sign, size_t in_size, fftw_complex input[in_size], size_t 
     return 0;
 }
 
-static int complexify(size_t size, double input[size], fftw_complex output[size])
+static void complexify(size_t size, double input[size], fftw_complex output[size])
 {
     for (size_t i = 0; i < size; i++) {
         output[i][0] = input[i];
         output[i][1] = 0.;
     }
-
-    return 0;
 }
 
-static int realify(size_t size, fftw_complex input[size], double output[size])
+static void realify(size_t size, fftw_complex input[size], double output[size])
 {
     for (size_t i = 0; i < size; i++) {
-        output[i] = sqrt(input[i][0] * input[i][1]);
+        output[i] = sqrt(pow(input[i][0], 2) + pow(input[i][1], 2));
     }
-
-    return 0;
 }
 
-static int conjugate(size_t size, fftw_complex input[size], fftw_complex output[size])
+static void conjugate(size_t size, fftw_complex input[size], fftw_complex output[size])
 {
     for (size_t i = 0; i < size; i++) {
         output[i][0] =  input[i][0];
         output[i][1] = -input[i][1];
     }
-
-    return 0;
 }
 
-static int multiply(size_t size, fftw_complex A[size], fftw_complex B[size], fftw_complex C[size])
+static void multiply(size_t size, fftw_complex C[size], fftw_complex A[size], fftw_complex B[size])
 {
     for (size_t i = 0; i < size; i++) {
         // (a + bi) * (c + di)
@@ -64,8 +59,14 @@ static int multiply(size_t size, fftw_complex A[size], fftw_complex B[size], fft
         C[i][0] = a * c - b * d;
         C[i][1] = b * c + a * d;
     }
+}
 
-    return 0;
+static void get_max(size_t size, double vals[size], double *max, size_t *imax)
+{
+    *max = -DBL_MAX;
+    for (size_t i = 0; i < size; i++)
+        if (vals[i] > *max)
+            *max = vals[*imax = i];
 }
 
 int main(int argc, char *argv[])
@@ -76,19 +77,20 @@ int main(int argc, char *argv[])
     char *ref_file = argv[1],
          *tst_file = argv[2];
     
-    size_t actual_size = 0;
+    size_t ref_size = 0,
+           tst_size = 0;
 
     struct audio_state as = { .sample_offset = 0 };
     
     double (*buffer)[BUFFER_SIZE] = malloc(sizeof *buffer);
 
-    fftw_complex *ref_data = fftw_malloc(countof(*buffer));
-    actual_size = read_file(&as, ref_file, countof(*buffer), *buffer);
-    complexify(countof(*buffer), *buffer, ref_data);
+    fftw_complex (*ref_data)[BUFFER_SIZE] = fftw_malloc(sizeof *ref_data);
+    ref_size = read_file(&as, ref_file, countof(*buffer), *buffer);
+    complexify(ref_size, *buffer, *ref_data);
     
-    fftw_complex *tst_data = fftw_malloc(countof(*buffer));
-    read_file(&as, tst_file, countof(*buffer), *buffer);
-    complexify(countof(*buffer), *buffer, tst_data);
+    fftw_complex (*tst_data)[BUFFER_SIZE] = fftw_malloc(sizeof *tst_data);
+    tst_size = read_file(&as, tst_file, countof(*buffer), *buffer);
+    complexify(tst_size, *buffer, *tst_data);
     
     free(*buffer);
 
@@ -97,9 +99,12 @@ int main(int argc, char *argv[])
                  (*cnj_fft)[WINDOW_SIZE] = fftw_malloc(sizeof *cnj_fft),
                  (*multed )[WINDOW_SIZE] = fftw_malloc(sizeof *multed );
 
-    do_fft(FFTW_FORWARD, countof(*ref_data), ref_data, WINDOW_SIZE, *ref_fft);
-    do_fft(FFTW_FORWARD, countof(*tst_data), tst_data, WINDOW_SIZE, *tst_fft);
-    
+    do_fft(FFTW_FORWARD, ref_size, *ref_data, WINDOW_SIZE, *ref_fft);
+    do_fft(FFTW_FORWARD, tst_size, *tst_data, WINDOW_SIZE, *tst_fft);
+
+    free(*ref_data);
+    free(*tst_data);
+
     conjugate(WINDOW_SIZE, *ref_fft, *cnj_fft);
 
     multiply(WINDOW_SIZE, *multed, *cnj_fft, *tst_fft);
@@ -107,12 +112,15 @@ int main(int argc, char *argv[])
     fftw_free(*tst_fft);
     fftw_free(*cnj_fft);
 
-    fftw_complex (*reversed)[actual_size] = fftw_malloc(sizeof *reversed);
+    fftw_complex (*reversed)[tst_size] = fftw_malloc(sizeof *reversed);
     double (*result)[WINDOW_SIZE] = malloc(sizeof *result);
-    do_fft(FFTW_BACKWARD, countof(*multed), *multed, actual_size, *reversed);
-    realify(actual_size, *reversed, *result);
+    do_fft(FFTW_BACKWARD, countof(*multed), *multed, tst_size, *reversed);
+    realify(tst_size, *reversed, *result);
 
-    abort();
+    double max = 0.;
+    size_t imax = 0;
+    get_max(tst_size, *result, &max, &imax);
+    printf("result[%zd] = %e\n", imax, max);
 
     return 0;
 }
