@@ -58,12 +58,12 @@ int read_file(struct audio_state *a, const char *filename, size_t size, double i
             count = sf_read_double(sf, tmp, sinfo.channels);
             size_t where = (size_t)SAMPLES_PER_BIT(a) + index++;
             input[where] = tmp[0];
-        } while (count && index < BUFFER_SIZE);
+        } while (count && index < size);
 
         if (sf_error(sf))
             sf_perror(sf);
 
-        if (index >= BUFFER_SIZE)
+        if (index >= size)
             fprintf(stderr, "Warning, ran out of buffer space before reaching end of file\n");
 
         sf_close(sf);
