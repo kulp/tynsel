@@ -5,9 +5,9 @@
 
 #include "audio.h"
 
-#define BUFFER_SIZE 16384
+#define BUFFER_SIZE 16384 * 3
 
-#define WINDOW_SIZE 512
+#define WINDOW_SIZE 16000
 
 #define countof(X) (sizeof (X) / sizeof (X)[0])
 
@@ -58,7 +58,7 @@ static void multiply(size_t size, fftw_complex C[size], fftw_complex A[size], ff
     }
 }
 
-static void get_max(size_t size, double vals[size], double *max, size_t *imax)
+static size_t get_max(size_t size, double vals[size])
 {
     double m = -DBL_MAX;
     size_t im = 0;
@@ -66,8 +66,7 @@ static void get_max(size_t size, double vals[size], double *max, size_t *imax)
         if (vals[i] > m)
             m = vals[im = i];
 
-    *max = m;
-    *imax = im;
+    return im;
 }
 
 int main(int argc, char *argv[])
@@ -77,22 +76,22 @@ int main(int argc, char *argv[])
 
     char *ref_file = argv[1],
          *tst_file = argv[2];
-    
+
     size_t ref_size = 0,
            tst_size = 0;
 
     struct audio_state as = { .sample_offset = 0 };
-    
+
     double (*buffer)[BUFFER_SIZE] = malloc(sizeof *buffer);
 
     fftw_complex (*ref_data)[BUFFER_SIZE] = fftw_malloc(sizeof *ref_data);
     ref_size = read_file(&as, ref_file, countof(*buffer), *buffer);
     complexify(ref_size, *buffer, *ref_data);
-    
+
     fftw_complex (*tst_data)[BUFFER_SIZE] = fftw_malloc(sizeof *tst_data);
     tst_size = read_file(&as, tst_file, countof(*buffer), *buffer);
     complexify(tst_size, *buffer, *tst_data);
-    
+
     free(*buffer);
 
     fftw_complex (*ref_fft)[WINDOW_SIZE] = fftw_malloc(sizeof *ref_fft),
@@ -118,10 +117,10 @@ int main(int argc, char *argv[])
     double (*result)[WINDOW_SIZE] = malloc(sizeof *result);
     realify(WINDOW_SIZE, *reversed, *result);
 
-    double max = 0.;
-    size_t imax = 0;
-    get_max(tst_size, *result, &max, &imax);
-    printf("result[%zd] = %e\n", imax, max);
+    size_t imax = get_max(tst_size, *result);
+    printf("-result[%zd] = %e\n", imax - 1, (*result)[imax - 1]);
+    printf(" result[%zd] = %e\n", imax    , (*result)[imax    ]);
+    printf("+result[%zd] = %e\n", imax + 1, (*result)[imax - 1]);
     free(*result);
 
     return 0;
