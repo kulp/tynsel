@@ -60,10 +60,14 @@ static void multiply(size_t size, fftw_complex C[size], fftw_complex A[size], ff
 
 static void get_max(size_t size, double vals[size], double *max, size_t *imax)
 {
-    *max = -DBL_MAX;
+    double m = -DBL_MAX;
+    size_t im = 0;
     for (size_t i = 0; i < size; i++)
-        if (vals[i] > *max)
-            *max = vals[*imax = i];
+        if (vals[i] > m)
+            m = vals[im = i];
+
+    *max = m;
+    *imax = im;
 }
 
 int main(int argc, char *argv[])
