@@ -2,6 +2,7 @@
 #include <fftw3.h>
 #include <math.h>
 #include <float.h>
+#include <string.h>
 
 #include "audio.h"
 
@@ -15,6 +16,8 @@ int read_file(struct audio_state *a, const char *filename, size_t size, double i
 
 static int do_fft(int sign, size_t in_size, fftw_complex input[in_size], fftw_complex output[])
 {
+    // XXX should create plan before initialising data ; this is absolutely
+    // necessary if we switch to FFTW_MEASURE
     fftw_plan plan = fftw_plan_dft_1d(in_size, input, output, sign, FFTW_ESTIMATE);
     fftw_execute(plan);
     fftw_destroy_plan(plan);
@@ -58,13 +61,23 @@ static void multiply(size_t size, fftw_complex C[size], fftw_complex A[size], ff
     }
 }
 
-static size_t get_max(size_t size, double vals[size])
+static size_t get_maxes(size_t size, double ins[size], size_t *count,
+        double outs[*count], size_t indices[*count])
 {
-    double m = -DBL_MAX;
+    outs[0] = -DBL_MAX;
     size_t im = 0;
+    size_t c = 0;
     for (size_t i = 0; i < size; i++)
-        if (vals[i] > m)
-            m = vals[im = i];
+        if (ins[i] > outs[0]) {
+            memmove(&outs[1], &outs[0], (*count - 1) * sizeof *outs);
+            memmove(&indices[1], &indices[0], (*count - 1) * sizeof *indices);
+            if (c < *count)
+                c++;
+            outs[0] = ins[i];
+            indices[0] = i;
+        }
+
+    *count = c;
 
     return im;
 }
@@ -117,10 +130,13 @@ int main(int argc, char *argv[])
     double (*result)[WINDOW_SIZE] = malloc(sizeof *result);
     realify(WINDOW_SIZE, *reversed, *result);
 
-    size_t imax = get_max(tst_size, *result);
-    printf("-result[%zd] = %e\n", imax - 1, (*result)[imax - 1]);
-    printf(" result[%zd] = %e\n", imax    , (*result)[imax    ]);
-    printf("+result[%zd] = %e\n", imax + 1, (*result)[imax - 1]);
+    size_t max_count = 10;
+    double maxes[max_count];
+    size_t imaxes[max_count];
+    get_maxes(tst_size, *result, &max_count, maxes, imaxes);
+    printf("0result[%5zd] = %e\n", 0            , (*result)[0            ]);
+    for (size_t i = 0; i < max_count; i++)
+        printf(" result[%5zd] = %e\n", imaxes[i], (*result)[imaxes[i]]);
     free(*result);
 
     return 0;
