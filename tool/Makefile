@@ -1,7 +1,11 @@
 ifneq ($(DEBUG),)
 CFLAGS += -g -O0
 CPPFLAGS += -DDEBUG
+else
+CFLAGS += -O3
 endif
+
+INCLUDE += ../src
 
 CPPFLAGS += $(patsubst %,-D%,$(DEFINE))
 CPPFLAGS += $(patsubst %,-I%,$(INCLUDE))
@@ -15,7 +19,6 @@ vpath %.c ../src
 correlate: CPPFLAGS += -std=c99
 correlate: LDLIBS += -lfftw3
 correlate: LDLIBS += -lsndfile
-correlate: INCLUDE += ../src
 correlate: io.o
 
 clean:
