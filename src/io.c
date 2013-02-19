@@ -63,8 +63,10 @@ int read_file(struct audio_state *a, const char *filename, size_t size, double i
         if (sf_error(sf))
             sf_perror(sf);
 
-        if (index >= size)
+        if (index >= size) {
             fprintf(stderr, "Warning, ran out of buffer space before reaching end of file\n");
+            index = size;
+        }
 
         sf_close(sf);
     }

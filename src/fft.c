@@ -89,8 +89,9 @@ int main(int argc, char* argv[])
     // The first SAMPLES_PER_BIT might be wrong because the sample_rate might
     // be wrong until the file is read. read_file() mends this and sets up the
     // correct offset.
-    double *_input = calloc((size_t)SAMPLES_PER_BIT(&s->audio) * 2 + BUFFER_SIZE, sizeof *_input);
-    size_t count = read_file(&s->audio, argv[optind], sizeof _input, _input);
+    size_t _input_count = (size_t)SAMPLES_PER_BIT(&s->audio) * 2 + BUFFER_SIZE;
+    double *_input = calloc(_input_count, sizeof *_input);
+    size_t count = read_file(&s->audio, argv[optind], _input_count, _input);
     // TODO round up fractional samples ?
     double *input = &_input[(size_t)SAMPLES_PER_BIT(&s->audio) + (size_t)s->audio.sample_offset];
 
