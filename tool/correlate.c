@@ -3,6 +3,7 @@
 #include <math.h>
 #include <float.h>
 #include <string.h>
+#include <getopt.h>
 
 #include "audio.h"
 
@@ -11,6 +12,16 @@
 #define WINDOW_SIZE 16000
 
 #define countof(X) (sizeof (X) / sizeof (X)[0])
+
+struct correlate_state {
+    int channel;
+    int verbosity;
+    char *ref_file, *tst_file;
+    struct {
+        int has_edge;
+        int compare;
+    } action;
+};
 
 int read_file(struct audio_state *a, const char *filename, size_t size, double input[size]);
 
@@ -82,62 +93,102 @@ static size_t get_maxes(size_t size, double ins[size], size_t *count,
     return im;
 }
 
+static int has_edge(struct audio_state *a, int chan, size_t size, fftw_complex data[size])
+{
+    return 0;
+}
+
+static int parse_opts(struct correlate_state *s, int argc, char *argv[])
+{
+    int ch;
+    while ((ch = getopt(argc, argv, "C:r:t:" "ec" "v")) != -1) {
+        switch (ch) {
+            case 'C': s->channel = strtol(optarg, NULL, 0); break;
+            case 'r': s->ref_file = optarg;                 break;
+            case 't': s->tst_file = optarg;                 break;
+
+            case 'e': s->action.has_edge = 1;               break;
+            case 'c': s->action.compare  = 1;               break;
+
+            case 'v': s->verbosity++;                       break;
+            default: fprintf(stderr, "args error before argument index %d\n", optind); return -1;
+        }
+    }
+
+    return 0;
+}
+
 int main(int argc, char *argv[])
 {
-    if (argc < 2)
-        abort();
+    struct correlate_state _s = { .verbosity = 0 }, *s = &_s;
+    struct audio_state as = { .sample_offset = 0 };
 
-    char *ref_file = argv[1],
-         *tst_file = argv[2];
+    parse_opts(s, argc, argv);
+
+    if (!s->tst_file) {
+        fprintf(stderr, "No test file specified with `-t`\n");
+        exit(EXIT_FAILURE);
+    }
 
     size_t ref_size = 0,
            tst_size = 0;
 
-    struct audio_state as = { .sample_offset = 0 };
+    double (*buffer)[BUFFER_SIZE] = calloc(1, sizeof *buffer);
 
-    double (*buffer)[BUFFER_SIZE] = malloc(sizeof *buffer);
-
-    fftw_complex (*ref_data)[BUFFER_SIZE] = fftw_malloc(sizeof *ref_data);
-    ref_size = read_file(&as, ref_file, countof(*buffer), *buffer);
-    complexify(ref_size, *buffer, *ref_data);
-
-    fftw_complex (*tst_data)[BUFFER_SIZE] = fftw_malloc(sizeof *tst_data);
-    tst_size = read_file(&as, tst_file, countof(*buffer), *buffer);
+    tst_size = read_file(&as, s->tst_file, countof(*buffer), *buffer);
+    printf("%zd, %zd\n", BUFFER_SIZE, tst_size);
+    fftw_complex (*tst_data)[WINDOW_SIZE] = calloc(1, sizeof *tst_data);
     complexify(tst_size, *buffer, *tst_data);
+
+    fftw_complex (*ref_fft)[WINDOW_SIZE] = calloc(1, sizeof *ref_fft),
+                 (*tst_fft)[WINDOW_SIZE] = calloc(1, sizeof *tst_fft),
+                 (*cnj_fft)[WINDOW_SIZE] = calloc(1, sizeof *cnj_fft),
+                 (*multed )[WINDOW_SIZE] = calloc(1, sizeof *multed );
+
+    do_fft(FFTW_FORWARD, WINDOW_SIZE, *tst_data, *tst_fft);
+
+    fftw_complex (*ref_data)[WINDOW_SIZE] = calloc(1, sizeof *ref_data);
+    if (s->action.compare) {
+        if (!s->ref_file) {
+            fprintf(stderr, "No reference file specified with `-r`\n");
+            exit(EXIT_FAILURE);
+        }
+
+        ref_size = read_file(&as, s->ref_file, countof(*buffer), *buffer);
+        complexify(ref_size, *buffer, *ref_data);
+
+        do_fft(FFTW_FORWARD, WINDOW_SIZE, *ref_data, *ref_fft);
+        free(*ref_data);
+
+        conjugate(WINDOW_SIZE, *ref_fft, *cnj_fft);
+        fftw_free(*ref_fft);
+
+        multiply(WINDOW_SIZE, *multed, *cnj_fft, *tst_fft);
+        fftw_free(*cnj_fft);
+
+        fftw_complex (*reversed)[WINDOW_SIZE] = calloc(1, sizeof *reversed);
+        do_fft(FFTW_BACKWARD, WINDOW_SIZE, *multed, *reversed);
+        fftw_free(*multed);
+
+        double (*result)[WINDOW_SIZE] = malloc(sizeof *result);
+        realify(WINDOW_SIZE, *reversed, *result);
+        fftw_free(*reversed);
+
+        size_t max_count = 10;
+        double maxes[max_count];
+        size_t imaxes[max_count];
+        get_maxes(tst_size, *result, &max_count, maxes, imaxes);
+        printf("0result[%5zd] = %e\n", 0            , (*result)[0            ]);
+        for (size_t i = 0; i < max_count; i++)
+            printf(" result[%5zd] = %e\n", imaxes[i], (*result)[imaxes[i]]);
+
+        free(*result);
+    }
 
     free(*buffer);
 
-    fftw_complex (*ref_fft)[WINDOW_SIZE] = fftw_malloc(sizeof *ref_fft),
-                 (*tst_fft)[WINDOW_SIZE] = fftw_malloc(sizeof *tst_fft),
-                 (*cnj_fft)[WINDOW_SIZE] = fftw_malloc(sizeof *cnj_fft),
-                 (*multed )[WINDOW_SIZE] = fftw_malloc(sizeof *multed );
-
-    do_fft(FFTW_FORWARD, WINDOW_SIZE, *ref_data, *ref_fft);
-    do_fft(FFTW_FORWARD, WINDOW_SIZE, *tst_data, *tst_fft);
-
-    free(*ref_data);
-    free(*tst_data);
-
-    conjugate(WINDOW_SIZE, *ref_fft, *cnj_fft);
-
-    multiply(WINDOW_SIZE, *multed, *cnj_fft, *tst_fft);
-    fftw_free(*ref_fft);
     fftw_free(*tst_fft);
-    fftw_free(*cnj_fft);
-
-    fftw_complex (*reversed)[WINDOW_SIZE] = fftw_malloc(sizeof *reversed);
-    do_fft(FFTW_BACKWARD, WINDOW_SIZE, *multed, *reversed);
-    double (*result)[WINDOW_SIZE] = malloc(sizeof *result);
-    realify(WINDOW_SIZE, *reversed, *result);
-
-    size_t max_count = 10;
-    double maxes[max_count];
-    size_t imaxes[max_count];
-    get_maxes(tst_size, *result, &max_count, maxes, imaxes);
-    printf("0result[%5zd] = %e\n", 0            , (*result)[0            ]);
-    for (size_t i = 0; i < max_count; i++)
-        printf(" result[%5zd] = %e\n", imaxes[i], (*result)[imaxes[i]]);
-    free(*result);
+    free(*tst_data);
 
     return 0;
 }
