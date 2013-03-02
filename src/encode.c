@@ -35,11 +35,11 @@ struct put_state {
     double adjust;
 };
 
-static int encode_sample(struct encode_state *s, double freq, double sample_index, struct put_state *state)
+static int encode_sample(struct encode_state *s, double freq, double gain, double sample_index, struct put_state *state)
 {
     double proportion = sample_index / s->audio.sample_rate;
     double radians = proportion * 2. * M_PI;
-    double sample = sin(radians * freq) * s->gain;
+    double sample = sin(radians * freq) * gain;
 
     int rc = s->cb.put_samples(&s->audio, 1, &sample, s->cb.userdata);
     state->last_sample = sample;
@@ -47,7 +47,7 @@ static int encode_sample(struct encode_state *s, double freq, double sample_inde
     return rc;
 }
 
-static int encode_bit(struct encode_state *s, double freq, struct put_state *state)
+static int encode_bit(struct encode_state *s, double freq, double gain, struct put_state *state)
 {
     double inverse = asin(state->last_sample / s->gain);
     switch (state->last_quadrant) {
@@ -65,7 +65,7 @@ static int encode_bit(struct encode_state *s, double freq, struct put_state *sta
 
     double sidx;
     for (sidx = sample_offset; sidx < SAMPLES_PER_BIT + sample_offset + state->adjust; sidx++) {
-        encode_sample(s, freq, sidx, state);
+        encode_sample(s, freq, gain, sidx, state);
     }
 
     state->adjust -= (sidx - sample_offset) - SAMPLES_PER_BIT;
@@ -87,20 +87,22 @@ int encode_bytes(struct encode_state *s, size_t byte_count, unsigned bytes[byte_
         if (s->verbosity)
             printf("writing byte %#x\n", byte);
 
+        double gains[] = { s->bitamp ? .7 : 1., 1. };
+
         for (int bit_index = 0; !rc && bit_index < s->audio.start_bits; bit_index++) {
-            rc = encode_bit(s, s->audio.freqs[s->channel][0], &state);
+            rc = encode_bit(s, s->audio.freqs[s->channel][0], s->gain * gains[0], &state);
         }
 
         for (int bit_index = 0; !rc && bit_index < s->audio.data_bits; bit_index++) {
             unsigned bit = !!(byte & (1 << bit_index));
             double freq = s->audio.freqs[s->channel][bit];
-            rc = encode_bit(s, freq, &state);
+            rc = encode_bit(s, freq, s->gain * gains[bit], &state);
         }
 
         // TODO parity bits
 
         for (int bit_index = 0; !rc && bit_index < s->audio.stop_bits; bit_index++) {
-            rc = encode_bit(s, s->audio.freqs[s->channel][1], &state);
+            rc = encode_bit(s, s->audio.freqs[s->channel][1], s->gain * gains[1], &state);
         }
     }
 

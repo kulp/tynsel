@@ -34,7 +34,7 @@
 static int parse_opts(struct encode_state *s, int argc, char *argv[], const char **filename)
 {
     int ch;
-    while ((ch = getopt(argc, argv, "C:G:S:T:P:D:s:o:v")) != -1) {
+    while ((ch = getopt(argc, argv, "C:G:S:T:P:D:s:o:" "vV")) != -1) {
         switch (ch) {
             case 'C': s->channel             = strtol(optarg, NULL, 0); break;
             case 'G': s->gain                = strtod(optarg, NULL);    break;
@@ -44,7 +44,9 @@ static int parse_opts(struct encode_state *s, int argc, char *argv[], const char
             case 'D': s->audio.data_bits     = strtol(optarg, NULL, 0); break;
             case 's': s->audio.sample_rate   = strtol(optarg, NULL, 0); break;
             case 'o': *filename              = optarg;                  break;
+
             case 'v': s->verbosity++;                                   break;
+            case 'V': s->bitamp = 1;                                    break;
             default: fprintf(stderr, "args error before argument index %d\n", optind); return -1;
         }
     }

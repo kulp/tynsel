@@ -33,9 +33,10 @@ struct encode_state {
     unsigned channel;
     double gain;
     struct {
-	void *userdata;
-	int (*put_samples)(struct audio_state *a, size_t count, double sample[count], void *userdata);
+        void *userdata;
+        int (*put_samples)(struct audio_state *a, size_t count, double sample[count], void *userdata);
     } cb;
+    int bitamp; // whether to differentiate amplitude in bits (hack)
 };
 
 int encode_bytes(struct encode_state *s, size_t byte_count, unsigned bytes[byte_count]);
