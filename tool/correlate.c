@@ -21,6 +21,9 @@ struct correlate_state {
         int has_edge;
         int compare;
     } action;
+
+    int offset, length; // subset of audio to analyse
+    int index; // index of energy to print
 };
 
 int read_file(struct audio_state *a, const char *filename, size_t size, double input[size]);
@@ -107,11 +110,14 @@ static int has_edge(struct audio_state *a, int chan, size_t size, fftw_complex d
 static int parse_opts(struct correlate_state *s, int argc, char *argv[])
 {
     int ch;
-    while ((ch = getopt(argc, argv, "C:r:t:" "ec" "v")) != -1) {
+    while ((ch = getopt(argc, argv, "C:r:t:O:L:I:" "ec" "v")) != -1) {
         switch (ch) {
             case 'C': s->channel = strtol(optarg, NULL, 0); break;
             case 'r': s->ref_file = optarg;                 break;
             case 't': s->tst_file = optarg;                 break;
+            case 'O': s->offset = strtol(optarg, NULL, 0);  break;
+            case 'L': s->length = strtol(optarg, NULL, 0);  break;
+            case 'I': s->index  = strtol(optarg, NULL, 0);  break;
 
             case 'e': s->action.has_edge = 1;               break;
             case 'c': s->action.compare  = 1;               break;
@@ -168,12 +174,14 @@ int main(int argc, char *argv[])
     double (*buffer)[BUFFER_SIZE] = calloc(1, sizeof *buffer);
 
     tst_size = read_file(&as, s->tst_file, countof(*buffer), *buffer);
-    fftw_complex (*tst_data)[WINDOW_SIZE] = calloc(1, sizeof *tst_data);
-    complexify(tst_size, *buffer, *tst_data);
+    if (!s->length || s->length > WINDOW_SIZE)
+        s->length = WINDOW_SIZE;
+    fftw_complex (*tst_data)[s->offset + s->length] = calloc(1, sizeof *tst_data);
+    complexify(s->length, *buffer, &(*tst_data)[s->offset]);
 
     fftw_complex (*tst_fft)[WINDOW_SIZE] = calloc(1, sizeof *tst_fft);
 
-    do_fft(FFTW_FORWARD, WINDOW_SIZE, *tst_data, *tst_fft);
+    do_fft(FFTW_FORWARD, WINDOW_SIZE, &(*tst_data)[s->offset], *tst_fft);
 
     fftw_complex (*ref_data)[WINDOW_SIZE] = calloc(1, sizeof *ref_data);
     if (s->action.compare) {
@@ -187,7 +195,7 @@ int main(int argc, char *argv[])
 
         size_t result_size = 0;
         fftw_complex *cresult = NULL;
-        do_compare(ref_size, *ref_data, WINDOW_SIZE, *tst_fft, &result_size, &cresult);
+        do_compare(s->length, *ref_data, WINDOW_SIZE, *tst_fft, &result_size, &cresult);
         free(*ref_data);
 
         double (*result)[WINDOW_SIZE] = malloc(sizeof *result);
@@ -198,7 +206,7 @@ int main(int argc, char *argv[])
         double maxes[max_count];
         size_t imaxes[max_count];
         get_maxes(tst_size, *result, &max_count, maxes, imaxes);
-        printf("0result[%5zd] = %e\n", 0, (*result)[0]);
+        printf("=result[%5zd] = %e\n", s->index, (*result)[s->index]);
         for (size_t i = 0; i < max_count; i++)
             printf(" result[%5zd] = %e\n", imaxes[i], (*result)[imaxes[i]]);
 
