@@ -118,6 +118,32 @@ static int parse_opts(struct correlate_state *s, int argc, char *argv[])
     return 0;
 }
 
+int do_compare(size_t ref_size, fftw_complex *ref_data,
+               size_t tst_size, fftw_complex *tst_fft,
+               size_t *rst_size, fftw_complex **rst_data)
+{
+    fftw_complex (*ref_fft)[WINDOW_SIZE] = calloc(1, sizeof *ref_fft),
+                 (*cnj_fft)[WINDOW_SIZE] = calloc(1, sizeof *cnj_fft),
+                 (*multed )[WINDOW_SIZE] = calloc(1, sizeof *multed );
+
+    do_fft(FFTW_FORWARD, WINDOW_SIZE, ref_data, *ref_fft);
+
+    conjugate(WINDOW_SIZE, *ref_fft, *cnj_fft);
+    free(*ref_fft);
+
+    multiply(WINDOW_SIZE, *multed, *cnj_fft, tst_fft);
+    free(*cnj_fft);
+
+    fftw_complex (*reversed)[WINDOW_SIZE] = calloc(1, sizeof *reversed);
+    do_fft(FFTW_BACKWARD, WINDOW_SIZE, *multed, *reversed);
+    free(*multed);
+
+    *rst_size = WINDOW_SIZE;
+    *rst_data = *reversed;
+
+    return 0;
+}
+
 int main(int argc, char *argv[])
 {
     struct correlate_state _s = { .verbosity = 0 }, *s = &_s;
@@ -136,14 +162,10 @@ int main(int argc, char *argv[])
     double (*buffer)[BUFFER_SIZE] = calloc(1, sizeof *buffer);
 
     tst_size = read_file(&as, s->tst_file, countof(*buffer), *buffer);
-    printf("%zd, %zd\n", BUFFER_SIZE, tst_size);
     fftw_complex (*tst_data)[WINDOW_SIZE] = calloc(1, sizeof *tst_data);
     complexify(tst_size, *buffer, *tst_data);
 
-    fftw_complex (*ref_fft)[WINDOW_SIZE] = calloc(1, sizeof *ref_fft),
-                 (*tst_fft)[WINDOW_SIZE] = calloc(1, sizeof *tst_fft),
-                 (*cnj_fft)[WINDOW_SIZE] = calloc(1, sizeof *cnj_fft),
-                 (*multed )[WINDOW_SIZE] = calloc(1, sizeof *multed );
+    fftw_complex (*tst_fft)[WINDOW_SIZE] = calloc(1, sizeof *tst_fft);
 
     do_fft(FFTW_FORWARD, WINDOW_SIZE, *tst_data, *tst_fft);
 
@@ -157,28 +179,20 @@ int main(int argc, char *argv[])
         ref_size = read_file(&as, s->ref_file, countof(*buffer), *buffer);
         complexify(ref_size, *buffer, *ref_data);
 
-        do_fft(FFTW_FORWARD, WINDOW_SIZE, *ref_data, *ref_fft);
+        size_t result_size = 0;
+        fftw_complex *cresult = NULL;
+        do_compare(ref_size, *ref_data, WINDOW_SIZE, *tst_fft, &result_size, &cresult);
         free(*ref_data);
 
-        conjugate(WINDOW_SIZE, *ref_fft, *cnj_fft);
-        fftw_free(*ref_fft);
-
-        multiply(WINDOW_SIZE, *multed, *cnj_fft, *tst_fft);
-        fftw_free(*cnj_fft);
-
-        fftw_complex (*reversed)[WINDOW_SIZE] = calloc(1, sizeof *reversed);
-        do_fft(FFTW_BACKWARD, WINDOW_SIZE, *multed, *reversed);
-        fftw_free(*multed);
-
         double (*result)[WINDOW_SIZE] = malloc(sizeof *result);
-        realify(WINDOW_SIZE, *reversed, *result);
-        fftw_free(*reversed);
+        realify(WINDOW_SIZE, cresult, *result);
+        free(cresult);
 
         size_t max_count = 10;
         double maxes[max_count];
         size_t imaxes[max_count];
         get_maxes(tst_size, *result, &max_count, maxes, imaxes);
-        printf("0result[%5zd] = %e\n", 0            , (*result)[0            ]);
+        printf("0result[%5zd] = %e\n", 0, (*result)[0]);
         for (size_t i = 0; i < max_count; i++)
             printf(" result[%5zd] = %e\n", imaxes[i], (*result)[imaxes[i]]);
 
@@ -187,7 +201,7 @@ int main(int argc, char *argv[])
 
     free(*buffer);
 
-    fftw_free(*tst_fft);
+    free(*tst_fft);
     free(*tst_data);
 
     return 0;
