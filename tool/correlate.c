@@ -78,15 +78,21 @@ static size_t get_maxes(size_t size, double ins[size], size_t *count,
     outs[0] = -DBL_MAX;
     size_t im = 0;
     size_t c = 0;
-    for (size_t i = 0; i < size; i++)
-        if (ins[i] > outs[0]) {
-            memmove(&outs[1], &outs[0], (*count - 1) * sizeof *outs);
-            memmove(&indices[1], &indices[0], (*count - 1) * sizeof *indices);
-            if (c < *count)
-                c++;
-            outs[0] = ins[i];
-            indices[0] = i;
+    for (size_t i = 0; i < size; i++) {
+        for (size_t check = 0; check < *count; check++) {
+            if (ins[i] > outs[check]) {
+                size_t outs_size = (*count - check - 1) * sizeof *outs;
+                size_t inds_size = (*count - check - 1) * sizeof *indices;
+                memmove(   &outs[check + 1],    &outs[check], outs_size);
+                memmove(&indices[check + 1], &indices[check], inds_size);
+                if (c < *count)
+                    c++;
+                outs[check] = ins[i];
+                indices[check] = i;
+                break;
+            }
         }
+    }
 
     *count = c;
 
