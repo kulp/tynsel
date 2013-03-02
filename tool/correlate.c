@@ -104,7 +104,12 @@ static size_t get_maxes(size_t size, double ins[size], size_t *count,
 
 static int has_edge(struct audio_state *a, int chan, size_t size, fftw_complex data[size])
 {
-    return 0;
+    return -1;
+}
+
+static int get_edge_offset(struct audio_state *a, int chan, size_t size, fftw_complex data[size])
+{
+    return -1;
 }
 
 static int parse_opts(struct correlate_state *s, int argc, char *argv[])
