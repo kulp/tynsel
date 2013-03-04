@@ -62,6 +62,19 @@ static int sample_callback(struct audio_state *a, size_t count, double samples[c
     return sf_write_double(userdata, samples, count);
 }
 
+static int parse_number(const char *in, char **next, int base)
+{
+    if (!strncmp(in, "0b", 2)) {
+        char *nn = NULL;
+        int result = strtol(in + 2, &nn, 2);
+        if (nn == in + 2)
+            return 0;
+        *next = nn;
+        return result;
+    }
+    return strtol(in, next, base);
+}
+
 int main(int argc, char* argv[])
 {
     const char *output_file = NULL;
@@ -113,7 +126,7 @@ int main(int argc, char* argv[])
     for (unsigned byte_index = 0; byte_index < byte_count; byte_index++) {
         char *next = NULL;
         char *thing = argv[byte_index + optind];
-        bytes[byte_index] = strtol(thing, &next, 0);
+        bytes[byte_index] = parse_number(thing, &next, 0);
         if (next == thing) {
             fprintf(stderr, "Error parsing argument at index %d, `%s'\n", optind, thing);
             return -1;
