@@ -37,8 +37,10 @@ struct encode_state {
         int (*put_samples)(struct audio_state *a, size_t count, double sample[count], void *userdata);
     } cb;
     int bitamp; // whether to differentiate amplitude in bits (hack)
+    int index, length; // sample offset and length (for silence at ends)
 };
 
+// returns number of samples emitted, or -1
 int encode_bytes(struct encode_state *s, size_t byte_count, unsigned bytes[byte_count]);
 
 #endif

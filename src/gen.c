@@ -34,7 +34,7 @@
 static int parse_opts(struct encode_state *s, int argc, char *argv[], const char **filename)
 {
     int ch;
-    while ((ch = getopt(argc, argv, "C:G:S:T:P:D:s:o:" "vV")) != -1) {
+    while ((ch = getopt(argc, argv, "C:G:S:T:P:D:s:I:L:o:" "vV")) != -1) {
         switch (ch) {
             case 'C': s->channel             = strtol(optarg, NULL, 0); break;
             case 'G': s->gain                = strtod(optarg, NULL);    break;
@@ -43,6 +43,8 @@ static int parse_opts(struct encode_state *s, int argc, char *argv[], const char
             case 'P': s->audio.parity_bits   = strtol(optarg, NULL, 0); break;
             case 'D': s->audio.data_bits     = strtol(optarg, NULL, 0); break;
             case 's': s->audio.sample_rate   = strtol(optarg, NULL, 0); break;
+            case 'I': s->index               = strtol(optarg, NULL, 0); break;
+            case 'L': s->length              = strtol(optarg, NULL, 0); break;
             case 'o': *filename              = optarg;                  break;
 
             case 'v': s->verbosity++;                                   break;
@@ -118,9 +120,17 @@ int main(int argc, char* argv[])
         }
     }
 
-    rc = encode_bytes(s, byte_count, bytes);
-    if (rc)
+    double zero = 0.;
+    for (int i = 0; i < s->index; i++)
+        // TODO put more samples at once
+        s->cb.put_samples(&s->audio, 1, &zero, s->cb.userdata);
+
+    int samples = encode_bytes(s, byte_count, bytes);
+    if (samples < 0)
         fprintf(stderr, "Error while encoding %zd bytes : %s\n", byte_count, strerror(errno));
+
+    for (int i = samples + s->index; i < s->length; i++)
+        s->cb.put_samples(&s->audio, 1, &zero, s->cb.userdata);
 
     sf_close(sf);
 
