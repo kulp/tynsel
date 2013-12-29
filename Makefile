@@ -91,6 +91,9 @@ sip : DEFINE += SIP_DOMAIN='"$(SIP_DOMAIN)"' \
                 STUN_SERVER='"$(STUN_SERVER)"' \
                 #
 
+suite: LDLIBS += -lsndfile
+suite: filters.o io.o
+
 clean:
-	rm -f *.o fft gen g711 sip pjtarget
+	rm -f *.o fft gen g711 sip pjtarget suite
 
