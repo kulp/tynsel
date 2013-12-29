@@ -40,7 +40,7 @@ int read_file(struct audio_state *a, const char *filename, size_t size, double i
     {
         sf = sf_open(filename, SFM_READ, &sinfo);
         if (!sf) {
-            fprintf(stderr, "Failed to open `%s' : %s\n", filename, strerror(errno));
+            fprintf(stderr, "Failed to open `%s' for reading : %s\n", filename, strerror(errno));
             exit(EXIT_FAILURE);
         }
 
@@ -53,12 +53,13 @@ int read_file(struct audio_state *a, const char *filename, size_t size, double i
 
     {
         sf_count_t count = 0;
+        size_t per = (size_t)SAMPLES_PER_BIT(a);
         do {
             double tmp[sinfo.channels];
             count = sf_read_double(sf, tmp, sinfo.channels);
-            size_t where = (size_t)SAMPLES_PER_BIT(a) + index++;
+            size_t where = per + index++;
             input[where] = tmp[0];
-        } while (count && index < size);
+        } while (count && (index + per) < size);
 
         if (sf_error(sf))
             sf_perror(sf);
@@ -70,6 +71,33 @@ int read_file(struct audio_state *a, const char *filename, size_t size, double i
 
         sf_close(sf);
     }
+
+    return index;
+}
+
+int write_file_pcm(struct audio_state *a, const char *filename, size_t size, double output[size])
+{
+    size_t index = 0;
+    SNDFILE *sf = NULL;
+    SF_INFO sinfo = {
+                .samplerate = a->sample_rate,
+                .channels   = 1,
+                .format     = SF_FORMAT_WAV | SF_FORMAT_FLOAT, //SF_FORMAT_PCM_U8,
+            };
+    {
+        sf = sf_open(filename, SFM_WRITE, &sinfo);
+        if (!sf) {
+            fprintf(stderr, "Failed to open `%s' for writing : %s (%s)\n", filename, sf_strerror(sf), strerror(errno));
+            exit(EXIT_FAILURE);
+        }
+    }
+
+    sf_write_double(sf, output, size);
+
+    if (sf_error(sf))
+        sf_perror(sf);
+
+    sf_close(sf);
 
     return index;
 }
