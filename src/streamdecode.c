@@ -6,7 +6,7 @@
 #include <stdlib.h>
 #include <math.h>
 
-#define WINDOW_SIZE ((int)(SAMPLES_PER_BIT(&s->as) / 2))
+#define WINDOW_SIZE(as) ((int)(SAMPLES_PER_BIT(as) / 2))
 
 struct stream_state {
     enum {
@@ -42,21 +42,29 @@ struct stream_state {
     int levhist; // the last level seen, -1 if none seen
 };
 
-int streamdecode_init(struct stream_state **sp, struct audio_state *as, void *ud, streamdecode_callback *cb)
+int streamdecode_init(struct stream_state **sp, struct audio_state *as, void *ud, streamdecode_callback *cb, int channel)
 {
+    if (channel != 0 && channel != 1)
+        return -1;
+
     struct stream_state *s = *sp = malloc(sizeof *s);
+
+    static const enum filter_ident filtersets[2][3] = {
+        { FILTER_PASS_CHAN0, FILTER_PASS_CHAN0BIT0, FILTER_PASS_CHAN0BIT1 },
+        { FILTER_PASS_CHAN1, FILTER_PASS_CHAN1BIT0, FILTER_PASS_CHAN1BIT1 },
+    };
 
     s->cb       = cb;
     s->userdata = ud;
     s->state    = STATE_NOSYNC;
     s->as       = *as;
     // should stop hard-coding channel 0
-    s->chan     = filter_create(FILTER_PASS_CHAN0);
-    s->bit[0]   = filter_create(FILTER_PASS_CHAN0BIT0);
-    s->bit[1]   = filter_create(FILTER_PASS_CHAN0BIT1);
+    s->chan     = filter_create(filtersets[channel][0]);
+    s->bit[0]   = filter_create(filtersets[channel][1]);
+    s->bit[1]   = filter_create(filtersets[channel][2]);
     // depends on IEEE-754-type zeros
-    s->ehist[0] = calloc(WINDOW_SIZE, sizeof *s->ehist[0]);
-    s->ehist[1] = calloc(WINDOW_SIZE, sizeof *s->ehist[1]);
+    s->ehist[0] = calloc(WINDOW_SIZE(&s->as), sizeof *s->ehist[0]);
+    s->ehist[1] = calloc(WINDOW_SIZE(&s->as), sizeof *s->ehist[1]);
     s->tick     = 0;
     s->levhist  = -1;
     s->gbltick  = 0;
@@ -141,7 +149,7 @@ static int state_update(struct stream_state *s)
                 // STOP bits are counted to determine when we get a valid
                 // START edge
                 s->state = STATE_BSYNC;
-                if (s->parity & 1) {
+                if (s->as.parity_bits > 0 && s->parity & 1) {
                     // XXX allow parity to be adjustable instead of always EVEN
                     s->cb(s->userdata, STREAM_ERR_PARITY, s->charac);
                 } else {
@@ -166,7 +174,7 @@ static int state_update(struct stream_state *s)
 
 int streamdecode_process(struct stream_state *s, size_t count, double samples[count])
 {
-    unsigned window_size = WINDOW_SIZE;
+    unsigned window_size = WINDOW_SIZE(&s->as);
     for (unsigned i = 0; i < count; i++) {
         s->gbltick++;
         s->tick++;

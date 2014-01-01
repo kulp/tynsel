@@ -19,7 +19,7 @@ enum {
     STREAM_ERR_max
 };
 
-int streamdecode_init(struct stream_state **sp, struct audio_state *as, void *ud, streamdecode_callback *cb);
+int streamdecode_init(struct stream_state **sp, struct audio_state *as, void *ud, streamdecode_callback *cb, int channel);
 int streamdecode_process(struct stream_state *s, size_t count, double samples[count]);
 void streamdecode_fini(struct stream_state *s);
 
