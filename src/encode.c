@@ -28,6 +28,8 @@
 #include <stdio.h>
 
 #define SAMPLES_PER_BIT ((double)s->audio.sample_rate / s->audio.baud_rate)
+// TODO redefine POPCNT for different compilers than GCC
+#define POPCNT(x) __builtin_popcount(x)
 
 struct put_state {
     int last_quadrant;
@@ -104,7 +106,12 @@ int encode_bytes(struct encode_state *s, size_t byte_count, unsigned bytes[byte_
             if (rc >= 0) samples += rc; else return -1;
         }
 
-        // TODO parity bits
+        int oddness = POPCNT(byte) & 1;
+        for (int bit_index = 0; rc >= 0 && bit_index < s->audio.parity_bits; bit_index++) {
+            // assume EVEN parity for now
+            rc = encode_bit(s, s->audio.freqs[s->channel][oddness], s->gain * gains[1], &state);
+            if (rc >= 0) samples += rc; else return -1;
+        }
 
         for (int bit_index = 0; rc >= 0 && bit_index < s->audio.stop_bits; bit_index++) {
             rc = encode_bit(s, s->audio.freqs[s->channel][1], s->gain * gains[1], &state);
