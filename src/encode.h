@@ -42,6 +42,7 @@ struct encode_state {
 
 // returns number of samples emitted, or -1
 int encode_bytes(struct encode_state *s, size_t byte_count, unsigned bytes[byte_count]);
+int encode_carrier(struct encode_state *s, size_t bit_times);
 
 #endif
 

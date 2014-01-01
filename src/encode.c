@@ -81,6 +81,22 @@ static int encode_bit(struct encode_state *s, double freq, double gain, struct p
     return samples;
 }
 
+int encode_carrier(struct encode_state *s, size_t bit_times)
+{
+    int samples = 0;
+    int rc = 0;
+
+    struct put_state state = { .last_quadrant = 0 };
+    double gains[] = { s->bitamp ? .7 : 1., 1. };
+
+    for (unsigned bit_index = 0; rc >= 0 && bit_index < bit_times; bit_index++) {
+        rc = encode_bit(s, s->audio.freqs[s->channel][1], s->gain * gains[1], &state);
+        if (rc >= 0) samples += rc; else return -1;
+    }
+
+    return 0;
+}
+
 int encode_bytes(struct encode_state *s, size_t byte_count, unsigned bytes[byte_count])
 {
     int samples = 0;
