@@ -92,7 +92,7 @@ sip : DEFINE += SIP_DOMAIN='"$(SIP_DOMAIN)"' \
                 #
 
 suite: LDLIBS += -lsndfile
-suite: filters.o io.o
+suite: filters.o io.o streamdecode.o
 
 clean:
 	rm -f *.o fft gen g711 sip pjtarget suite
