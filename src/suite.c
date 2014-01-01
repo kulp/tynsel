@@ -63,7 +63,7 @@ static int process_read(struct audio_state *as, size_t size, double in[size])
         } else {
             puts("malformed word");
         }
-        p += (int)(SAMPLES_PER_BIT(as) * 11);
+        p += (int)(SAMPLES_PER_BIT(as) * 9); // leave stop bits for find_start_bit()
     }
 
     return 0;
@@ -93,7 +93,7 @@ int main(int argc, char *argv[])
     const int window_size = 13; // TODO tune
     double cached_energy[2][window_size];
 
-    double *edges = malloc(bufsiz * sizeof *edges);
+    double *edges = calloc(bufsiz, sizeof *edges);
     for (unsigned i = 0; i < bufsiz; i++) {
         filter_put(ch0, buf[i]);
         double bandpassed = filter_get(ch0);
