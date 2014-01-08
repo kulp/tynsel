@@ -24,17 +24,6 @@
 #define DECODE_H_
 
 #include "audio.h"
-#include <stddef.h>
-
-struct decode_state {
-    struct audio_state audio;
-    int verbosity;
-    int synchronous;
-};
-
-int decode_byte(struct decode_state *s, size_t size, double input[size], int output[], double *offset, int channel, double *prob);
-int decode_data(struct decode_state *s, size_t count, double input[count]);
-void decode_cleanup(void);
 
 #define SAMPLES_PER_BIT(a) ((double)(a)->sample_rate / (a)->baud_rate)
 

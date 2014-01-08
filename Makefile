@@ -7,32 +7,18 @@ CPPFLAGS += $(patsubst %,-D%,$(DEFINE))
 
 CFLAGS += -Wall -Wextra -Wunused
 
-gen fft: CPPFLAGS += -std=c99
-fft: LDLIBS += -lfftw3
-g711 gen fft: LDLIBS += -lsndfile
+gen: CPPFLAGS += -std=c99
+gen: LDLIBS += -lsndfile
 
-all: fft gen sip
-
-.PHONY: test
-test: gen fft
-	./test.pl
+all: suite gen sip
 
 INCLUDE += src src/recognisers
 vpath %.c src src/recognisers
 
-DECODERS = \
-           naive.c \
-           higher.c \
-           correlate.c \
-           gsl.c \
-           #
-
 CPPFLAGS += $(patsubst %,-I%,$(INCLUDE))
 
-fft: decode.o $(DECODERS:.c=.o) decoders.o io.o
 gen: encode.o
-fft gen: audio.o
-fft: LDLIBS += $(shell pkg-config --libs gsl)
+gen: audio.o
 
 # pjtarget gives us the TARGET_NAME for linking
 pjtarget: LDLIBS =
@@ -95,5 +81,5 @@ suite: LDLIBS += -lsndfile
 suite: filters.o streamdecode.o
 
 clean:
-	rm -f *.o fft gen g711 sip pjtarget suite
+	rm -f *.o gen sip pjtarget suite
 
