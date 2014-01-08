@@ -57,13 +57,13 @@ int streamdecode_init(struct stream_state **sp, struct audio_state *as, void *ud
         int rate;
         double att;
     } args[][3] = {
-        { { FILTER_TYPE_LOW_PASS , 1600, len, as->sample_rate, 21 },
-          { FILTER_TYPE_LOW_PASS , 1170, len, as->sample_rate, 21 },
-          { FILTER_TYPE_HIGH_PASS, 1170, len, as->sample_rate, 21 }, },
+        { { FILTER_TYPE_LOW_PASS , bell103_freqs[0][1] + 300, len, as->sample_rate, 21 },
+          { FILTER_TYPE_LOW_PASS , bell103_freqs[0][0] + 100, len, as->sample_rate, 21 },
+          { FILTER_TYPE_HIGH_PASS, bell103_freqs[0][0] + 100, len, as->sample_rate, 21 }, },
 
-        { { FILTER_TYPE_HIGH_PASS, 1700, len, as->sample_rate, 21 },
-          { FILTER_TYPE_LOW_PASS , 2125, len, as->sample_rate, 21 },
-          { FILTER_TYPE_HIGH_PASS, 2125, len, as->sample_rate, 21 }, },
+        { { FILTER_TYPE_HIGH_PASS, bell103_freqs[1][0] - 300, len, as->sample_rate, 21 },
+          { FILTER_TYPE_LOW_PASS , bell103_freqs[1][0] + 100, len, as->sample_rate, 21 },
+          { FILTER_TYPE_HIGH_PASS, bell103_freqs[1][0] + 100, len, as->sample_rate, 21 }, },
     };
 
     s->cb       = cb;

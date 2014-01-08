@@ -17,8 +17,10 @@ vpath %.c src src/recognisers
 
 CPPFLAGS += $(patsubst %,-I%,$(INCLUDE))
 
-gen: encode.o
-gen: audio.o
+gen: encode.o audio.o
+
+suite: LDLIBS += -lsndfile
+suite: filters.o streamdecode.o audio.o
 
 # pjtarget gives us the TARGET_NAME for linking
 pjtarget: LDLIBS =
@@ -76,9 +78,6 @@ sip : DEFINE += SIP_DOMAIN='"$(SIP_DOMAIN)"' \
                 SIP_PASSWD='"$(SIP_PASSWD)"' \
                 STUN_SERVER='"$(STUN_SERVER)"' \
                 #
-
-suite: LDLIBS += -lsndfile
-suite: filters.o streamdecode.o
 
 clean:
 	rm -f *.o gen sip pjtarget suite
