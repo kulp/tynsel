@@ -1,9 +1,8 @@
 *.aup
 *.wav
 *_data/
-fft
+suite
 gen
-g711
 Makefile.sipsettings
 detect
 sip
