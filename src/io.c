@@ -22,7 +22,6 @@
 
 #include "common.h"
 #include "audio.h"
-#include "decode.h"
 
 #include <stdio.h>
 #include <stddef.h>

@@ -7,7 +7,6 @@
 #include <errno.h>
 
 #include "audio.h"
-#include "decode.h"
 #include "filters.h"
 #include "streamdecode.h"
 

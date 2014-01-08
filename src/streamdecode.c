@@ -1,6 +1,5 @@
 #include "streamdecode.h"
 #include "audio.h"
-#include "decode.h"
 #include "filters.h"
 
 #include <stdlib.h>

@@ -40,6 +40,8 @@ struct audio_state {
 
 extern const double bell103_freqs[2][2];
 
+#define SAMPLES_PER_BIT(a) ((double)(a)->sample_rate / (a)->baud_rate)
+
 #endif
 
 

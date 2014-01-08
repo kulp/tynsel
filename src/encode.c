@@ -27,7 +27,6 @@
 #include <math.h>
 #include <stdio.h>
 
-#define SAMPLES_PER_BIT ((double)s->audio.sample_rate / s->audio.baud_rate)
 // TODO redefine POPCNT for different compilers than GCC
 #define POPCNT(x) __builtin_popcount(x)
 
@@ -68,11 +67,11 @@ static int encode_bit(struct encode_state *s, double freq, double gain, struct p
     double sample_offset = inverse_prop * samples_per_cycle + 1;
 
     double sidx;
-    for (sidx = sample_offset; sidx < SAMPLES_PER_BIT + sample_offset + state->adjust; sidx++) {
+    for (sidx = sample_offset; sidx < SAMPLES_PER_BIT(&s->audio) + sample_offset + state->adjust; sidx++) {
         samples += encode_sample(s, freq, gain, sidx, state);
     }
 
-    state->adjust -= (sidx - sample_offset) - SAMPLES_PER_BIT;
+    state->adjust -= (sidx - sample_offset) - SAMPLES_PER_BIT(&s->audio);
 
     double si = sidx - 1; // undo last iteration of for-loop
     // TODO explain what is happening here
