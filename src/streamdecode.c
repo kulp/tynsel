@@ -49,9 +49,21 @@ int streamdecode_init(struct stream_state **sp, struct audio_state *as, void *ud
 
     struct stream_state *s = *sp = malloc(sizeof *s);
 
-    static const enum filter_ident filtersets[2][3] = {
-        { FILTER_PASS_CHAN0, FILTER_PASS_CHAN0BIT0, FILTER_PASS_CHAN0BIT1 },
-        { FILTER_PASS_CHAN1, FILTER_PASS_CHAN1BIT0, FILTER_PASS_CHAN1BIT1 },
+    const int len = ((int)SAMPLES_PER_BIT(as)) | 1;
+    struct argset {
+        enum filter_type type;
+        double freq;
+        int len;
+        int rate;
+        double att;
+    } args[][3] = {
+        { { FILTER_TYPE_LOW_PASS , 1600, len, as->sample_rate, 21 },
+          { FILTER_TYPE_LOW_PASS , 1170, len, as->sample_rate, 21 },
+          { FILTER_TYPE_HIGH_PASS, 1170, len, as->sample_rate, 21 }, },
+
+        { { FILTER_TYPE_HIGH_PASS, 1700, len, as->sample_rate, 21 },
+          { FILTER_TYPE_LOW_PASS , 2125, len, as->sample_rate, 21 },
+          { FILTER_TYPE_HIGH_PASS, 2125, len, as->sample_rate, 21 }, },
     };
 
     s->cb       = cb;
@@ -59,9 +71,10 @@ int streamdecode_init(struct stream_state **sp, struct audio_state *as, void *ud
     s->state    = STATE_NOSYNC;
     s->as       = *as;
     // should stop hard-coding channel 0
-    s->chan     = filter_create(filtersets[channel][0]);
-    s->bit[0]   = filter_create(filtersets[channel][1]);
-    s->bit[1]   = filter_create(filtersets[channel][2]);
+    const struct argset *arg = args[channel];
+    s->chan     = filter_create(arg[0].type, arg[0].freq, arg[0].len, arg[0].rate, arg[0].att);
+    s->bit[0]   = filter_create(arg[1].type, arg[1].freq, arg[1].len, arg[1].rate, arg[1].att);
+    s->bit[1]   = filter_create(arg[2].type, arg[2].freq, arg[2].len, arg[2].rate, arg[2].att);
     // depends on IEEE-754-type zeros
     s->ehist[0] = calloc(WINDOW_SIZE(&s->as), sizeof *s->ehist[0]);
     s->ehist[1] = calloc(WINDOW_SIZE(&s->as), sizeof *s->ehist[1]);

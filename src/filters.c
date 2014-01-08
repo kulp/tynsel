@@ -1,236 +1,85 @@
 #include "filters.h"
 #include <errno.h>
 #include <stdlib.h>
+#include <math.h>
 
 struct filter_state {
-    const struct filter_entry *entry;
+    struct filter_entry {
+        int tapcount;
+        double *taps;
+    } *entry;
     double *history;
     int last_index;
 };
 
-// Use :AlignCtrl Irlp0P0 for aligning taps
-static struct filter_entry filters[] = {
-    [FILTER_PASS_CHAN0] = {
-        /* 0-1270 @ 5dB, 1600-4000 @ -40dB */
-        .ident = FILTER_PASS_CHAN0,
-        .tapcount = 27,
-        .taps = (double[27]){
-            -0.0056015351311259325,
-            -0.029637140108221473 ,
-            -0.04703242493634984  ,
-            -0.047212665488529565 ,
-            -0.01673263372785522  ,
-             0.025956777608056633 ,
-             0.04395124859339777  ,
-             0.013002854747559788 ,
-            -0.04631079600871891  ,
-            -0.07303225161865606  ,
-            -0.012505259548689938 ,
-             0.13042561783370019  ,
-             0.2813726462298767   ,
-             0.3459148430740437   ,
-             0.2813726462298767   ,
-             0.13042561783370019  ,
-            -0.012505259548689938 ,
-            -0.07303225161865606  ,
-            -0.04631079600871891  ,
-             0.013002854747559788 ,
-             0.04395124859339777  ,
-             0.025956777608056633 ,
-            -0.01673263372785522  ,
-            -0.047212665488529565 ,
-            -0.04703242493634984  ,
-            -0.029637140108221473 ,
-            -0.0056015351311259325
-        },
-    },
-    [FILTER_PASS_CHAN0BIT0] = {
-        /* 0-1070 @ 5dB, 1270-4000 @ -40dB */
-        .ident = FILTER_PASS_CHAN0BIT0,
-        .tapcount = 27,
-        .taps = (double[27]){
-            -0.0007124926963727803,
-             0.027958179571406967 ,
-             0.05243587160917998  ,
-             0.07557980227488914  ,
-             0.07882392266463276  ,
-             0.05259743344683504  ,
-             0.0026436265570192463,
-            -0.04835998030749869  ,
-            -0.0695630046200249   ,
-            -0.0380640494339432   ,
-             0.04634635446285935  ,
-             0.15685603783775337  ,
-             0.25008406007446965  ,
-             0.2864731120471816   ,
-             0.25008406007446965  ,
-             0.15685603783775337  ,
-             0.04634635446285935  ,
-            -0.0380640494339432   ,
-            -0.0695630046200249   ,
-            -0.04835998030749869  ,
-             0.0026436265570192463,
-             0.05259743344683504  ,
-             0.07882392266463276  ,
-             0.07557980227488914  ,
-             0.05243587160917998  ,
-             0.027958179571406967 ,
-            -0.0007124926963727803
-        },
-    },
-    [FILTER_PASS_CHAN0BIT1] = {
-        /* 0-1070 @ -40dB, 1270-4000 @ 5dB */
-        .ident = FILTER_PASS_CHAN0BIT1,
-        .tapcount = 27,
-        .taps = (double[27]){
-            -0.005023284276188728,
-            -0.09387216495974861 ,
-             0.14741922267749277 ,
-             0.002325511923249027,
-            -0.05179316927195578 ,
-            -0.052481601255380594,
-            -0.014314971650090736,
-             0.037462189543502764,
-             0.06856431941370533 ,
-             0.047392566350220884,
-            -0.03491304510338438 ,
-            -0.15288504135926237 ,
-            -0.25744932891159283 ,
-             0.7009867058756108  ,
-            -0.25744932891159283 ,
-            -0.15288504135926237 ,
-            -0.03491304510338438 ,
-             0.047392566350220884,
-             0.06856431941370533 ,
-             0.037462189543502764,
-            -0.014314971650090736,
-            -0.052481601255380594,
-            -0.05179316927195578 ,
-             0.002325511923249027,
-             0.14741922267749277 ,
-            -0.09387216495974861 ,
-            -0.005023284276188728
-        },
-    },
-    [FILTER_PASS_CHAN1] = {
-        /* 0-1700 @ -40dB, 2025-4000 @ 5dB */
-        .ident = FILTER_PASS_CHAN1,
-        .tapcount = 27,
-        .taps = (double[27]){
-             0.0023563678074816066,
-            -0.03948868128485718  ,
-             0.06861092369461289  ,
-            -0.032809974786043805 ,
-            -0.03297173980286935  ,
-             0.02369485547053838  ,
-             0.0396776302908945   ,
-            -0.021620166625208246 ,
-            -0.05859155970170932  ,
-             0.021431759142609485 ,
-             0.10277156592529614  ,
-            -0.02158086067818903  ,
-            -0.31717367660017537  ,
-             0.5217033971061938   ,
-            -0.31717367660017537  ,
-            -0.02158086067818903  ,
-             0.10277156592529614  ,
-             0.021431759142609485 ,
-            -0.05859155970170932  ,
-            -0.021620166625208246 ,
-             0.0396776302908945   ,
-             0.02369485547053838  ,
-            -0.03297173980286935  ,
-            -0.032809974786043805 ,
-             0.06861092369461289  ,
-            -0.03948868128485718  ,
-             0.0023563678074816066
-        },
-    },
-    [FILTER_PASS_CHAN1BIT0] = {
-        /* 0-2025 @ 5dB, 2225-4000 @ -40dB */
-        .ident = FILTER_PASS_CHAN1BIT0,
-        .tapcount = 27,
-        .taps = (double[27]){
-            -0.01654595705000902 ,
-            -0.08770413353311607 ,
-            -0.11748111512342249 ,
-            -0.045976302642650325,
-             0.051255608271147994,
-             0.034388533914805564,
-            -0.04860915176763406 ,
-            -0.028618056518859694,
-             0.0638059770695411  ,
-             0.026210246880102494,
-            -0.10561260475332916 ,
-            -0.02513677797909965 ,
-             0.31808060627391516 ,
-             0.5248453669154755  ,
-             0.31808060627391516 ,
-            -0.02513677797909965 ,
-            -0.10561260475332916 ,
-             0.026210246880102494,
-             0.0638059770695411  ,
-            -0.028618056518859694,
-            -0.04860915176763406 ,
-             0.034388533914805564,
-             0.051255608271147994,
-            -0.045976302642650325,
-            -0.11748111512342249 ,
-            -0.08770413353311607 ,
-            -0.01654595705000902
-        },
-    },
-    [FILTER_PASS_CHAN1BIT1] = {
-        /* 0-2025 @ -40dB, 2225-4000 @ 5dB */
-        .ident = FILTER_PASS_CHAN1BIT1,
-        .tapcount = 27,
-        .taps = (double[27]){
-             0.005472740676860831,
-             0.03781488450013161 ,
-            -0.09564512295954505 ,
-             0.10700885312619667 ,
-            -0.035194366899678114,
-            -0.048757540371237286,
-             0.041682377843163136,
-             0.039207943370985085,
-            -0.05875537652787179 ,
-            -0.03738940517364874 ,
-             0.10234685326134665 ,
-             0.037320497823454785,
-            -0.31692893414600143 ,
-             0.4625867092276224  ,
-            -0.31692893414600143 ,
-             0.037320497823454785,
-             0.10234685326134665 ,
-            -0.03738940517364874 ,
-            -0.05875537652787179 ,
-             0.039207943370985085,
-             0.041682377843163136,
-            -0.048757540371237286,
-            -0.035194366899678114,
-             0.10700885312619667 ,
-            -0.09564512295954505 ,
-             0.03781488450013161 ,
-             0.005472740676860831
-        },
-    },
-};
-
-// The following functions mangled from sources produced by
-// http://t-filter.appspot.com/fir/index.html
-struct filter_state *filter_create(enum filter_ident which) {
-    if (which <= FILTER_invalid || which >= FILTER_max) {
+// Adapted from // dspUtils-10.js // Dr A.R.Collins <http://www.arc.id.au/>
+/*
+ * This function calculates Kaiser windowed
+ * FIR filter coefficients for a single passband
+ * based on
+ * "DIGITAL SIGNAL PROCESSING, II" IEEE Press pp 123-126.
+ *
+ * Fs=Sampling frequency
+ * Fa=Low freq ideal cut off (0=low pass)
+ * Fb=High freq ideal cut off (Fs/2=high pass)
+ * Att=Minimum stop band attenuation (>21dB)
+ * M=Number of points in filter (ODD number)
+ * H[] holds the output coefficients (they are symetric only half generated)
+ */
+struct filter_state *filter_create(enum filter_type type, double cutoff, unsigned M, unsigned Fs, double Att)
+{
+    double Fa = cutoff, Fb = cutoff;
+    if (type == FILTER_TYPE_LOW_PASS) {
+        Fa = 0;
+    } else if (type == FILTER_TYPE_HIGH_PASS) {
+        Fb = (double)Fs / 2;
+    } else {
         errno = EINVAL;
         return NULL;
     }
 
-    struct filter_state *s = malloc(sizeof *s);
-    const struct filter_entry *e = s->entry = &filters[which];
-    s->history = malloc(e->tapcount * sizeof *e->taps);
-    for (int i = 0; i < e->tapcount; i++)
-        s->history[i] = 0;
+    if (M % 2 == 0 || M > 1024) { // arbitrary upper limit
+        errno = EINVAL;
+        return NULL;
+    }
 
+    int Np = (M - 1) / 2;
+    double A[Np + 1];
+
+    // Calculate the impulse response of the ideal filter
+    A[0] = 2 * (Fb - Fa) / Fs;
+    for (int j = 1; j <= Np; j++) {
+        A[j] = (sin(2 * j * M_PI * Fb / Fs) - sin(2 * j * M_PI * Fa / Fs)) / (j * M_PI);
+    }
+
+    // Calculate the desired shape factor for the Kaiser - Bessel window
+    double Alpha;
+    if (Att < 21) {
+        Alpha = 0;
+    } else if (Att > 50) {
+        Alpha = 0.1102 * (Att - 8.7);
+    } else {
+        Alpha = 0.5842 * pow((Att - 21), 0.4) + 0.07886 * (Att - 21);
+    }
+
+    // Window the ideal response with the Kaiser - Bessel window
+    double Inoalpha = j0(Alpha);
+    double *H = malloc(M * sizeof *H);
+    for (int j = 0; j <= Np; j++) {
+        H[Np + j] = A[j] * j0(Alpha * sqrt(1 - ((double)j * j / (Np * Np)))) / Inoalpha;
+    }
+
+    for (int j = 0; j < Np; j++) {
+        H[j] = H[M - 1 - j];
+    }
+
+    struct filter_state *s = malloc(sizeof *s);
+    struct filter_entry *e = s->entry = malloc(sizeof *e);
+    // depends on IEEE-754-like zeros
+    s->history = calloc((e->tapcount = M), sizeof *s->history);
     s->last_index = 0;
+    e->tapcount = M;
+    e->taps = H;
 
     return s;
 }
@@ -254,6 +103,9 @@ double filter_get(struct filter_state *s) {
 }
 
 void filter_destroy(struct filter_state *s) {
+    struct filter_entry *e = s->entry;
+    free(e->taps);
+    free(e);
     free(s->history);
     free(s);
 }
