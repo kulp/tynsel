@@ -11,7 +11,5 @@
 #define debug_nl(...)
 #endif
 
-#define countof(X) (sizeof (X) / sizeof (X)[0])
-
 #endif
 
