@@ -29,49 +29,39 @@ struct filter_state {
 struct filter_state *filter_create(enum filter_type type, double cutoff, unsigned M, unsigned Fs, double Att)
 {
     double Fa = cutoff, Fb = cutoff;
-    if (type == FILTER_TYPE_LOW_PASS) {
+    if (type == FILTER_TYPE_LOW_PASS)
         Fa = 0;
-    } else if (type == FILTER_TYPE_HIGH_PASS) {
+    else if (type == FILTER_TYPE_HIGH_PASS)
         Fb = (double)Fs / 2;
-    } else {
-        errno = EINVAL;
-        return NULL;
-    }
+    else
+        goto badparams;
 
-    if (M % 2 == 0 || M > 1024) { // arbitrary upper limit
-        errno = EINVAL;
-        return NULL;
-    }
+    if (M % 2 == 0 || M > 1024) // arbitrary upper limit
+        goto badparams;
 
-    int Np = (M - 1) / 2;
-    double A[Np + 1];
-
-    // Calculate the impulse response of the ideal filter
-    A[0] = 2 * (Fb - Fa) / Fs;
-    for (int j = 1; j <= Np; j++) {
-        A[j] = (sin(2 * j * M_PI * Fb / Fs) - sin(2 * j * M_PI * Fa / Fs)) / (j * M_PI);
-    }
-
-    // Calculate the desired shape factor for the Kaiser - Bessel window
-    double Alpha;
-    if (Att < 21) {
-        Alpha = 0;
-    } else if (Att > 50) {
-        Alpha = 0.1102 * (Att - 8.7);
-    } else {
-        Alpha = 0.5842 * pow((Att - 21), 0.4) + 0.07886 * (Att - 21);
-    }
-
-    // Window the ideal response with the Kaiser - Bessel window
-    double Inoalpha = j0(Alpha);
     double *H = malloc(M * sizeof *H);
-    for (int j = 0; j <= Np; j++) {
-        H[Np + j] = A[j] * j0(Alpha * sqrt(1 - ((double)j * j / (Np * Np)))) / Inoalpha;
+    int Np = (M - 1) / 2;
+    { // scope for VLA
+        double A[Np + 1];
+
+        // Calculate the impulse response of the ideal filter
+        A[0] = 2 * (Fb - Fa) / Fs;
+        for (int j = 1; j <= Np; j++)
+            A[j] = (sin(2 * j * M_PI * Fb / Fs) - sin(2 * j * M_PI * Fa / Fs)) / (j * M_PI);
+
+        // Calculate the desired shape factor for the Kaiser - Bessel window
+        double Alpha = Att < 21 ? 0
+                     : Att > 50 ? 0.1102 * (Att - 8.7)
+                     : 0.5842 * pow((Att - 21), 0.4) + 0.07886 * (Att - 21);
+
+        // Window the ideal response with the Kaiser - Bessel window
+        double Inoalpha = j0(Alpha);
+        for (int j = 0; j <= Np; j++)
+            H[Np + j] = A[j] * j0(Alpha * sqrt(1 - ((double)j * j / (Np * Np)))) / Inoalpha;
     }
 
-    for (int j = 0; j < Np; j++) {
+    for (int j = 0; j < Np; j++)
         H[j] = H[M - 1 - j];
-    }
 
     struct filter_state *s = malloc(sizeof *s);
     struct filter_entry *e = s->entry = malloc(sizeof *e);
@@ -82,6 +72,9 @@ struct filter_state *filter_create(enum filter_type type, double cutoff, unsigne
     e->taps = H;
 
     return s;
+badparams:
+    errno = EINVAL;
+    return NULL;
 }
 
 void filter_put(struct filter_state *s, double input) {

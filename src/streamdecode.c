@@ -89,7 +89,7 @@ static int state_update(struct stream_state *s)
 {
     double perbit = SAMPLES_PER_BIT(&s->as);
     int level = s->energy[1] > s->energy[0];
-    int charbits = s->as.start_bits + 
+    int charbits = s->as.start_bits +
                    s->as.data_bits +
                    s->as.parity_bits +
                    s->as.stop_bits;
