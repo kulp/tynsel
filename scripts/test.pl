@@ -35,8 +35,8 @@ for my $trial (1 .. $trials) {
 
     my @bytes = map { int rand 256 } 1 .. $length;
     system("./gen -s $rate -o $fname $genopts @bytes");
-    my @lines = (qx(./fft -s $rate $fname.wav 2> /dev/null))[0 .. scalar $#bytes];
-    chomp, s/^.*= //, $_ = hex $_ for @lines;
+    my @lines = (qx(./suite 0 $fname 2> /dev/null))[0 .. scalar $#bytes];
+    chomp, s/^char '.' \((\d+)\)/$1/ for @lines;
     check(\@lines, \@bytes);
 }
 
