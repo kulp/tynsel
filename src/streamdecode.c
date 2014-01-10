@@ -191,7 +191,7 @@ static int state_update(struct stream_state *s)
             break;
         default:
             // TODO handle error cases
-            break;
+            return -1;
     }
 
     s->levhist = level;
@@ -222,7 +222,8 @@ int streamdecode_process(struct stream_state *s, size_t count, double samples[co
 
         // drop the first WINDOW_SIZE samples to make energy readings meaningful
         if (s->gbltick > window_size)
-            state_update(s);
+            if (state_update(s))
+                return -1;
     }
 
     return 0;
