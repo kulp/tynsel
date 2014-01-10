@@ -114,29 +114,22 @@ static int state_update(struct stream_state *s)
                    s->as.data_bits +
                    s->as.parity_bits +
                    s->as.stop_bits;
+    int have_edge = s->levhist == 1 && level == 0;
 
     switch (s->state) {
         case STATE_NOSYNC:
             // a START edge requires at least CHARBITS ticks of ONE followed by ZERO
-            // TODO robustify edge detection ; discard spurious edges
-            if (s->tick < (charbits * perbit)) {
-                if (level == 0)
-                    s->tick = 0; // reset tick counter so we count only strings of ONE
-            } else if (s->levhist == 1 && level == 0) {
-                s->state    = STATE_START;
-                s->tick     = 0;
-                s->bitcount = 0;
-                s->charac   = 0;
-                s->parity   = 0;
-            }
-            break;
+            if (s->tick < (charbits * perbit)) // FALLTHROUGH
         case STATE_BSYNC:
             // a START edge requires at least STOPBITS ticks of ONE followed by ZERO
             // TODO robustify edge detection ; discard spurious edges
             if (s->tick < (s->as.stop_bits * perbit)) {
                 if (level == 0)
                     s->tick = 0; // reset tick counter so we count only strings of ONE
-            } else if (s->levhist == 1 && level == 0) {
+                have_edge = 0;
+            }
+
+            if (have_edge) {
                 s->state    = STATE_START;
                 s->tick     = 0;
                 s->bitcount = 0;
