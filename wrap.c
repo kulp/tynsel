@@ -5,6 +5,8 @@
 const int SAMPLE_RATE = 8000;
 const int FREQUENCY = 1270;
 
+#define TABLE_SIZE 64
+
 #define DATA_TYPE uint16_t
 #define PHASE_TYPE uint16_t
 #define PHASE_FRACTION_BITS 8
@@ -15,19 +17,19 @@ const int FREQUENCY = 1270;
 #define CAT(X,Y) CAT_(X,Y)
 #define CAT_(X,Y) X ## Y
 
-DATA_TYPE get_sample(PHASE_TYPE *phase, PHASE_TYPE step, const DATA_TYPE sines[64])
+DATA_TYPE get_sample(PHASE_TYPE *phase, PHASE_TYPE step, const DATA_TYPE sines[TABLE_SIZE])
 {
     uint8_t top = *phase >> PHASE_FRACTION_BITS;
     DATA_TYPE  half    = (top & (1 << 7)) ? -1 : 0;
     PHASE_TYPE quarter = (top & (1 << 6)) ? -1 : 0;
-    uint8_t lookup = (top ^ quarter) & ((1 << 6) - 1);
+    uint8_t lookup = (top ^ quarter) % TABLE_SIZE;
 
     *phase += step;
 
     return sines[lookup] ^ half;
 }
 
-void run(int samples, DATA_TYPE output[samples], const DATA_TYPE sines[64])
+void run(int samples, DATA_TYPE output[samples], const DATA_TYPE sines[TABLE_SIZE])
 {
     PHASE_TYPE phase = 0;
     const PHASE_TYPE step = (1u << PHASE_FRACTION_BITS) * SAMPLE_RATE / FREQUENCY;
@@ -39,13 +41,13 @@ void run(int samples, DATA_TYPE output[samples], const DATA_TYPE sines[64])
 
 int main()
 {
-    DATA_TYPE sines[64];
+    DATA_TYPE sines[TABLE_SIZE];
 
-    for (int i = 0; i < 64; i++) {
+    for (int i = 0; i < TABLE_SIZE; i++) {
         sines[i] = (sinf(2 * M_PI * (i + 0.5) / 256) - 1) * (CAT(DATA_TYPE,MAX) / 2) - 1;
     }
 
-    const int samples = 64 * 8;
+    const int samples = TABLE_SIZE * 8;
     DATA_TYPE output[samples];
 
     run(samples, output, sines);
