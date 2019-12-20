@@ -6,11 +6,12 @@
 const int SAMPLE_RATE = 8000;
 const int FREQUENCY = 1270;
 
-uint16_t get_sample(uint8_t *phase, uint8_t step, const uint16_t sines[64])
+uint16_t get_sample(uint16_t *phase, uint16_t step, const uint16_t sines[64])
 {
-    bool half    = *phase & (1 << 7);
-    bool quarter = *phase & (1 << 6);
-    uint8_t lookup = (*phase ^ -quarter) & ((1 << 6) - 1);
+    uint8_t top = *phase >> 8;
+    bool half    = top & (1 << 7);
+    bool quarter = top & (1 << 6);
+    uint8_t lookup = (top ^ -quarter) & ((1 << 6) - 1);
 
     *phase += step;
 
@@ -19,8 +20,8 @@ uint16_t get_sample(uint8_t *phase, uint8_t step, const uint16_t sines[64])
 
 void run(int samples, uint16_t output[samples], const uint16_t sines[64])
 {
-    uint8_t phase = 0;
-    const uint8_t step = SAMPLE_RATE / FREQUENCY;
+    uint16_t phase = 0;
+    const uint16_t step = 256u * SAMPLE_RATE / FREQUENCY;
 
     for (int i = 0; i < samples; i++) {
         output[i] = get_sample(&phase, step, sines);
