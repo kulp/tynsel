@@ -7,10 +7,12 @@ const int SAMPLE_RATE = 8000;
 const int FREQUENCY = 1270;
 
 #define DATA_TYPE uint16_t
+#define PHASE_TYPE uint16_t
+#define PHASE_FRACTION_BITS 8
 
-DATA_TYPE get_sample(uint16_t *phase, uint16_t step, const DATA_TYPE sines[64])
+DATA_TYPE get_sample(PHASE_TYPE *phase, PHASE_TYPE step, const DATA_TYPE sines[64])
 {
-    uint8_t top = *phase >> 8;
+    uint8_t top = *phase >> PHASE_FRACTION_BITS;
     bool half    = top & (1 << 7);
     bool quarter = top & (1 << 6);
     uint8_t lookup = (top ^ -quarter) & ((1 << 6) - 1);
@@ -22,8 +24,8 @@ DATA_TYPE get_sample(uint16_t *phase, uint16_t step, const DATA_TYPE sines[64])
 
 void run(int samples, DATA_TYPE output[samples], const DATA_TYPE sines[64])
 {
-    uint16_t phase = 0;
-    const uint16_t step = 256u * SAMPLE_RATE / FREQUENCY;
+    PHASE_TYPE phase = 0;
+    const PHASE_TYPE step = (1u << PHASE_FRACTION_BITS) * SAMPLE_RATE / FREQUENCY;
 
     for (int i = 0; i < samples; i++) {
         output[i] = get_sample(&phase, step, sines);
