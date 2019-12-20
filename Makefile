@@ -12,6 +12,8 @@ gen: LDLIBS += -lsndfile
 
 all: suite gen sip
 
+wrap: CFLAGS += -Os -fomit-frame-pointer
+
 INCLUDE += src src/recognisers
 vpath %.c src src/recognisers
 
