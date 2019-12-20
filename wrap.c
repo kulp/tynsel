@@ -6,26 +6,24 @@
 const int SAMPLE_RATE = 8000;
 const int FREQUENCY = 1270;
 
-void run(int samples, float output[samples], float sines[64])
+float get_sample(uint8_t *phase, uint8_t step, const float sines[64])
+{
+    bool half    = *phase & (1 << 7);
+    bool quarter = *phase & (1 << 6);
+    uint8_t lookup = (*phase ^ -quarter) & ((1 << 6) - 1);
+
+    *phase += step;
+
+    return sines[lookup] * (half ? -1 : 1);
+}
+
+void run(int samples, float output[samples], const float sines[64])
 {
     uint8_t phase = 0;
-    uint8_t step = SAMPLE_RATE / FREQUENCY;
+    const uint8_t step = SAMPLE_RATE / FREQUENCY;
 
     for (int i = 0; i < samples; i++) {
-        bool half    = phase & (1 << 7);
-        bool quarter = phase & (1 << 6);
-        uint8_t lookup = (phase ^ -quarter) & ((1 << 6) - 1);
-
-        float result = sines[lookup] * (half ? -1 : 1);
-
-#if 0
-        printf("half = %d, quarter = %d, lookup = %4hhd, phase = %4hhd, result = % f\n",
-                half, quarter, lookup, phase, result);
-#endif
-
-        output[i] = result;
-
-        phase += step;
+        output[i] = get_sample(&phase, step, sines);
     }
 }
 
