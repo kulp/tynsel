@@ -6,7 +6,9 @@
 const int SAMPLE_RATE = 8000;
 const int FREQUENCY = 1270;
 
-uint16_t get_sample(uint16_t *phase, uint16_t step, const uint16_t sines[64])
+#define DATA_TYPE uint16_t
+
+DATA_TYPE get_sample(uint16_t *phase, uint16_t step, const DATA_TYPE sines[64])
 {
     uint8_t top = *phase >> 8;
     bool half    = top & (1 << 7);
@@ -18,7 +20,7 @@ uint16_t get_sample(uint16_t *phase, uint16_t step, const uint16_t sines[64])
     return sines[lookup] ^ -half;
 }
 
-void run(int samples, uint16_t output[samples], const uint16_t sines[64])
+void run(int samples, DATA_TYPE output[samples], const DATA_TYPE sines[64])
 {
     uint16_t phase = 0;
     const uint16_t step = 256u * SAMPLE_RATE / FREQUENCY;
@@ -30,14 +32,14 @@ void run(int samples, uint16_t output[samples], const uint16_t sines[64])
 
 int main()
 {
-    uint16_t sines[64];
+    DATA_TYPE sines[64];
 
     for (int i = 0; i < 64; i++) {
         sines[i] = sinf(2 * M_PI * (i + 0.5) / 256) * INT16_MAX + INT16_MIN;
     }
 
     const int samples = 64 * 8;
-    uint16_t output[samples];
+    DATA_TYPE output[samples];
 
     run(samples, output, sines);
 
