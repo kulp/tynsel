@@ -1,5 +1,4 @@
 #include <math.h>
-#include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
 
@@ -19,13 +18,13 @@ const int FREQUENCY = 1270;
 DATA_TYPE get_sample(PHASE_TYPE *phase, PHASE_TYPE step, const DATA_TYPE sines[64])
 {
     uint8_t top = *phase >> PHASE_FRACTION_BITS;
-    bool half    = top & (1 << 7);
-    bool quarter = top & (1 << 6);
-    uint8_t lookup = (top ^ -quarter) & ((1 << 6) - 1);
+    DATA_TYPE  half    = (top & (1 << 7)) ? -1 : 0;
+    PHASE_TYPE quarter = (top & (1 << 6)) ? -1 : 0;
+    uint8_t lookup = (top ^ quarter) & ((1 << 6) - 1);
 
     *phase += step;
 
-    return sines[lookup] ^ -half;
+    return sines[lookup] ^ half;
 }
 
 void run(int samples, DATA_TYPE output[samples], const DATA_TYPE sines[64])
