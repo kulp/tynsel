@@ -10,6 +10,12 @@ const int FREQUENCY = 1270;
 #define PHASE_TYPE uint16_t
 #define PHASE_FRACTION_BITS 8
 
+#define uint16_tMAX UINT16_MAX
+#define  uint8_tMAX  UINT8_MAX
+
+#define CAT(X,Y) CAT_(X,Y)
+#define CAT_(X,Y) X ## Y
+
 DATA_TYPE get_sample(PHASE_TYPE *phase, PHASE_TYPE step, const DATA_TYPE sines[64])
 {
     uint8_t top = *phase >> PHASE_FRACTION_BITS;
@@ -37,7 +43,7 @@ int main()
     DATA_TYPE sines[64];
 
     for (int i = 0; i < 64; i++) {
-        sines[i] = sinf(2 * M_PI * (i + 0.5) / 256) * INT16_MAX + INT16_MIN;
+        sines[i] = (sinf(2 * M_PI * (i + 0.5) / 256) - 1) * (CAT(DATA_TYPE,MAX) / 2) - 1;
     }
 
     const int samples = 64 * 8;
@@ -46,7 +52,7 @@ int main()
     run(samples, output, sines);
 
     for (int i = 0; i < samples; i++) {
-        printf("samples[%3d] = % f\n", i, 2.0f * (float)(output[i] - INT16_MAX) / UINT16_MAX);
+        printf("samples[%3d] = % f\n", i, 2.0f * (float)(output[i] - CAT(DATA_TYPE,MAX) / 2) / CAT(DATA_TYPE,MAX));
     }
 }
 
