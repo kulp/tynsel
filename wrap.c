@@ -34,7 +34,7 @@ DATA_TYPE get_sample(PHASE_TYPE *phase, PHASE_TYPE step, const DATA_TYPE sines[T
 void run(int samples, DATA_TYPE output[samples], const DATA_TYPE sines[TABLE_SIZE])
 {
     PHASE_TYPE phase = 0;
-    const PHASE_TYPE step = (1u << PHASE_FRACTION_BITS) * SAMPLE_RATE / FREQUENCY;
+    const PHASE_TYPE step = (1u << PHASE_FRACTION_BITS) * 256u * FREQUENCY / SAMPLE_RATE;
 
     for (int i = 0; i < samples; i++) {
         output[i] = get_sample(&phase, step, sines);
