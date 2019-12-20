@@ -17,11 +17,13 @@ const int FREQUENCY = 1270;
 #define CAT(X,Y) CAT_(X,Y)
 #define CAT_(X,Y) X ## Y
 
+#define TEST_BIT(Word,Index) (((Word) & (1 << (Index))) ? -1 : 0)
+
 DATA_TYPE get_sample(PHASE_TYPE *phase, PHASE_TYPE step, const DATA_TYPE sines[TABLE_SIZE])
 {
     uint8_t top = *phase >> PHASE_FRACTION_BITS;
-    DATA_TYPE  half    = (top & (1 << 7)) ? -1 : 0;
-    PHASE_TYPE quarter = (top & (1 << 6)) ? -1 : 0;
+    DATA_TYPE  half    = TEST_BIT(top, 7);
+    PHASE_TYPE quarter = TEST_BIT(top, 6);
     uint8_t lookup = (top ^ quarter) % TABLE_SIZE;
 
     *phase += step;
