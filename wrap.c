@@ -5,13 +5,12 @@
 const int SAMPLE_RATE = 8000;
 const int FREQUENCY = 1270;
 
-#define TABLE_SIZE 64
-
 #define DATA_TYPE uint16_t
 #define PHASE_TYPE uint16_t
 #define PHASE_FRACTION_BITS 8
 
-#define MAJOR_PER_CYCLE 256u
+#define TABLE_SIZE 64u
+#define MAJOR_PER_CYCLE (TABLE_SIZE * 4)
 #define MINOR_PER_CYCLE (MAJOR_PER_CYCLE * (1 << (PHASE_FRACTION_BITS)))
 
 #define uint16_tMAX UINT16_MAX
@@ -49,7 +48,7 @@ int main()
     DATA_TYPE sines[TABLE_SIZE];
 
     for (int i = 0; i < TABLE_SIZE; i++) {
-        sines[i] = (sinf(2 * M_PI * (i + 0.5) / MAJOR_PER_CYCLE) - 1) * (CAT(DATA_TYPE,MAX) / 2) - 1;
+        quadrant[i] = (sinf(2 * M_PI * (i + 0.5) / MAJOR_PER_CYCLE) - 1) * (CAT(DATA_TYPE,MAX) / 2) - 1;
     }
 
     const int samples = TABLE_SIZE * 8;
