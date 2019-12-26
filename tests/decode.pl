@@ -30,6 +30,13 @@ while (<>) {
 
         if ($bit == 0) {
             # start bit, skip
+            if ($found != 0) {
+                warn "Start bit is not 0";
+                $byte = 0;
+                $bit = 0;
+                $edge = 0;
+                next;
+            }
         } elsif ($bit == 8) {
             # parity, skip
         } elsif ($bit > 8) {
@@ -46,6 +53,7 @@ while (<>) {
             printf "Byte : 0b%07b (`%s`)\n", $byte, chr $byte;
             $byte = 0;
             $bit = 0;
+            $edge = 0;
         } else {
             $bit++;
         }
