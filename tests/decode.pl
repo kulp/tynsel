@@ -51,10 +51,8 @@ while (<>) {
             $byte |= ($found << ($bit - 1));
         }
 
-        say "found $found";
-
         if ($bit >= 10) {
-            printf "Byte : 0b%07b (`%s`)\n", $byte, chr $byte;
+            print chr $byte;
             $byte = 0;
             $bit = 0;
             $edge = 0;
