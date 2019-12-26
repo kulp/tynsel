@@ -47,7 +47,7 @@ int main()
 {
     DATA_TYPE sines[TABLE_SIZE];
 
-    for (int i = 0; i < TABLE_SIZE; i++) {
+    for (unsigned int i = 0; i < TABLE_SIZE; i++) {
         quadrant[i] = (sinf(2 * M_PI * (i + 0.5) / MAJOR_PER_CYCLE) - 1) * (CAT(DATA_TYPE,MAX) / 2) - 1;
     }
 
