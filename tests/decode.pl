@@ -18,7 +18,7 @@ while (<>) {
     my $here = int;
     if ($bit == 0 && $here >= 0 && $last < 0) {
         if ($. - $edge < $bitwidth) {
-            die "found an edge at line $., sooner than expected (last edge was $edge)";
+            warn "found an edge at line $., sooner than expected (last edge was $edge)";
         }
         # found a positive-going edge
         $edge = $.;
@@ -41,7 +41,11 @@ while (<>) {
             # parity, skip
         } elsif ($bit > 8) {
             if ($found != 1) {
-                die "Stop bit was not 1";
+                warn "Stop bit was not 1";
+                $byte = 0;
+                $bit = 0;
+                $edge = 0;
+                next;
             }
         } else {
             $byte |= ($found << ($bit - 1));
