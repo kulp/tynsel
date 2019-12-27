@@ -16,14 +16,14 @@ struct state {
     signed char last;
     unsigned char bit;
     unsigned char byte;
-    unsigned inited:1;
+    bool inited;
 };
 
 static bool decode(struct state *s, int offset, int datum, int index, char *out)
 {
     do {
         if (! s->inited) {
-            s->inited = 1;
+            s->inited = true;
             break;
         }
 
