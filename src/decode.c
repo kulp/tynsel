@@ -4,7 +4,11 @@
 #define BITWIDTH 27 /* 8000 / 300 */
 #define THRESHOLD 0
 
+#ifdef __AVR__
+#define WARN(...) (void)(__VA_ARGS__)
+#else
 #define WARN(Fmt,...) fprintf(stderr, Fmt "\n", ##__VA_ARGS__)
+#endif
 
 struct state {
     int last;
@@ -93,7 +97,7 @@ int main(int argc, char *argv[])
             break;
 
         if (result != 1) {
-            perror("scanf");
+            WARN("scanf failed");
             exit(EXIT_FAILURE);
         }
 
