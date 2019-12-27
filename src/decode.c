@@ -1,3 +1,4 @@
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -18,7 +19,7 @@ struct state {
     unsigned inited:1;
 };
 
-static void decode(struct state *s, int offset, int datum, int index)
+static bool decode(struct state *s, int offset, int datum, int index, char *out)
 {
     do {
         if (! s->inited) {
@@ -64,11 +65,11 @@ static void decode(struct state *s, int offset, int datum, int index)
             }
 
             if (s->bit >= 10) {
-                putchar(s->byte);
+                *out = s->byte;
                 s->byte = 0;
                 s->bit = 0;
                 s->edge = 0;
-                break;
+                return true;
             } else {
                 s->bit++;
             }
@@ -78,13 +79,14 @@ static void decode(struct state *s, int offset, int datum, int index)
     } while (0);
 
     s->last = datum;
+    return false;
 }
 
-void decode_top(int offset, int datum)
+bool decode_top(int offset, int datum, char *out)
 {
     static struct state s = { 0 };
     static int index = 0;
-    decode(&s, offset, datum, index++);
+    return decode(&s, offset, datum, index++, out);
 }
 
 #ifndef __AVR__
@@ -108,7 +110,9 @@ int main(int argc, char *argv[])
             exit(EXIT_FAILURE);
         }
 
-        decode_top(offset, i);
+        char out = EOF;
+        if (decode_top(offset, i, &out))
+            putchar(out);
     }
 }
 #endif
