@@ -12,26 +12,27 @@
 #endif
 
 struct state {
+    int index;
     int edge;
     signed char last;
     unsigned char bit;
     unsigned char byte;
 };
 
-static bool decode(struct state *s, int offset, int datum, int index, char *out)
+static bool decode(struct state *s, int offset, int datum, char *out)
 {
     do {
         if (s->bit == 0 && datum >= THRESHOLD && s->last < THRESHOLD) {
-            if (s->edge && index - s->edge < BITWIDTH) {
-                WARN("found an edge at line %d, sooner than expected (last edge was %d)", index, s->edge);
+            if (s->edge && s->index - s->edge < BITWIDTH) {
+                WARN("found an edge at line %d, sooner than expected (last edge was %d)", s->index, s->edge);
             }
-            s->edge = index;
+            s->edge = s->index;
         }
 
         if (! s->edge)
             break;
 
-        if (s->edge + offset == index) {
+        if (s->edge + offset == s->index) {
             // sample here
             int found = datum >= 0 ? 0 : 1;
 
@@ -73,14 +74,14 @@ static bool decode(struct state *s, int offset, int datum, int index, char *out)
     } while (0);
 
     s->last = datum;
+    s->index++;
     return false;
 }
 
 bool decode_top(int offset, int datum, char *out)
 {
     static struct state s = { .last = THRESHOLD };
-    static int index = 0;
-    return decode(&s, offset, datum, index++, out);
+    return decode(&s, offset, datum, out);
 }
 
 #ifndef __AVR__
