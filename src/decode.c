@@ -87,6 +87,7 @@ void decode_top(int offset, int datum)
     decode(&s, offset, datum, index++);
 }
 
+#ifndef __AVR__
 int main(int argc, char *argv[])
 {
     if (argc != 2) {
@@ -110,3 +111,5 @@ int main(int argc, char *argv[])
         decode_top(offset, i);
     }
 }
+#endif
+
