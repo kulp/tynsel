@@ -7,8 +7,7 @@ CPPFLAGS += $(patsubst %,-D%,$(DEFINE))
 
 CFLAGS += -Wall -Wextra -Wunused
 
-gen: CPPFLAGS += -std=c99
-gen: LDLIBS += -lsndfile
+CPPFLAGS += -std=c99
 
 all: suite gen sip
 
@@ -19,6 +18,7 @@ vpath %.c src src/recognisers
 
 CPPFLAGS += $(patsubst %,-I%,$(INCLUDE))
 
+gen: LDLIBS += -lsndfile
 gen: encode.o audio.o
 
 suite: LDLIBS += -lsndfile
