@@ -18,8 +18,17 @@ struct state {
     unsigned char byte;
 };
 
-static bool decode(struct state *s, int offset, int datum, char *out)
+struct config {
+    unsigned char start_bits;
+    unsigned char data_bits;
+    unsigned char parity_bits;
+    unsigned char stop_bits;
+};
+
+static bool decode(const struct config *c, struct state *s, int offset, int datum, char *out)
 {
+    const unsigned char before_parity = c->start_bits + c->data_bits;
+    const unsigned char before_stop   = before_parity + c->parity_bits;
     do {
         if (s->bit == 0 && datum >= THRESHOLD && s->last < THRESHOLD) {
             s->off = offset;
@@ -32,8 +41,8 @@ static bool decode(struct state *s, int offset, int datum, char *out)
             // sample here
             int found = datum >= 0 ? 0 : 1;
 
-            if (s->bit == 0) {
-                // start bit
+            if (s->bit < c->start_bits) {
+                // start bit(s)
                 if (found != 0) {
                     WARN("Start bit is not 0");
                     s->byte = 0;
@@ -41,9 +50,9 @@ static bool decode(struct state *s, int offset, int datum, char *out)
                     s->off = -1;
                     break;
                 }
-            } else if (s->bit == 8) {
+            } else if (s->bit >= before_parity && s->bit < before_stop) {
                 // parity, skip
-            } else if (s->bit > 8) {
+            } else if (s->bit >= before_stop) {
                 if (found != 1) {
                     WARN("Stop bit was not 1");
                     s->byte = 0;
@@ -77,7 +86,13 @@ static bool decode(struct state *s, int offset, int datum, char *out)
 bool decode_top(int offset, int datum, char *out)
 {
     static struct state s = { .off = -1, .last = THRESHOLD };
-    return decode(&s, offset, datum, out);
+    static const struct config c = {
+        .start_bits  = 1,
+        .data_bits   = 7,
+        .parity_bits = 1,
+        .stop_bits   = 2,
+    };
+    return decode(&c, &s, offset, datum, out);
 }
 
 #ifndef __AVR__
