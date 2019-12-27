@@ -32,7 +32,7 @@ static bool decode(struct state *s, int offset, int datum, char *out)
         if (! s->edge)
             break;
 
-        if (s->edge + offset == s->index) {
+        if (s->index - s->edge == offset) {
             // sample here
             int found = datum >= 0 ? 0 : 1;
 
