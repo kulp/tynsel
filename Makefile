@@ -11,6 +11,16 @@ CPPFLAGS += -std=c99
 
 all: suite gen sip decode
 
+avr-%: ARCH_FLAGS += -mmcu=avrxmega3
+
+avr-%: CC = avr-gcc
+avr-%: LD = avr-gcc
+avr-%: CFLAGS += -Os $(ARCH_FLAGS)
+avr-%: LDFLAGS += $(ARCH_FLAGS)
+
+avr-%.o: %.c
+	$(COMPILE.c) -o $@ $<
+
 wrap: CFLAGS += -Os -fomit-frame-pointer
 
 INCLUDE += src src/recognisers
