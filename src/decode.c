@@ -11,8 +11,8 @@
 #endif
 
 struct state {
-    int last;
     int edge;
+    signed char last;
     unsigned char bit;
     unsigned char byte;
     unsigned inited:1;
