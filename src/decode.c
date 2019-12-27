@@ -14,6 +14,7 @@
 struct state {
     int index;
     int edge;
+    int off;
     signed char last;
     unsigned char bit;
     unsigned char byte;
@@ -24,12 +25,13 @@ static bool decode(struct state *s, int offset, int datum, char *out)
     do {
         if (s->bit == 0 && datum >= THRESHOLD && s->last < THRESHOLD) {
             s->edge = s->index;
+            s->off = offset;
         }
 
-        if (! s->edge)
+        if (s->off < 0)
             break;
 
-        if (s->index - s->edge == offset) {
+        if (s->off == 0) {
             // sample here
             int found = datum >= 0 ? 0 : 1;
 
@@ -40,6 +42,7 @@ static bool decode(struct state *s, int offset, int datum, char *out)
                     s->byte = 0;
                     s->bit = 0;
                     s->edge = 0;
+                    s->off = -1;
                     break;
                 }
             } else if (s->bit == 8) {
@@ -50,6 +53,7 @@ static bool decode(struct state *s, int offset, int datum, char *out)
                     s->byte = 0;
                     s->bit = 0;
                     s->edge = 0;
+                    s->off = -1;
                     break;
                 }
             } else {
@@ -61,23 +65,26 @@ static bool decode(struct state *s, int offset, int datum, char *out)
                 s->byte = 0;
                 s->bit = 0;
                 s->edge = 0;
+                s->off = -1;
                 return true;
             } else {
                 s->bit++;
             }
 
             s->edge += BITWIDTH;
+            s->off = BITWIDTH;
         }
     } while (0);
 
     s->last = datum;
     s->index++;
+    s->off--;
     return false;
 }
 
 bool decode_top(int offset, int datum, char *out)
 {
-    static struct state s = { .last = THRESHOLD };
+    static struct state s = { .off = -1, .last = THRESHOLD };
     return decode(&s, offset, datum, out);
 }
 
