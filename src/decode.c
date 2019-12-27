@@ -4,6 +4,8 @@
 #define BITWIDTH 27 /* 8000 / 300 */
 #define THRESHOLD 0
 
+#define WARN(Fmt,...) fprintf(stderr, Fmt "\n", ##__VA_ARGS__)
+
 struct state {
     int last;
     int edge;
@@ -22,7 +24,7 @@ static void decode(struct state *s, int offset, int datum, int index)
 
         if (s->bit == 0 && datum >= THRESHOLD && s->last < THRESHOLD) {
             if (s->edge > 0 && index - s->edge < BITWIDTH) {
-                fprintf(stderr, "found an edge at line %d, sooner than expected (last edge was %d)\n", index, s->edge);
+                WARN("found an edge at line %d, sooner than expected (last edge was %d)", index, s->edge);
             }
             s->edge = index;
         }
@@ -37,7 +39,7 @@ static void decode(struct state *s, int offset, int datum, int index)
             if (s->bit == 0) {
                 // start bit
                 if (found != 0) {
-                    fprintf(stderr, "Start bit is not 0\n");
+                    WARN("Start bit is not 0");
                     s->byte = 0;
                     s->bit = 0;
                     s->edge = 0;
@@ -47,7 +49,7 @@ static void decode(struct state *s, int offset, int datum, int index)
                 // parity, skip
             } else if (s->bit > 8) {
                 if (found != 1) {
-                    fprintf(stderr, "Stop bit was not 1\n");
+                    WARN("Stop bit was not 1");
                     s->byte = 0;
                     s->bit = 0;
                     s->edge = 0;
@@ -75,7 +77,7 @@ static void decode(struct state *s, int offset, int datum, int index)
 int main(int argc, char *argv[])
 {
     if (argc != 2) {
-        fprintf(stderr, "Supply a offset (in samples) from the start bit edge as the first argument\n");
+        WARN("Supply a offset (in samples) from the start bit edge as the first argument");
         exit(EXIT_FAILURE);
     }
 
