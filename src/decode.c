@@ -12,7 +12,7 @@
 #endif
 
 struct state {
-    int off;
+    signed char off;
     signed char last;
     unsigned char bit;
     unsigned char byte;
