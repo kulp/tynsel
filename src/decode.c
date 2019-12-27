@@ -23,9 +23,6 @@ static bool decode(struct state *s, int offset, int datum, char *out)
 {
     do {
         if (s->bit == 0 && datum >= THRESHOLD && s->last < THRESHOLD) {
-            if (s->edge && s->index - s->edge < BITWIDTH) {
-                WARN("found an edge at line %d, sooner than expected (last edge was %d)", s->index, s->edge);
-            }
             s->edge = s->index;
         }
 
