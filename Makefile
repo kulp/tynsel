@@ -9,7 +9,7 @@ CFLAGS += -Wall -Wextra -Wunused
 
 CPPFLAGS += -std=c99
 
-all: suite gen sip
+all: suite gen sip decode
 
 wrap: CFLAGS += -Os -fomit-frame-pointer
 
