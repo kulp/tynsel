@@ -9,7 +9,7 @@ my $offset = shift
 my $bitwidth = 27; # approximately (8000Hz)/(300 baud)
 
 my $last;
-my $edge = -$bitwidth;
+my $edge;
 my $bit = 0;
 my $byte = 0;
 my $threshold = 0;
@@ -18,12 +18,14 @@ while (<>) {
     next unless defined $last;
     my $here = int;
     if ($bit == 0 && $here >= $threshold && $last < $threshold) {
-        if ($. - $edge < $bitwidth) {
+        if (defined $edge && $. - $edge < $bitwidth) {
             warn "found an edge at line $., sooner than expected (last edge was $edge)";
         }
         # found a positive-going edge
         $edge = $.;
     }
+
+    next unless defined $edge;
 
     if ($edge + $offset + $bit * $bitwidth == $.) {
         # sample here
