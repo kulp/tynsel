@@ -36,7 +36,7 @@ static void decode(struct state *s, int offset, int datum, int index)
         if (s->edge < 0)
             break;
 
-        if (s->edge + offset + s->bit * BITWIDTH == index) {
+        if (s->edge + offset == index) {
             // sample here
             int found = datum >= 0 ? 0 : 1;
 
@@ -72,6 +72,8 @@ static void decode(struct state *s, int offset, int datum, int index)
             } else {
                 s->bit++;
             }
+
+            s->edge += BITWIDTH;
         }
     } while (0);
 
