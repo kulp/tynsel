@@ -12,11 +12,12 @@ my $last;
 my $edge = -$bitwidth;
 my $bit = 0;
 my $byte = 0;
+my $threshold = 0;
 while (<>) {
     chomp;
     next unless defined $last;
     my $here = int;
-    if ($bit == 0 && $here >= 0 && $last < 0) {
+    if ($bit == 0 && $here >= $threshold && $last < $threshold) {
         if ($. - $edge < $bitwidth) {
             warn "found an edge at line $., sooner than expected (last edge was $edge)";
         }
