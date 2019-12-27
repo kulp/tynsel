@@ -78,6 +78,13 @@ static void decode(struct state *s, int offset, int datum, int index)
     s->last = datum;
 }
 
+void decode_top(int offset, int datum)
+{
+    static struct state s = { .edge = -1 };
+    static int index = 0;
+    decode(&s, offset, datum, index++);
+}
+
 int main(int argc, char *argv[])
 {
     if (argc != 2) {
@@ -87,9 +94,6 @@ int main(int argc, char *argv[])
 
     int offset = strtol(argv[1], NULL, 0);
 
-    struct state s = { .edge = -1 };
-
-    int index = 0;
     while (!feof(stdin)) {
         int i = 0;
         int result = scanf("%d", &i);
@@ -101,6 +105,6 @@ int main(int argc, char *argv[])
             exit(EXIT_FAILURE);
         }
 
-        decode(&s, offset, i, index++);
+        decode_top(offset, i);
     }
 }
