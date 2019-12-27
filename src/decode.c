@@ -12,8 +12,6 @@
 #endif
 
 struct state {
-    int index;
-    int edge;
     int off;
     signed char last;
     unsigned char bit;
@@ -24,7 +22,6 @@ static bool decode(struct state *s, int offset, int datum, char *out)
 {
     do {
         if (s->bit == 0 && datum >= THRESHOLD && s->last < THRESHOLD) {
-            s->edge = s->index;
             s->off = offset;
         }
 
@@ -41,7 +38,6 @@ static bool decode(struct state *s, int offset, int datum, char *out)
                     WARN("Start bit is not 0");
                     s->byte = 0;
                     s->bit = 0;
-                    s->edge = 0;
                     s->off = -1;
                     break;
                 }
@@ -52,7 +48,6 @@ static bool decode(struct state *s, int offset, int datum, char *out)
                     WARN("Stop bit was not 1");
                     s->byte = 0;
                     s->bit = 0;
-                    s->edge = 0;
                     s->off = -1;
                     break;
                 }
@@ -64,20 +59,17 @@ static bool decode(struct state *s, int offset, int datum, char *out)
                 *out = s->byte;
                 s->byte = 0;
                 s->bit = 0;
-                s->edge = 0;
                 s->off = -1;
                 return true;
             } else {
                 s->bit++;
             }
 
-            s->edge += BITWIDTH;
             s->off = BITWIDTH;
         }
     } while (0);
 
     s->last = datum;
-    s->index++;
     s->off--;
     return false;
 }
