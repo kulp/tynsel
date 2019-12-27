@@ -27,13 +27,13 @@ static void decode(struct state *s, int offset, int datum, int index)
         }
 
         if (s->bit == 0 && datum >= THRESHOLD && s->last < THRESHOLD) {
-            if (s->edge > 0 && index - s->edge < BITWIDTH) {
+            if (s->edge && index - s->edge < BITWIDTH) {
                 WARN("found an edge at line %d, sooner than expected (last edge was %d)", index, s->edge);
             }
             s->edge = index;
         }
 
-        if (s->edge < 0)
+        if (! s->edge)
             break;
 
         if (s->edge + offset == index) {
@@ -82,7 +82,7 @@ static void decode(struct state *s, int offset, int datum, int index)
 
 void decode_top(int offset, int datum)
 {
-    static struct state s = { .edge = -1 };
+    static struct state s = { 0 };
     static int index = 0;
     decode(&s, offset, datum, index++);
 }
