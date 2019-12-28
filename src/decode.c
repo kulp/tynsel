@@ -13,23 +13,23 @@
 #endif
 
 struct bits_state {
-    signed char off;
-    signed char last;
-    unsigned char bit;
-    unsigned char byte;
+    int8_t off;
+    int8_t last;
+    uint8_t bit;
+    uint8_t byte;
 };
 
 struct bits_config {
-    unsigned char start_bits;
-    unsigned char data_bits;
-    unsigned char parity_bits;
-    unsigned char stop_bits;
+    uint8_t start_bits;
+    uint8_t data_bits;
+    uint8_t parity_bits;
+    uint8_t stop_bits;
 };
 
 static bool decode(const struct bits_config *c, struct bits_state *s, int offset, int datum, char *out)
 {
-    const unsigned char before_parity = c->start_bits + c->data_bits;
-    const unsigned char before_stop   = before_parity + c->parity_bits;
+    const uint8_t before_parity = c->start_bits + c->data_bits;
+    const uint8_t before_stop   = before_parity + c->parity_bits;
     do {
         if (s->bit == 0 && datum >= THRESHOLD && s->last < THRESHOLD) {
             s->off = offset;
@@ -99,12 +99,12 @@ bool decode_top(int offset, int datum, char *out)
 struct rms_state {
     int *window;
     int sum;
-    unsigned char ptr;
+    uint8_t ptr;
     bool primed;
 };
 
 struct rms_config {
-    unsigned char window_size;
+    uint8_t window_size;
 };
 
 static bool rms(const struct rms_config *c, struct rms_state *s, int datum, int *out)
@@ -128,7 +128,7 @@ static bool rms(const struct rms_config *c, struct rms_state *s, int datum, int 
 
 // TODO rename -- we do not actually do the "root" part of RMS since it is
 // expensive and for our purposes unnecessary.
-bool rms_top(unsigned char window_size, int datum, int *out)
+bool rms_top(uint8_t window_size, int datum, int *out)
 {
     static int large[BITWIDTH]; // largest conceivable window size
     static struct rms_config c;
