@@ -11,12 +11,16 @@ typedef int16_t RMS_IN_DATA;
 typedef uint32_t RMS_OUT_DATA;
 typedef uint32_t RUNS_IN_DATA;
 typedef int8_t RUNS_OUT_DATA;
+typedef uint8_t DECODE_OUT_DATA;
 #else
 typedef int16_t RMS_IN_DATA;
 typedef uint32_t RMS_OUT_DATA;
 typedef uint32_t RUNS_IN_DATA;
 typedef int8_t RUNS_OUT_DATA;
+typedef uint8_t DECODE_OUT_DATA;
 #endif
+
+typedef RUNS_OUT_DATA DECODE_IN_DATA;
 
 #ifdef __AVR__
 #define WARN(...) (void)(__VA_ARGS__)
@@ -29,7 +33,7 @@ struct bits_state {
     int8_t off;
     int8_t last;
     uint8_t bit;
-    uint8_t byte;
+    DECODE_OUT_DATA byte;
 };
 
 struct bits_config {
@@ -39,7 +43,7 @@ struct bits_config {
     uint8_t stop_bits;
 };
 
-static bool decode(const struct bits_config *c, struct bits_state *s, int8_t offset, int8_t datum, char *out)
+static bool decode(const struct bits_config *c, struct bits_state *s, int8_t offset, DECODE_IN_DATA datum, DECODE_OUT_DATA *out)
 {
     const uint8_t before_parity = c->start_bits + c->data_bits;
     const uint8_t before_stop   = before_parity + c->parity_bits;
@@ -97,7 +101,7 @@ static bool decode(const struct bits_config *c, struct bits_state *s, int8_t off
     return false;
 }
 
-bool decode_top(int8_t offset, int8_t datum, char *out)
+bool decode_top(int8_t offset, DECODE_IN_DATA datum, DECODE_OUT_DATA *out)
 {
     static struct bits_state s = { .off = -1, .last = THRESHOLD };
     static const struct bits_config c = {
@@ -242,7 +246,7 @@ int decode_main(int argc, char *argv[])
             exit(EXIT_FAILURE);
         }
 
-        char out = EOF;
+        DECODE_OUT_DATA out = EOF;
         if (decode_top(offset, i, &out))
             putchar(out);
     }
