@@ -103,7 +103,7 @@ struct rms_state {
 };
 
 struct rms_config {
-    int window_size;
+    unsigned char window_size;
 };
 
 static bool rms(const struct rms_config *c, struct rms_state *s, int datum, int *out)
@@ -127,7 +127,7 @@ static bool rms(const struct rms_config *c, struct rms_state *s, int datum, int 
 
 // TODO rename -- we do not actually do the "root" part of RMS since it is
 // expensive and for our purposes unnecessary.
-bool rms_top(int window_size, int datum, int *out)
+bool rms_top(unsigned char window_size, int datum, int *out)
 {
     static int large[BITWIDTH]; // largest conceivable window size
     static struct rms_config c;
