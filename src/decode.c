@@ -1,4 +1,5 @@
 #include <stdbool.h>
+#include <stdint.h>
 #include <stdlib.h>
 
 #define BITWIDTH 27 /* 8000 / 300 */
