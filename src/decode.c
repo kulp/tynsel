@@ -40,11 +40,11 @@ static bool decode(const struct bits_config *c, struct bits_state *s, int8_t off
 
         if (s->off == 0) {
             // sample here
-            uint8_t found = datum >= 0 ? 0 : 1;
+            uint8_t this_bit = datum < 0;
 
             if (s->bit < c->start_bits) {
                 // start bit(s)
-                if (found != 0) {
+                if (this_bit != 0) {
                     WARN("Start bit is not 0");
                     s->byte = 0;
                     s->bit = 0;
@@ -54,7 +54,7 @@ static bool decode(const struct bits_config *c, struct bits_state *s, int8_t off
             } else if (s->bit >= before_parity && s->bit < before_stop) {
                 // parity, skip
             } else if (s->bit >= before_stop) {
-                if (found != 1) {
+                if (this_bit != 1) {
                     WARN("Stop bit was not 1");
                     s->byte = 0;
                     s->bit = 0;
@@ -62,7 +62,7 @@ static bool decode(const struct bits_config *c, struct bits_state *s, int8_t off
                     break;
                 }
             } else {
-                s->byte |= found << (s->bit - 1);
+                s->byte |= this_bit << (s->bit - 1);
             }
 
             if (s->bit >= 10) {
