@@ -96,7 +96,7 @@ bool decode_top(int offset, int datum, char *out)
 }
 
 #ifndef __AVR__
-int main(int argc, char *argv[])
+int decode_main(int argc, char *argv[])
 {
     if (argc != 2) {
         WARN("Supply a offset (in samples) from the start bit edge as the first argument");
@@ -120,6 +120,8 @@ int main(int argc, char *argv[])
         if (decode_top(offset, i, &out))
             putchar(out);
     }
+
+    return 0;
 }
 #endif
 

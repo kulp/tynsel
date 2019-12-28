@@ -21,6 +21,11 @@ avr-%: LDFLAGS += $(ARCH_FLAGS)
 avr-%.o: %.c
 	$(COMPILE.c) -o $@ $<
 
+decode.o: CPPFLAGS += -D$*_main=main
+
+decode.o: decode.c
+	$(COMPILE.c) -o $@ $<
+
 wrap: CFLAGS += -Os -fomit-frame-pointer
 
 INCLUDE += src src/recognisers
