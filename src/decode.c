@@ -9,9 +9,13 @@
 typedef int16_t RMS_IN_DATA;
 // Consider using __uint24 for RMS_OUT_DATA if possible (code size optimization)
 typedef uint32_t RMS_OUT_DATA;
+typedef uint32_t RUNS_IN_DATA;
+typedef int8_t RUNS_OUT_DATA;
 #else
 typedef int16_t RMS_IN_DATA;
 typedef uint32_t RMS_OUT_DATA;
+typedef uint32_t RUNS_IN_DATA;
+typedef int8_t RUNS_OUT_DATA;
 #endif
 
 #ifdef __AVR__
@@ -148,6 +152,45 @@ bool rms_top(uint8_t window_size, RMS_IN_DATA datum, RMS_OUT_DATA *out)
     return rms(&c, &s, datum, out);
 }
 
+struct runs_config {
+    int8_t threshold;
+};
+
+struct runs_state {
+    RUNS_OUT_DATA current;
+};
+
+static bool runs(const struct runs_config *c, struct runs_state *s, RUNS_IN_DATA da, RUNS_IN_DATA db, RUNS_OUT_DATA *out)
+{
+    int8_t inc = (da > db) ?  1 :
+                 (da < db) ? -1 :
+                              0 ;
+    s->current += inc;
+
+    const int8_t max =  c->threshold;
+    const int8_t min = -c->threshold;
+
+    if (s->current > max)
+        s->current = max;
+
+    if (s->current < min)
+        s->current = min;
+
+    *out = s->current;
+
+    return true;
+}
+
+bool runs_top(int8_t threshold, RUNS_IN_DATA da, RUNS_IN_DATA db, RUNS_OUT_DATA *out)
+{
+    static struct runs_config c = { .threshold = 0 };
+    static struct runs_state s = { .current = 0 };
+    if (! c.threshold)
+        c.threshold = threshold;
+
+    return runs(&c, &s, da, db, out);
+}
+
 #ifndef __AVR__
 #include <stdio.h>
 
@@ -202,6 +245,47 @@ int decode_main(int argc, char *argv[])
         char out = EOF;
         if (decode_top(offset, i, &out))
             putchar(out);
+    }
+
+    return 0;
+}
+
+int runs_main(int argc, char *argv[])
+{
+    if (argc != 4) {
+        WARN("Supply a threshold count as the first argument, followed by two filenames");
+        exit(EXIT_FAILURE);
+    }
+
+    int threshold = strtol(argv[1], NULL, 0);
+    FILE *fa = fopen(argv[2], "r");
+    FILE *fb = fopen(argv[3], "r");
+
+    while (!feof(fa) && !feof(fb)) {
+        RUNS_IN_DATA i = 0;
+        int result;
+        result = fscanf(fa, "%d", &i);
+        if (result == EOF)
+            break;
+
+        if (result != 1) {
+            WARN("scanf failed");
+            exit(EXIT_FAILURE);
+        }
+
+        RUNS_IN_DATA j = 0;
+        result = fscanf(fb, "%d", &j);
+        if (result == EOF)
+            break;
+
+        if (result != 1) {
+            WARN("scanf failed");
+            exit(EXIT_FAILURE);
+        }
+
+        RUNS_OUT_DATA out = 0;
+        if (runs_top(threshold, i, j, &out))
+            printf("%d\n", out);
     }
 
     return 0;

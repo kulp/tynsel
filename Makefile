@@ -22,9 +22,9 @@ avr-%: CFLAGS += -ffunction-sections
 avr-%.o: %.c
 	$(COMPILE.c) -o $@ $<
 
-decode.o rms.o: CPPFLAGS += -D$*_main=main
+decode.o rms.o runs.o: CPPFLAGS += -D$*_main=main
 
-decode.o rms.o: decode.c
+decode.o rms.o runs.o: decode.c
 	$(COMPILE.c) -o $@ $<
 
 wrap: CFLAGS += -Os -fomit-frame-pointer
