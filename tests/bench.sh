@@ -10,7 +10,10 @@ do
         do
             (
                 out=out/$rms_samples,$hysteresis,$offset
-                $here/instance.sh $rms_samples $hysteresis $offset 2> /dev/null > $out
+                if [[ ! -e $out ]] # assume existence implies previous completion
+                then
+                    $here/instance.sh $rms_samples $hysteresis $offset 2> /dev/null > $out
+                fi
             ) &
         done
         wait
