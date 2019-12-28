@@ -97,8 +97,8 @@ bool decode_top(int8_t offset, int8_t datum, char *out)
 }
 
 struct rms_state {
-    int *window;
-    int sum;
+    uint32_t *window;
+    uint32_t sum;
     uint8_t ptr;
     bool primed;
 };
@@ -107,7 +107,7 @@ struct rms_config {
     uint8_t window_size;
 };
 
-static bool rms(const struct rms_config *c, struct rms_state *s, int datum, int *out)
+static bool rms(const struct rms_config *c, struct rms_state *s, int16_t datum, uint32_t *out)
 {
     s->sum -= s->window[s->ptr];
     s->window[s->ptr] = datum * datum;
@@ -128,9 +128,9 @@ static bool rms(const struct rms_config *c, struct rms_state *s, int datum, int 
 
 // TODO rename -- we do not actually do the "root" part of RMS since it is
 // expensive and for our purposes unnecessary.
-bool rms_top(uint8_t window_size, int datum, int *out)
+bool rms_top(uint8_t window_size, int16_t datum, uint32_t *out)
 {
-    static int large[BITWIDTH]; // largest conceivable window size
+    static uint32_t large[BITWIDTH]; // largest conceivable window size
     static struct rms_config c;
     static struct rms_state s = { .window = large };
     if (! c.window_size)
@@ -162,7 +162,7 @@ int rms_main(int argc, char *argv[])
             exit(EXIT_FAILURE);
         }
 
-        int out = 0;
+        uint32_t out = 0;
         if (rms_top(n, i, &out))
             printf("%d\n", out);
     }
