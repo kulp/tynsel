@@ -11,21 +11,21 @@
 #define WARN(Fmt,...) fprintf(stderr, Fmt "\n", ##__VA_ARGS__)
 #endif
 
-struct state {
+struct bits_state {
     signed char off;
     signed char last;
     unsigned char bit;
     unsigned char byte;
 };
 
-struct config {
+struct bits_config {
     unsigned char start_bits;
     unsigned char data_bits;
     unsigned char parity_bits;
     unsigned char stop_bits;
 };
 
-static bool decode(const struct config *c, struct state *s, int offset, int datum, char *out)
+static bool decode(const struct bits_config *c, struct bits_state *s, int offset, int datum, char *out)
 {
     const unsigned char before_parity = c->start_bits + c->data_bits;
     const unsigned char before_stop   = before_parity + c->parity_bits;
@@ -85,8 +85,8 @@ static bool decode(const struct config *c, struct state *s, int offset, int datu
 
 bool decode_top(int offset, int datum, char *out)
 {
-    static struct state s = { .off = -1, .last = THRESHOLD };
-    static const struct config c = {
+    static struct bits_state s = { .off = -1, .last = THRESHOLD };
+    static const struct bits_config c = {
         .start_bits  = 1,
         .data_bits   = 7,
         .parity_bits = 1,
