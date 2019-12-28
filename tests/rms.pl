@@ -6,7 +6,8 @@ use feature 'say';
 use List::Util qw(sum);
 
 # First argument is window size, remainder are input files
-my $n = shift;
+my $n = shift
+    // die "Supply a window size (in samples) as the first argument";
 
 sub square ($) { $_[0] * $_[0] }
 
