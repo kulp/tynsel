@@ -40,7 +40,7 @@ static bool decode(const struct bits_config *c, struct bits_state *s, int8_t off
 
         if (s->off == 0) {
             // sample here
-            int found = datum >= 0 ? 0 : 1;
+            uint8_t found = datum >= 0 ? 0 : 1;
 
             if (s->bit < c->start_bits) {
                 // start bit(s)
