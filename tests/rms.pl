@@ -14,6 +14,6 @@ sub square ($) { $_[0] * $_[0] }
 my @list;
 while (<>) {
     push @list, int;
-    say sum map square($_), $list[-$n..-1] if $n <= scalar @list;
+    say sum map square($_), @list[-$n..-1] if $n <= scalar @list;
 }
 
