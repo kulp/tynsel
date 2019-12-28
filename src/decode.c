@@ -95,7 +95,79 @@ bool decode_top(int offset, int datum, char *out)
     return decode(&c, &s, offset, datum, out);
 }
 
+struct rms_state {
+    int *window;
+    int sum;
+    unsigned char ptr;
+    bool primed;
+};
+
+struct rms_config {
+    int window_size;
+};
+
+static bool rms(const struct rms_config *c, struct rms_state *s, int datum, int *out)
+{
+    s->sum -= s->window[s->ptr];
+    s->window[s->ptr] = datum * datum;
+    s->sum += s->window[s->ptr];
+
+    if (s->ptr == c->window_size - 1)
+        s->primed = true;
+
+    s->ptr++;
+    // Watch out -- the following line can be very cheap (with a power-of-two
+    // window_size) or very expensive
+    s->ptr %= c->window_size;
+
+    if (s->primed)
+        *out = s->sum;
+
+    return s->primed;
+}
+
+// TODO rename -- we do not actually do the "root" part of RMS since it is
+// expensive and for our purposes unnecessary.
+bool rms_top(int window_size, int datum, int *out)
+{
+    static int large[BITWIDTH]; // largest conceivable window size
+    static struct rms_config c;
+    static struct rms_state s = { .window = large };
+    if (! c.window_size)
+        c.window_size = window_size;
+
+    return rms(&c, &s, datum, out);
+}
+
 #ifndef __AVR__
+int rms_main(int argc, char *argv[])
+{
+    if (argc != 2) {
+        WARN("Supply a window size (in samples) as the first argument");
+        exit(EXIT_FAILURE);
+    }
+
+    int n = strtol(argv[1], NULL, 0);
+
+    while (!feof(stdin)) {
+        int i = 0;
+        int result = scanf("%d", &i);
+        if (result == EOF)
+            break;
+
+        if (result != 1) {
+            WARN("scanf failed");
+            exit(EXIT_FAILURE);
+        }
+
+        int out = 0;
+        if (rms_top(n, i, &out))
+            printf("%d\n", out);
+    }
+
+    return 0;
+}
+
 int decode_main(int argc, char *argv[])
 {
     if (argc != 2) {
