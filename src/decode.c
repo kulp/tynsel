@@ -115,10 +115,9 @@ static bool rms(const struct rms_config *c, struct rms_state *s, int datum, int 
     if (s->ptr == c->window_size - 1)
         s->primed = true;
 
-    s->ptr++;
-    // Watch out -- the following line can be very cheap (with a power-of-two
-    // window_size) or very expensive
-    s->ptr %= c->window_size;
+    // Avoid expensive modulo
+    if (++s->ptr >= c->window_size)
+        s->ptr = 0;
 
     if (s->primed)
         *out = s->sum;
