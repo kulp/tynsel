@@ -9,17 +9,16 @@
 typedef int16_t RMS_IN_DATA;
 // Consider using __uint24 for RMS_OUT_DATA if possible (code size optimization)
 typedef uint32_t RMS_OUT_DATA;
-typedef uint32_t RUNS_IN_DATA;
 typedef int8_t RUNS_OUT_DATA;
 typedef uint8_t DECODE_OUT_DATA;
 #else
 typedef int16_t RMS_IN_DATA;
 typedef uint32_t RMS_OUT_DATA;
-typedef uint32_t RUNS_IN_DATA;
 typedef int8_t RUNS_OUT_DATA;
 typedef uint8_t DECODE_OUT_DATA;
 #endif
 
+typedef RMS_OUT_DATA RUNS_IN_DATA;
 typedef RUNS_OUT_DATA DECODE_IN_DATA;
 
 #ifdef __AVR__
