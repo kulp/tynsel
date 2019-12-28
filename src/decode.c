@@ -123,6 +123,8 @@ struct rms_config {
     uint8_t window_size;
 };
 
+// TODO rename -- we do not actually do the "root" part of RMS since it is
+// expensive and for our purposes unnecessary.
 static bool rms(const struct rms_config *c, struct rms_state *s, RMS_IN_DATA datum, RMS_OUT_DATA *out)
 {
     s->sum -= s->window[s->ptr];
@@ -140,19 +142,6 @@ static bool rms(const struct rms_config *c, struct rms_state *s, RMS_IN_DATA dat
         *out = s->sum;
 
     return s->primed;
-}
-
-// TODO rename -- we do not actually do the "root" part of RMS since it is
-// expensive and for our purposes unnecessary.
-bool rms_top(uint8_t window_size, RMS_IN_DATA datum, RMS_OUT_DATA *out)
-{
-    static RMS_OUT_DATA large[BITWIDTH]; // largest conceivable window size
-    static struct rms_config c;
-    static struct rms_state s = { .window = large };
-    if (! c.window_size)
-        c.window_size = window_size;
-
-    return rms(&c, &s, datum, out);
 }
 
 struct runs_config {
@@ -206,6 +195,10 @@ int rms_main(int argc, char *argv[])
 
     int n = strtol(argv[1], NULL, 0);
 
+    RMS_OUT_DATA large[BITWIDTH] = { 0 }; // largest conceivable window size
+    struct rms_config c = { .window_size = n };
+    struct rms_state s = { .window = large };
+
     while (!feof(stdin)) {
         int i = 0;
         int result = scanf("%d", &i);
@@ -218,7 +211,7 @@ int rms_main(int argc, char *argv[])
         }
 
         RMS_OUT_DATA out = 0;
-        if (rms_top(n, i, &out))
+        if (rms(&c, &s, i, &out))
             printf("%d\n", out);
     }
 
