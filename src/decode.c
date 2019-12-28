@@ -44,8 +44,8 @@ struct bits_config {
 
 static bool decode(const struct bits_config *c, struct bits_state *s, int8_t offset, DECODE_IN_DATA datum, DECODE_OUT_DATA *out)
 {
-    const uint8_t before_parity = c->start_bits + c->data_bits;
-    const uint8_t before_stop   = before_parity + c->parity_bits;
+    const uint8_t before_parity = (uint8_t)(c->start_bits + c->data_bits);
+    const uint8_t before_stop   = (uint8_t)(before_parity + c->parity_bits);
     do {
         if (s->bit == 0 && datum >= THRESHOLD && s->last < THRESHOLD) {
             s->off = offset;
@@ -78,7 +78,7 @@ static bool decode(const struct bits_config *c, struct bits_state *s, int8_t off
                     break;
                 }
             } else {
-                s->byte |= this_bit << (s->bit - 1);
+                s->byte |= (DECODE_OUT_DATA)(this_bit << (s->bit - 1));
             }
 
             if (s->bit >= 10) {
@@ -126,7 +126,7 @@ struct rms_config {
 static bool rms(const struct rms_config *c, struct rms_state *s, RMS_IN_DATA datum, RMS_OUT_DATA *out)
 {
     s->sum -= s->window[s->ptr];
-    s->window[s->ptr] = datum * datum;
+    s->window[s->ptr] = (RMS_OUT_DATA)(datum * datum);
     s->sum += s->window[s->ptr];
 
     if (s->ptr == c->window_size - 1)
@@ -168,10 +168,10 @@ static bool runs(const struct runs_config *c, struct runs_state *s, RUNS_IN_DATA
     int8_t inc = (da > db) ?  1 :
                  (da < db) ? -1 :
                               0 ;
-    s->current += inc;
+    s->current = (RUNS_OUT_DATA)(s->current + inc);
 
-    const int8_t max =  c->threshold;
-    const int8_t min = -c->threshold;
+    const int8_t max = (int8_t) c->threshold;
+    const int8_t min = (int8_t)-c->threshold;
 
     if (s->current > max)
         s->current = max;
