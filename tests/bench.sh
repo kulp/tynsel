@@ -2,11 +2,11 @@
 set -euo pipefail
 here=$(dirname $0)
 
-for rms_samples in {4..6}
+for rms_samples in {9..11}
 do
-    for hysteresis in {4..6}
+    for hysteresis in {6..8}
     do
-        for offset in {9..15}
+        for offset in {14..16}
         do
             (
                 out=out/$rms_samples,$hysteresis,$offset
