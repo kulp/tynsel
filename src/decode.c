@@ -1,5 +1,4 @@
 #include <stdbool.h>
-#include <stdio.h>
 #include <stdlib.h>
 
 #define BITWIDTH 27 /* 8000 / 300 */
@@ -8,6 +7,7 @@
 #ifdef __AVR__
 #define WARN(...) (void)(__VA_ARGS__)
 #else
+#include <stdio.h>
 #define WARN(Fmt,...) fprintf(stderr, Fmt "\n", ##__VA_ARGS__)
 #endif
 
@@ -139,6 +139,8 @@ bool rms_top(unsigned char window_size, int datum, int *out)
 }
 
 #ifndef __AVR__
+#include <stdio.h>
+
 int rms_main(int argc, char *argv[])
 {
     if (argc != 2) {
