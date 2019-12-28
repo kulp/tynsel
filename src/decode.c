@@ -6,6 +6,15 @@
 #define THRESHOLD 0
 
 #ifdef __AVR__
+typedef int16_t RMS_IN_DATA;
+// Consider using __uint24 for RMS_OUT_DATA if possible (code size optimization)
+typedef uint32_t RMS_OUT_DATA;
+#else
+typedef int16_t RMS_IN_DATA;
+typedef uint32_t RMS_OUT_DATA;
+#endif
+
+#ifdef __AVR__
 #define WARN(...) (void)(__VA_ARGS__)
 #else
 #include <stdio.h>
@@ -97,8 +106,8 @@ bool decode_top(int8_t offset, int8_t datum, char *out)
 }
 
 struct rms_state {
-    uint32_t *window;
-    uint32_t sum;
+    RMS_OUT_DATA *window;
+    RMS_OUT_DATA sum;
     uint8_t ptr;
     bool primed;
 };
@@ -107,7 +116,7 @@ struct rms_config {
     uint8_t window_size;
 };
 
-static bool rms(const struct rms_config *c, struct rms_state *s, int16_t datum, uint32_t *out)
+static bool rms(const struct rms_config *c, struct rms_state *s, RMS_IN_DATA datum, RMS_OUT_DATA *out)
 {
     s->sum -= s->window[s->ptr];
     s->window[s->ptr] = datum * datum;
@@ -128,9 +137,9 @@ static bool rms(const struct rms_config *c, struct rms_state *s, int16_t datum, 
 
 // TODO rename -- we do not actually do the "root" part of RMS since it is
 // expensive and for our purposes unnecessary.
-bool rms_top(uint8_t window_size, int16_t datum, uint32_t *out)
+bool rms_top(uint8_t window_size, RMS_IN_DATA datum, RMS_OUT_DATA *out)
 {
-    static uint32_t large[BITWIDTH]; // largest conceivable window size
+    static RMS_OUT_DATA large[BITWIDTH]; // largest conceivable window size
     static struct rms_config c;
     static struct rms_state s = { .window = large };
     if (! c.window_size)
@@ -162,7 +171,7 @@ int rms_main(int argc, char *argv[])
             exit(EXIT_FAILURE);
         }
 
-        uint32_t out = 0;
+        RMS_OUT_DATA out = 0;
         if (rms_top(n, i, &out))
             printf("%d\n", out);
     }
