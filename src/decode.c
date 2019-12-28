@@ -26,7 +26,7 @@ struct bits_config {
     uint8_t stop_bits;
 };
 
-static bool decode(const struct bits_config *c, struct bits_state *s, int8_t offset, int datum, char *out)
+static bool decode(const struct bits_config *c, struct bits_state *s, int8_t offset, int8_t datum, char *out)
 {
     const uint8_t before_parity = c->start_bits + c->data_bits;
     const uint8_t before_stop   = before_parity + c->parity_bits;
@@ -84,7 +84,7 @@ static bool decode(const struct bits_config *c, struct bits_state *s, int8_t off
     return false;
 }
 
-bool decode_top(int8_t offset, int datum, char *out)
+bool decode_top(int8_t offset, int8_t datum, char *out)
 {
     static struct bits_state s = { .off = -1, .last = THRESHOLD };
     static const struct bits_config c = {
