@@ -5,12 +5,21 @@
 #define BITWIDTH 27 /* 8000 / 300 */
 #define THRESHOLD 0
 
-// TODO change FILTER_COEFF to fixed-point after proving algorithm
+#define COEFF_FRACTIONAL_BITS 14
+
+#if 0
 typedef float FILTER_COEFF;
 #define FILTER_COEFF_read(Arg) parse_coeff_float(Arg)
 #define FILTER_MULT(a, b) ((a) * (b))
-typedef int16_t FILTER_IN_DATA;
 typedef float FILTER_STATE_DATA;
+#else
+typedef int16_t FILTER_COEFF;
+typedef int16_t FILTER_STATE_DATA;
+#define FILTER_COEFF_read(Arg) parse_coeff_int16_t(Arg)
+#define FILTER_MULT(a, b) (((a) * (b)) >> COEFF_FRACTIONAL_BITS)
+#endif
+
+typedef int16_t FILTER_IN_DATA;
 typedef FILTER_IN_DATA FILTER_OUT_DATA;
 
 #ifdef __AVR__
@@ -229,10 +238,17 @@ static bool filter(const struct filter_config *c, struct filter_state *s, FILTER
 
 #ifndef __AVR__
 #include <stdio.h>
+#include <math.h>
 
 static float parse_coeff_float(const char *arg)
 {
     return strtof(arg, NULL);
+}
+
+static int16_t parse_coeff_int16_t(const char *arg)
+{
+    float entire = parse_coeff_float(arg);
+    return (int16_t)ldexpf(entire, COEFF_FRACTIONAL_BITS);
 }
 
 int filter_main(int argc, char *argv[])
@@ -256,7 +272,7 @@ int filter_main(int argc, char *argv[])
     *pa++ = FILTER_COEFF_read(*arg++);
     *pa++ = FILTER_COEFF_read(*arg++);
 
-    if (c.a[0] != 1) {
+    if (c.a[0] != FILTER_COEFF_read("1")) {
         WARN("A non-normalized filter is not supported");
         exit(EXIT_FAILURE);
     }
