@@ -4,6 +4,7 @@
 
 #define BITWIDTH 27 /* 8000 / 300 */
 #define THRESHOLD 0
+#define RMS_THRESHOLD 50000
 
 #define COEFF_FRACTIONAL_BITS 14
 
@@ -313,6 +314,9 @@ int top_main(int argc, char *argv[])
                 ! rms(&rms_config, &rms_states[0], f[0] - i, &ra)
             ||  ! rms(&rms_config, &rms_states[1], f[1] - i, &rb)
             )
+            continue;
+
+        if (ra < RMS_THRESHOLD || rb < RMS_THRESHOLD)
             continue;
 
         RUNS_OUT_DATA ro = 0;
