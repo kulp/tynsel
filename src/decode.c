@@ -198,7 +198,6 @@ struct filter_state {
     FILTER_IN_DATA in[3];
     FILTER_STATE_DATA out[3];
     uint8_t ptr;
-    bool primed;
 };
 
 static bool filter(const struct filter_config *c, struct filter_state *s, FILTER_IN_DATA datum, FILTER_OUT_DATA *out)
@@ -218,17 +217,13 @@ static bool filter(const struct filter_config *c, struct filter_state *s, FILTER
         - c->a[2] * INDEX(s->out, -2)
         ;
 
-    if (s->ptr == 2)
-        s->primed = true;
-
-    if (s->primed)
-        *out = (FILTER_OUT_DATA)s->out[s->ptr];
+    *out = (FILTER_OUT_DATA)s->out[s->ptr];
 
     ++s->ptr;
     if (s->ptr >= 3)
         s->ptr = 0;
 
-    return s->primed;
+    return true;
 }
 
 #ifndef __AVR__
