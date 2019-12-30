@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 here=$(dirname $0)
-zeros_file=$here/zeros.raw
-ones_file=$here/ones.raw
+zeros_file=$here/zeros.wav
+ones_file=$here/ones.wav
 
 DECODE=${DECODE:-$here/decode.pl}
 RMS=${RMS:-$here/rms.pl}
@@ -18,7 +18,7 @@ function textify ()
     perl -le 'local $/; print for map { unpack "s" } map { /\G(..)/gms } <>' "$@"
 }
 
-$RUNS $hysteresis <(textify $zeros_file | $RMS $rms_samples) <(textify $ones_file | $RMS $rms_samples) |
+$RUNS $hysteresis <(sox $zeros_file -t raw - | textify | $RMS $rms_samples) <(sox $ones_file -t raw - | textify | $RMS $rms_samples) |
     tail -n+$ignore_samples |
     $DECODE $offset
 
