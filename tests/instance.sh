@@ -18,8 +18,14 @@ function textify ()
     perl -le 'local $/; print for map { unpack "s" } map { /\G(..)/gms } <>' "$@"
 }
 
-function notch_1270 () { sox "$@" biquad 0.96172 -1.04336 0.96172 1.00000 -1.04336 0.92344; } # [b,a]=pei_tseng_notch(1270/4000,100/4000)
-function notch_1070 () { sox "$@" biquad 0.96153 -1.28304 0.96153 1.00000 -1.28304 0.92306; } # [b,a]=pei_tseng_notch(1070/4000,100/4000)
+function notch ()
+{
+    local notch_freq=${1?"Supply a notch frequency"}
+    local nyquist=$(( ${2:-8000} / 2 ))
+    local notch_width=${3:-100}
+
+    octave-cli --eval "pkg load signal; [b,a]=pei_tseng_notch($notch_freq/$nyquist,$notch_width/$nyquist); disp([b a])"
+}
 
 function invert () { sox "$@" vol -1; }
 
@@ -28,7 +34,7 @@ function pass_freq ()
     local freq=$1
     shift
     local input=$1
-    sox -m <(notch_$freq $input -p | invert -p -p) "$@"
+    sox -m <(sox $input -p biquad $(notch $freq) | invert -p -p) "$@"
 }
 
 $RUNS $hysteresis <(pass_freq 1070 $input_file -b 16 -t raw - | textify | $RMS $rms_samples) <(pass_freq 1270 $input_file -b 16 -t raw - | textify | $RMS $rms_samples) |
