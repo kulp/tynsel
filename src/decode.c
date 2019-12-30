@@ -216,8 +216,9 @@ static bool filter(const struct filter_config *c, struct filter_state *s, FILTER
 {
     s->in[s->ptr] = datum;
 
-    // TODO obviate expensive modulo
-    #define INDEX(x,n) (x)[(s->ptr + (n) + 3) % 3]
+    // Avoid expensive modulo
+    #define MOD(x,n) ((x) >= (n) ? (x) - (n) : (x))
+    #define INDEX(x,n) (x)[MOD(s->ptr + (n) + 3, 3)]
 
     s->out[s->ptr] = 0
         + FILTER_MULT(c->b[0], INDEX(s->in ,  0))
@@ -232,8 +233,7 @@ static bool filter(const struct filter_config *c, struct filter_state *s, FILTER
     *out = (FILTER_OUT_DATA)s->out[s->ptr];
 
     ++s->ptr;
-    if (s->ptr >= 3)
-        s->ptr = 0;
+    s->ptr = (uint8_t)MOD(s->ptr, 3);
 
     return true;
 }
