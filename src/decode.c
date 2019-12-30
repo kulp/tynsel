@@ -5,6 +5,12 @@
 #define BITWIDTH 27 /* 8000 / 300 */
 #define THRESHOLD 0
 
+// TODO change FILTER_COEFF to fixed-point after proving algorithm
+typedef float FILTER_COEFF;
+#define FILTER_COEFF_read(Arg) parse_coeff_float(Arg)
+typedef int16_t FILTER_IN_DATA;
+typedef float FILTER_OUT_DATA;
+
 #ifdef __AVR__
 typedef int16_t RMS_IN_DATA;
 // Consider using __uint24 for RMS_OUT_DATA if possible (code size optimization)
@@ -183,8 +189,101 @@ bool runs_top(int8_t threshold, RUNS_IN_DATA da, RUNS_IN_DATA db, RUNS_OUT_DATA 
     return runs(&c, &s, da, db, out);
 }
 
+struct filter_config {
+    FILTER_COEFF b[3], a[3];
+};
+
+struct filter_state {
+    FILTER_IN_DATA in[3];
+    FILTER_OUT_DATA out[3];
+    uint8_t ptr;
+    bool primed;
+};
+
+static bool filter(const struct filter_config *c, struct filter_state *s, FILTER_IN_DATA datum, FILTER_OUT_DATA *out)
+{
+    s->in[s->ptr] = datum;
+
+    // TODO obviate expensive modulo
+    #define INDEX(x,n) (x)[(s->ptr + (n) + 3) % 3]
+
+    s->out[s->ptr] = 0
+        + c->b[0] * INDEX(s->in ,  0)
+        + c->b[1] * INDEX(s->in , -1)
+        + c->b[2] * INDEX(s->in , -2)
+
+        // coefficient a0 is special, and does not appear here
+        - c->a[1] * INDEX(s->out, -1)
+        - c->a[2] * INDEX(s->out, -2)
+        ;
+
+    if (s->ptr == 2)
+        s->primed = true;
+
+    if (s->primed)
+        *out = s->out[s->ptr];
+
+    ++s->ptr;
+    if (s->ptr >= 3)
+        s->ptr = 0;
+
+    return s->primed;
+}
+
 #ifndef __AVR__
 #include <stdio.h>
+
+static float parse_coeff_float(const char *arg)
+{
+    return strtof(arg, NULL);
+}
+
+int filter_main(int argc, char *argv[])
+{
+    if (argc != 7) {
+        WARN("Supply six coefficients (b,b,b,a,a,a)");
+        exit(EXIT_FAILURE);
+    }
+
+    struct filter_config c = { };
+
+    char **arg = &argv[1];
+
+    FILTER_COEFF *pb = c.b;
+    *pb++ = FILTER_COEFF_read(*arg++);
+    *pb++ = FILTER_COEFF_read(*arg++);
+    *pb++ = FILTER_COEFF_read(*arg++);
+
+    FILTER_COEFF *pa = c.a;
+    *pa++ = FILTER_COEFF_read(*arg++);
+    *pa++ = FILTER_COEFF_read(*arg++);
+    *pa++ = FILTER_COEFF_read(*arg++);
+
+    if (c.a[0] != 1) {
+        WARN("A non-normalized filter is not supported");
+        exit(EXIT_FAILURE);
+    }
+
+    struct filter_state s = { };
+
+    while (!feof(stdin)) {
+        int i = 0;
+        int result = scanf("%d", &i);
+        if (result == EOF)
+            break;
+
+        if (result != 1) {
+            WARN("scanf failed");
+            exit(EXIT_FAILURE);
+        }
+
+        FILTER_OUT_DATA out = 0;
+        if (filter(&c, &s, i, &out))
+            printf("%f\n", out);
+    }
+
+    return 0;
+}
 
 int rms_main(int argc, char *argv[])
 {

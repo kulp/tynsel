@@ -23,9 +23,9 @@ avr-%: CFLAGS += -Werror=conversion
 avr-%.o: %.c
 	$(COMPILE.c) -o $@ $<
 
-decode.o rms.o runs.o: CPPFLAGS += -D$*_main=main
+decode.o filter.o rms.o runs.o: CPPFLAGS += -D$*_main=main
 
-decode.o rms.o runs.o: decode.c
+decode.o filter.o rms.o runs.o: decode.c
 	$(COMPILE.c) -o $@ $<
 
 wrap: CFLAGS += -Os -fomit-frame-pointer
