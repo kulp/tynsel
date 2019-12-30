@@ -19,6 +19,7 @@ avr-%: CFLAGS += -Os $(ARCH_FLAGS)
 avr-%: LDFLAGS += $(ARCH_FLAGS)
 avr-%: CFLAGS += -ffunction-sections
 avr-%: CFLAGS += -Werror=conversion
+avr-%: LDFLAGS += -nostdlib
 
 avr-%.o: %.c
 	$(COMPILE.c) -o $@ $<
