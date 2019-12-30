@@ -10,12 +10,14 @@
 #if 0
 typedef float FILTER_COEFF;
 #define FILTER_COEFF_read(Arg) parse_coeff_float(Arg)
+#define FILTER_COEFF_as_float(Arg) (Arg)
 #define FILTER_MULT(a, b) ((a) * (b))
 typedef float FILTER_STATE_DATA;
 #else
 typedef int16_t FILTER_COEFF;
 typedef int16_t FILTER_STATE_DATA;
 #define FILTER_COEFF_read(Arg) parse_coeff_int16_t(Arg)
+#define FILTER_COEFF_as_float(Arg) ldexpf(Arg, -COEFF_FRACTIONAL_BITS)
 #define FILTER_MULT(a, b) (((a) * (b)) >> COEFF_FRACTIONAL_BITS)
 #endif
 
@@ -276,6 +278,12 @@ int filter_main(int argc, char *argv[])
         WARN("A non-normalized filter is not supported");
         exit(EXIT_FAILURE);
     }
+
+    for (int i = 0; i < 3; i++)
+        fprintf(stderr, "b[%d] = %f\n", i, FILTER_COEFF_as_float(c.b[i]));
+
+    for (int i = 0; i < 3; i++)
+        fprintf(stderr, "a[%d] = %f\n", i, FILTER_COEFF_as_float(c.a[i]));
 
     struct filter_state s = { };
 
