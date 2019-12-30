@@ -23,7 +23,8 @@ function pass_freq ()
 {
     local freq=$1
     shift
-    local input=$1
-    sox -m <(sox $input -p biquad $(notch $freq) | invert -p -p) "$@"
+    local filter=${FILTER:-'sox $1 -t raw -e signed -r 8000 -b 16 - biquad'}
+    local post_filter=${POST_FILTER:-cat}
+    sox -m <(eval $filter $(notch $freq) | $post_filter | invert -t raw -e signed -r 8000 -b 16 - -p) "$@"
 }
 
