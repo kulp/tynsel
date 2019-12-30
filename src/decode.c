@@ -10,7 +10,7 @@ typedef float FILTER_COEFF;
 #define FILTER_COEFF_read(Arg) parse_coeff_float(Arg)
 typedef int16_t FILTER_IN_DATA;
 typedef float FILTER_STATE_DATA;
-typedef float FILTER_OUT_DATA;
+typedef FILTER_IN_DATA FILTER_OUT_DATA;
 
 #ifdef __AVR__
 typedef int16_t RMS_IN_DATA;
@@ -280,7 +280,7 @@ int filter_main(int argc, char *argv[])
 
         FILTER_OUT_DATA out = 0;
         if (filter(&c, &s, i, &out))
-            printf("%f\n", out);
+            printf("%d\n", out);
     }
 
     return 0;
