@@ -9,6 +9,7 @@
 typedef float FILTER_COEFF;
 #define FILTER_COEFF_read(Arg) parse_coeff_float(Arg)
 typedef int16_t FILTER_IN_DATA;
+typedef float FILTER_STATE_DATA;
 typedef float FILTER_OUT_DATA;
 
 #ifdef __AVR__
@@ -195,7 +196,7 @@ struct filter_config {
 
 struct filter_state {
     FILTER_IN_DATA in[3];
-    FILTER_OUT_DATA out[3];
+    FILTER_STATE_DATA out[3];
     uint8_t ptr;
     bool primed;
 };
@@ -221,7 +222,7 @@ static bool filter(const struct filter_config *c, struct filter_state *s, FILTER
         s->primed = true;
 
     if (s->primed)
-        *out = s->out[s->ptr];
+        *out = (FILTER_OUT_DATA)s->out[s->ptr];
 
     ++s->ptr;
     if (s->ptr >= 3)
