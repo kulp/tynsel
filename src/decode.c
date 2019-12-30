@@ -242,6 +242,91 @@ static bool filter(const struct filter_config *c, struct filter_state *s, FILTER
 #include <stdio.h>
 #include <math.h>
 
+int top_main(int argc, char *argv[])
+{
+    if (argc != 16) {
+        WARN("Supply summation window size, hysteresis, sample offset, and two pairs of six coefficients (b,b,b,a,a,a)");
+        exit(EXIT_FAILURE);
+    }
+
+    struct filter_config filter_config[2] = { };
+
+    char **arg = &argv[1];
+
+    int window_size = strtol(*arg++, NULL, 0);
+    int hysteresis = strtol(*arg++, NULL, 0);
+    int offset = strtol(*arg++, NULL, 0);
+
+    {
+        FILTER_COEFF *pb = filter_config[0].b;
+        *pb++ = FILTER_COEFF_read(*arg++);
+        *pb++ = FILTER_COEFF_read(*arg++);
+        *pb++ = FILTER_COEFF_read(*arg++);
+
+        FILTER_COEFF *pa = filter_config[0].a;
+        *pa++ = FILTER_COEFF_read(*arg++);
+        *pa++ = FILTER_COEFF_read(*arg++);
+        *pa++ = FILTER_COEFF_read(*arg++);
+    }
+
+    {
+        FILTER_COEFF *pb = filter_config[1].b;
+        *pb++ = FILTER_COEFF_read(*arg++);
+        *pb++ = FILTER_COEFF_read(*arg++);
+        *pb++ = FILTER_COEFF_read(*arg++);
+
+        FILTER_COEFF *pa = filter_config[1].a;
+        *pa++ = FILTER_COEFF_read(*arg++);
+        *pa++ = FILTER_COEFF_read(*arg++);
+        *pa++ = FILTER_COEFF_read(*arg++);
+    }
+
+    RMS_OUT_DATA large[2][BITWIDTH] = { }; // largest conceivable window size
+    struct rms_config rms_config = { .window_size = window_size };
+    struct rms_state rms_states[2] = {
+        { .window = large[0] },
+        { .window = large[1] },
+    };
+
+    struct filter_state filt_states[2] = { };
+
+    while (!feof(stdin)) {
+        int i = 0;
+        int result = scanf("%d", &i);
+        if (result == EOF)
+            break;
+
+        if (result != 1) {
+            WARN("scanf failed");
+            exit(EXIT_FAILURE);
+        }
+
+        FILTER_OUT_DATA f[2] = { };
+        if (
+                ! filter(&filter_config[0], &filt_states[0], i, &f[0])
+            ||  ! filter(&filter_config[1], &filt_states[1], i, &f[1])
+            )
+            continue;
+
+        RMS_OUT_DATA ra = 0, rb = 0;
+        if (
+                ! rms(&rms_config, &rms_states[0], f[0] - i, &ra)
+            ||  ! rms(&rms_config, &rms_states[1], f[1] - i, &rb)
+            )
+            continue;
+
+        RUNS_OUT_DATA ro = 0;
+        if (! runs_top(hysteresis, ra, rb, &ro))
+            continue;
+
+        DECODE_OUT_DATA out = EOF;
+        if (decode_top(offset, ro, &out))
+            putchar(out);
+    }
+
+    return 0;
+}
+
 int filter_main(int argc, char *argv[])
 {
     if (argc != 7) {
