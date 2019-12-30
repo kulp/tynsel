@@ -8,6 +8,7 @@
 // TODO change FILTER_COEFF to fixed-point after proving algorithm
 typedef float FILTER_COEFF;
 #define FILTER_COEFF_read(Arg) parse_coeff_float(Arg)
+#define FILTER_MULT(a, b) ((a) * (b))
 typedef int16_t FILTER_IN_DATA;
 typedef float FILTER_STATE_DATA;
 typedef FILTER_IN_DATA FILTER_OUT_DATA;
@@ -208,13 +209,13 @@ static bool filter(const struct filter_config *c, struct filter_state *s, FILTER
     #define INDEX(x,n) (x)[(s->ptr + (n) + 3) % 3]
 
     s->out[s->ptr] = 0
-        + c->b[0] * INDEX(s->in ,  0)
-        + c->b[1] * INDEX(s->in , -1)
-        + c->b[2] * INDEX(s->in , -2)
+        + FILTER_MULT(c->b[0], INDEX(s->in ,  0))
+        + FILTER_MULT(c->b[1], INDEX(s->in , -1))
+        + FILTER_MULT(c->b[2], INDEX(s->in , -2))
 
         // coefficient a0 is special, and does not appear here
-        - c->a[1] * INDEX(s->out, -1)
-        - c->a[2] * INDEX(s->out, -2)
+        - FILTER_MULT(c->a[1], INDEX(s->out, -1))
+        - FILTER_MULT(c->a[2], INDEX(s->out, -2))
         ;
 
     *out = (FILTER_OUT_DATA)s->out[s->ptr];
