@@ -19,12 +19,17 @@ function notch ()
 
 function invert () { sox "$@" vol -1; }
 
+function filter ()
+{
+    local file=$1
+    shift
+    sox $file -t raw -e signed -r 8000 -b 16 - biquad "$@"
+}
+
 function pass_freq ()
 {
     local freq=$1
     shift
-    local filter=${FILTER:-'sox $1 -t raw -e signed -r 8000 -b 16 - biquad'}
-    local post_filter=${POST_FILTER:-cat}
-    sox -m <(eval $filter $(notch $freq) | $post_filter | invert -t raw -e signed -r 8000 -b 16 - -p) "$@"
+    sox -m <(filter $1 $(notch $freq) | invert -t raw -e signed -r 8000 -b 16 - -p) "$@"
 }
 
