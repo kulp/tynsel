@@ -9,7 +9,7 @@ CFLAGS += -Wall -Wextra -Wunused
 
 CPPFLAGS += -std=c99
 
-all: suite gen sip decode
+all: suite gen sip
 
 avr-%: ARCH_FLAGS += -mmcu=attiny412
 
