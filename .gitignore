@@ -8,4 +8,5 @@ detect
 sip
 *.o
 pjtarget
+wrap
 *.d

@@ -9,7 +9,7 @@ CFLAGS += -Wall -Wextra -Wunused
 
 CPPFLAGS += -std=c99
 
-all: suite gen sip
+all: suite gen sip wrap
 
 avr-%: ARCH_FLAGS += -mmcu=attiny412
 
@@ -108,5 +108,5 @@ sip : DEFINE += SIP_DOMAIN='"$(SIP_DOMAIN)"' \
 -include $(patsubst %.c,%.d,$(notdir $(wildcard *.c src/recognisers/*.c src/*.c)))
 
 clean:
-	rm -f *.d *.o gen sip pjtarget suite
+	rm -f *.d *.o gen sip pjtarget suite wrap
 
