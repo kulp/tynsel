@@ -8,3 +8,4 @@ detect
 sip
 *.o
 pjtarget
+*.d

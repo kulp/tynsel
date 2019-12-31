@@ -102,6 +102,11 @@ sip : DEFINE += SIP_DOMAIN='"$(SIP_DOMAIN)"' \
                 STUN_SERVER='"$(STUN_SERVER)"' \
                 #
 
+%.d: %.c
+	@$(COMPILE.c) -MM -MG -MF $@ $<
+
+-include $(patsubst %.c,%.d,$(notdir $(wildcard *.c src/recognisers/*.c src/*.c)))
+
 clean:
-	rm -f *.o gen sip pjtarget suite
+	rm -f *.d *.o gen sip pjtarget suite
 
