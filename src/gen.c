@@ -144,6 +144,8 @@ int main(int argc, char* argv[])
     if (samples < 0)
         fprintf(stderr, "Error while encoding %zd bytes : %s\n", byte_count, strerror(errno));
 
+    encode_carrier(s, 20);
+
     for (int i = samples + s->index; i < s->length; i++)
         s->cb.put_samples(&s->audio, 1, &zero, s->cb.userdata);
 
