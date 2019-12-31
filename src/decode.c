@@ -43,9 +43,11 @@ typedef RUNS_OUT_DATA DECODE_IN_DATA;
 
 #ifdef __AVR__
 #define WARN(...) (void)(__VA_ARGS__)
+#include <avr/pgmspace.h>
 #else
 #include <stdio.h>
 #define WARN(Fmt,...) fprintf(stderr, Fmt "\n", ##__VA_ARGS__)
+#define PROGMEM
 #endif
 
 struct bits_state {
@@ -183,22 +185,23 @@ struct filter_state {
     uint8_t ptr;
 };
 
-static bool filter(const struct filter_config *c, struct filter_state *s, FILTER_IN_DATA datum, FILTER_OUT_DATA *out)
+static bool filter(const struct filter_config * PROGMEM c, struct filter_state *s, FILTER_IN_DATA datum, FILTER_OUT_DATA *out)
 {
     s->in[s->ptr] = datum;
 
     // Avoid expensive modulo
     #define MOD(x,n) ((x) >= (n) ? (x) - (n) : (x))
     #define INDEX(x,n) (x)[MOD(s->ptr + (n) + 3, 3)]
+    #define COEFF(Type,Index) (FILTER_COEFF)pgm_read_word(&c->Type[Index])
 
     s->out[s->ptr] = 0
-        + FILTER_MULT(c->b[0], INDEX(s->in ,  0))
-        + FILTER_MULT(c->b[1], INDEX(s->in , -1))
-        + FILTER_MULT(c->b[2], INDEX(s->in , -2))
+        + FILTER_MULT(COEFF(b, 0), INDEX(s->in ,  0))
+        + FILTER_MULT(COEFF(b, 1), INDEX(s->in , -1))
+        + FILTER_MULT(COEFF(b, 2), INDEX(s->in , -2))
 
         // coefficient a0 is special, and does not appear here
-        - FILTER_MULT(c->a[1], INDEX(s->out, -1))
-        - FILTER_MULT(c->a[2], INDEX(s->out, -2))
+        - FILTER_MULT(COEFF(a, 1), INDEX(s->out, -1))
+        - FILTER_MULT(COEFF(a, 2), INDEX(s->out, -2))
         ;
 
     *out = (FILTER_OUT_DATA)s->out[s->ptr];
@@ -212,7 +215,7 @@ static bool filter(const struct filter_config *c, struct filter_state *s, FILTER
 enum channel { CHAN_ZERO, CHAN_ONE, CHAN_max };
 enum bit { BIT_ZERO, BIT_ONE, BIT_max };
 
-static const struct filter_config coeffs[CHAN_max][BIT_max] = {
+static const struct filter_config coeffs[CHAN_max][BIT_max] PROGMEM = {
     [CHAN_ZERO] = {
         [BIT_ZERO] = {   // pei_tseng_notch(1070/(8000/2),150/(8000/2))
             .b = { FLOAT_TO_COEFF(+0.942850f), FLOAT_TO_COEFF(-1.258100f), FLOAT_TO_COEFF(+0.942850f) },
