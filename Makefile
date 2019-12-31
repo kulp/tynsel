@@ -25,6 +25,8 @@ avr-%: CFLAGS += -fstack-usage
 avr-%.o: %.c
 	$(COMPILE.c) -o $@ $<
 
+top: CFLAGS += -O3
+
 top.o: CPPFLAGS += -D$*_main=main
 
 top.o: decode.c
