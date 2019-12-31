@@ -1,6 +1,5 @@
 #include <stdbool.h>
 #include <stdint.h>
-#include <stdlib.h>
 
 #define BITWIDTH 27 /* 8000 / 300 */
 #define THRESHOLD 0
@@ -289,6 +288,7 @@ bool top(
 }
 
 #ifndef __AVR__
+#include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
 
