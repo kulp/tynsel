@@ -5,13 +5,13 @@ input_file=$1
 
 source $here/bash_functions
 
-for rms_samples in {4..25}
+for rms_samples in {17..21}
 do
-    for hysteresis in {3..10}
+    for hysteresis in {8..12}
     do
-        for offset in {3..20}
+        for offset in {12..15}
         do
-            for bw in 20 50 100
+            for bw in 100 200
             do
                 (
                     out=$here/out/$rms_samples,$hysteresis,$offset,$bw
