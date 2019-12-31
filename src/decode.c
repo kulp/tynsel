@@ -210,17 +210,31 @@ static bool filter(const struct filter_config *c, struct filter_state *s, FILTER
     return true;
 }
 
+enum channel { CHAN_ZERO, CHAN_ONE, CHAN_max };
 enum bit { BIT_ZERO, BIT_ONE, BIT_max };
 
-static const struct filter_config coeffs[BIT_max] = {
-    [BIT_ZERO] = {   // pei_tseng_notch(1070/(8000/2),150/(8000/2))
-        .b = { FLOAT_TO_COEFF(+0.94285f), FLOAT_TO_COEFF(-1.25810f), FLOAT_TO_COEFF(+0.94285f) },
-        .a = { FLOAT_TO_COEFF(+1.00000f), FLOAT_TO_COEFF(-1.25810f), FLOAT_TO_COEFF(+0.88569f) },
-    },
+static const struct filter_config coeffs[CHAN_max][BIT_max] = {
+    [CHAN_ZERO] = {
+        [BIT_ZERO] = {   // pei_tseng_notch(1070/(8000/2),150/(8000/2))
+            .b = { FLOAT_TO_COEFF(+0.942850f), FLOAT_TO_COEFF(-1.258100f), FLOAT_TO_COEFF(+0.942850f) },
+            .a = { FLOAT_TO_COEFF(+1.000000f), FLOAT_TO_COEFF(-1.258100f), FLOAT_TO_COEFF(+0.885690f) },
+        },
 
-    [BIT_ONE] = {   // pei_tseng_notch(1270/(8000/2),150/(8000/2))
-        .b = { FLOAT_TO_COEFF(+0.94327f), FLOAT_TO_COEFF(-1.02334f), FLOAT_TO_COEFF(+0.94327f) },
-        .a = { FLOAT_TO_COEFF(+1.00000f), FLOAT_TO_COEFF(-1.02334f), FLOAT_TO_COEFF(+0.88654f) },
+        [BIT_ONE] = {   // pei_tseng_notch(1270/(8000/2),150/(8000/2))
+            .b = { FLOAT_TO_COEFF(+0.943270f), FLOAT_TO_COEFF(-1.023340f), FLOAT_TO_COEFF(+0.943270f) },
+            .a = { FLOAT_TO_COEFF(+1.000000f), FLOAT_TO_COEFF(-1.023340f), FLOAT_TO_COEFF(+0.886540f) },
+        },
+    },
+    [CHAN_ONE] = {
+        [BIT_ZERO] = {   // pei_tseng_notch(2025/(8000/2),150/(8000/2))
+            .b = { FLOAT_TO_COEFF(+0.944342f), FLOAT_TO_COEFF(+0.037082f), FLOAT_TO_COEFF(+0.944342f) },
+            .a = { FLOAT_TO_COEFF(+1.000000f), FLOAT_TO_COEFF(+0.037082f), FLOAT_TO_COEFF(+0.888683f) },
+        },
+
+        [BIT_ONE] = {   // pei_tseng_notch(2225/(8000/2),150/(8000/2))
+            .b = { FLOAT_TO_COEFF(+0.944590f), FLOAT_TO_COEFF(+0.332110f), FLOAT_TO_COEFF(+0.944590f) },
+            .a = { FLOAT_TO_COEFF(+1.000000f), FLOAT_TO_COEFF(+0.332110f), FLOAT_TO_COEFF(+0.889170f) },
+        },
     },
 };
 
@@ -252,8 +266,8 @@ bool top(
 
     FILTER_OUT_DATA f[2] = { };
     if (
-            ! filter(&coeffs[BIT_ZERO], &filt_states[0], in, &f[0])
-        ||  ! filter(&coeffs[BIT_ONE ], &filt_states[1], in, &f[1])
+            ! filter(&coeffs[CHAN_ZERO][BIT_ZERO], &filt_states[0], in, &f[0])
+        ||  ! filter(&coeffs[CHAN_ZERO][BIT_ONE ], &filt_states[1], in, &f[1])
         )
         return false;
 
