@@ -291,6 +291,17 @@ int top_main(int argc, char *argv[])
 
     struct filter_state filt_states[2] = { };
 
+    struct runs_config run_conf = { .threshold = hysteresis };
+    struct runs_state run_state = { .current = 0 };
+
+    struct bits_state dec_state = { .off = -1, .last = THRESHOLD };
+    const struct bits_config dec_conf = {
+        .start_bits  = 1,
+        .data_bits   = 7,
+        .parity_bits = 1,
+        .stop_bits   = 2,
+    };
+
     while (!feof(stdin)) {
         int i = 0;
         int result = scanf("%d", &i);
@@ -320,11 +331,11 @@ int top_main(int argc, char *argv[])
             continue;
 
         RUNS_OUT_DATA ro = 0;
-        if (! runs_top(hysteresis, ra, rb, &ro))
+        if (! runs(&run_conf, &run_state, ra, rb, &ro))
             continue;
 
         DECODE_OUT_DATA out = EOF;
-        if (decode_top(offset, ro, &out))
+        if (decode(&dec_conf, &dec_state, offset, ro, &out))
             putchar(out);
     }
 
