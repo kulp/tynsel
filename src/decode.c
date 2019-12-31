@@ -210,6 +210,18 @@ static bool filter(const struct filter_config *c, struct filter_state *s, FILTER
     return true;
 }
 
+static const struct filter_config coeffs[2] = {
+    [0] = {   // pei_tseng_notch(1070/(8000/2),150/(8000/2))
+        .b = { FLOAT_TO_COEFF(+0.94285f), FLOAT_TO_COEFF(-1.25810f), FLOAT_TO_COEFF(+0.94285f) },
+        .a = { FLOAT_TO_COEFF(+1.00000f), FLOAT_TO_COEFF(-1.25810f), FLOAT_TO_COEFF(+0.88569f) },
+    },
+
+    [1] = {   // pei_tseng_notch(1270/(8000/2),150/(8000/2))
+        .b = { FLOAT_TO_COEFF(+0.94327f), FLOAT_TO_COEFF(-1.02334f), FLOAT_TO_COEFF(+0.94327f) },
+        .a = { FLOAT_TO_COEFF(+1.00000f), FLOAT_TO_COEFF(-1.02334f), FLOAT_TO_COEFF(+0.88654f) },
+    },
+};
+
 bool top(
         const struct filter_config filter_config[2],
         uint8_t window_size,
