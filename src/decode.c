@@ -315,14 +315,16 @@ int top_main(int argc, char *argv[])
     struct rms_config rms_config = { .window_size = window_size };
     struct runs_config run_conf = { .threshold = hysteresis };
 
-    while (!feof(stdin)) {
+    FILE *stream = stdin;
+    while (true) {
         FILTER_IN_DATA in = 0;
-        int result = scanf("%hd", &in);
-        if (result == EOF)
-            break;
+        int result = fread(&in, sizeof in, 1, stream);
 
         if (result != 1) {
-            WARN("scanf failed");
+            if (feof(stream))
+                break;
+
+            WARN("fread failed");
             exit(EXIT_FAILURE);
         }
 
