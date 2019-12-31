@@ -20,6 +20,7 @@ avr-%: LDFLAGS += $(ARCH_FLAGS)
 avr-%: CFLAGS += -ffunction-sections
 avr-%: CFLAGS += -Werror=conversion
 avr-%: LDFLAGS += -nostdlib
+avr-%: CFLAGS += -fstack-usage
 
 avr-%.o: %.c
 	$(COMPILE.c) -o $@ $<
