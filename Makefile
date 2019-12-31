@@ -24,9 +24,9 @@ avr-%: LDFLAGS += -nostdlib
 avr-%.o: %.c
 	$(COMPILE.c) -o $@ $<
 
-decode.o filter.o rms.o runs.o top.o: CPPFLAGS += -D$*_main=main
+top.o: CPPFLAGS += -D$*_main=main
 
-decode.o filter.o rms.o runs.o top.o: decode.c
+top.o: decode.c
 	$(COMPILE.c) -o $@ $<
 
 wrap: CFLAGS += -Os -fomit-frame-pointer

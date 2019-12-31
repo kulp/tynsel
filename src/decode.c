@@ -120,18 +120,6 @@ static bool decode(const struct bits_config *c, struct bits_state *s, int8_t off
     return false;
 }
 
-bool decode_top(int8_t offset, DECODE_IN_DATA datum, DECODE_OUT_DATA *out)
-{
-    static struct bits_state s = { .off = -1, .last = THRESHOLD };
-    static const struct bits_config c = {
-        .start_bits  = 1,
-        .data_bits   = 7,
-        .parity_bits = 1,
-        .stop_bits   = 2,
-    };
-    return decode(&c, &s, offset, datum, out);
-}
-
 struct rms_state {
     RMS_OUT_DATA *window;
     RMS_OUT_DATA sum;
@@ -191,16 +179,6 @@ static bool runs(const struct runs_config *c, struct runs_state *s, RUNS_IN_DATA
     *out = s->current;
 
     return true;
-}
-
-bool runs_top(int8_t threshold, RUNS_IN_DATA da, RUNS_IN_DATA db, RUNS_OUT_DATA *out)
-{
-    static struct runs_config c = { .threshold = 0 };
-    static struct runs_state s = { .current = 0 };
-    if (! c.threshold)
-        c.threshold = threshold;
-
-    return runs(&c, &s, da, db, out);
 }
 
 struct filter_config {
@@ -342,158 +320,5 @@ int top_main(int argc, char *argv[])
     return 0;
 }
 
-int filter_main(int argc, char *argv[])
-{
-    if (argc != 7) {
-        WARN("Supply six coefficients (b,b,b,a,a,a)");
-        exit(EXIT_FAILURE);
-    }
-
-    struct filter_config c = { };
-
-    char **arg = &argv[1];
-
-    FILTER_COEFF *pb = c.b;
-    *pb++ = FILTER_COEFF_read(*arg++);
-    *pb++ = FILTER_COEFF_read(*arg++);
-    *pb++ = FILTER_COEFF_read(*arg++);
-
-    FILTER_COEFF *pa = c.a;
-    *pa++ = FILTER_COEFF_read(*arg++);
-    *pa++ = FILTER_COEFF_read(*arg++);
-    *pa++ = FILTER_COEFF_read(*arg++);
-
-    if (c.a[0] != FILTER_COEFF_read("1")) {
-        WARN("A non-normalized filter is not supported");
-        exit(EXIT_FAILURE);
-    }
-
-    for (int i = 0; i < 3; i++)
-        fprintf(stderr, "b[%d] = %f\n", i, FILTER_COEFF_as_float(c.b[i]));
-
-    for (int i = 0; i < 3; i++)
-        fprintf(stderr, "a[%d] = %f\n", i, FILTER_COEFF_as_float(c.a[i]));
-
-    struct filter_state s = { };
-
-    while (!feof(stdin)) {
-        int i = 0;
-        int result = scanf("%d", &i);
-        if (result == EOF)
-            break;
-
-        if (result != 1) {
-            WARN("scanf failed");
-            exit(EXIT_FAILURE);
-        }
-
-        FILTER_OUT_DATA out = 0;
-        if (filter(&c, &s, i, &out))
-            printf("%d\n", out);
-    }
-
-    return 0;
-}
-
-int rms_main(int argc, char *argv[])
-{
-    if (argc != 2) {
-        WARN("Supply a window size (in samples) as the first argument");
-        exit(EXIT_FAILURE);
-    }
-
-    int n = strtol(argv[1], NULL, 0);
-
-    RMS_OUT_DATA large[BITWIDTH] = { 0 }; // largest conceivable window size
-    struct rms_config c = { .window_size = n };
-    struct rms_state s = { .window = large };
-
-    while (!feof(stdin)) {
-        int i = 0;
-        int result = scanf("%d", &i);
-        if (result == EOF)
-            break;
-
-        if (result != 1) {
-            WARN("scanf failed");
-            exit(EXIT_FAILURE);
-        }
-
-        RMS_OUT_DATA out = 0;
-        if (rms(&c, &s, i, &out))
-            printf("%d\n", out);
-    }
-
-    return 0;
-}
-
-int decode_main(int argc, char *argv[])
-{
-    if (argc != 2) {
-        WARN("Supply a offset (in samples) from the start bit edge as the first argument");
-        exit(EXIT_FAILURE);
-    }
-
-    int offset = strtol(argv[1], NULL, 0);
-
-    while (!feof(stdin)) {
-        int i = 0;
-        int result = scanf("%d", &i);
-        if (result == EOF)
-            break;
-
-        if (result != 1) {
-            WARN("scanf failed");
-            exit(EXIT_FAILURE);
-        }
-
-        DECODE_OUT_DATA out = EOF;
-        if (decode_top(offset, i, &out))
-            putchar(out);
-    }
-
-    return 0;
-}
-
-int runs_main(int argc, char *argv[])
-{
-    if (argc != 4) {
-        WARN("Supply a threshold count as the first argument, followed by two filenames");
-        exit(EXIT_FAILURE);
-    }
-
-    int threshold = strtol(argv[1], NULL, 0);
-    FILE *fa = fopen(argv[2], "r");
-    FILE *fb = fopen(argv[3], "r");
-
-    while (!feof(fa) && !feof(fb)) {
-        RUNS_IN_DATA i = 0;
-        int result;
-        result = fscanf(fa, "%d", &i);
-        if (result == EOF)
-            break;
-
-        if (result != 1) {
-            WARN("scanf failed");
-            exit(EXIT_FAILURE);
-        }
-
-        RUNS_IN_DATA j = 0;
-        result = fscanf(fb, "%d", &j);
-        if (result == EOF)
-            break;
-
-        if (result != 1) {
-            WARN("scanf failed");
-            exit(EXIT_FAILURE);
-        }
-
-        RUNS_OUT_DATA out = 0;
-        if (runs_top(threshold, i, j, &out))
-            printf("%d\n", out);
-    }
-
-    return 0;
-}
 #endif
 
