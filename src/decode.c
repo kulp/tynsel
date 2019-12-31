@@ -192,7 +192,11 @@ static bool filter(const struct filter_config * PROGMEM c, struct filter_state *
     // Avoid expensive modulo
     #define MOD(x,n) ((x) >= (n) ? (x) - (n) : (x))
     #define INDEX(x,n) (x)[MOD(s->ptr + (n) + 3, 3)]
+#if !defined(__AVR__) || defined(__AVR_PM_BASE_ADDRESS__)
+    #define COEFF(Type,Index) c->Type[Index]
+#else
     #define COEFF(Type,Index) (FILTER_COEFF)pgm_read_word(&c->Type[Index])
+#endif
 
     s->out[s->ptr] = 0
         + FILTER_MULT(COEFF(b, 0), INDEX(s->in ,  0))
