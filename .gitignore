@@ -3,10 +3,6 @@
 *_data/
 suite
 gen
-Makefile.sipsettings
-detect
-sip
 *.o
-pjtarget
 wrap
 *.d
