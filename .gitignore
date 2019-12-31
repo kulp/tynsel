@@ -6,3 +6,4 @@ gen
 *.o
 wrap
 *.d
+decode

@@ -17,7 +17,7 @@ do
                     out=$here/out/$rms_samples,$hysteresis,$offset,$bw
                     if [[ ! -e $out ]] # assume existence implies previous completion
                     then
-                        $here/../top $rms_samples $hysteresis $offset $(notch 1070 8000 $bw) $(notch 1270 8000 $bw) < $input_file 2> /dev/null > $out
+                        $here/../decode $rms_samples $hysteresis $offset $(notch 1070 8000 $bw) $(notch 1270 8000 $bw) < $input_file 2> /dev/null > $out
                     fi
                 ) &
             done

@@ -11,7 +11,7 @@ CFLAGS += -Wall -Wextra -Wunused
 
 CPPFLAGS += -std=c99
 
-all: suite gen wrap
+all: suite gen wrap decode
 
 avr-%: ARCH_FLAGS += -mmcu=attiny412
 
@@ -27,12 +27,7 @@ avr-%: CFLAGS += -fstack-usage
 avr-%.o: %.c
 	$(COMPILE.c) -o $@ $<
 
-top: CFLAGS += -O3
-
-top.o: CPPFLAGS += -D$*_main=main
-
-top.o: decode.c
-	$(COMPILE.c) -o $@ $<
+decode: CFLAGS += -O3
 
 wrap: CFLAGS += -Os -fomit-frame-pointer
 
@@ -53,5 +48,5 @@ suite: filters.o streamdecode.o audio.o
 -include $(patsubst %.c,%.d,$(notdir $(wildcard *.c src/recognisers/*.c src/*.c)))
 
 clean:
-	rm -f *.d *.o gen suite wrap
+	rm -f *.d *.o gen suite wrap decode
 

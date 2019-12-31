@@ -299,7 +299,7 @@ bool top(
 #include <stdio.h>
 #include <math.h>
 
-int top_main(int argc, char *argv[])
+int main(int argc, char *argv[])
 {
     if (argc != 4) {
         WARN("Supply summation window size, hysteresis, and sample offset");
