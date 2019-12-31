@@ -86,10 +86,9 @@ int encode_carrier(struct encode_state *s, size_t bit_times)
     int rc = 0;
 
     struct put_state state = { .last_quadrant = 0 };
-    double gains[] = { s->bitamp ? .7 : 1., 1. };
 
     for (unsigned bit_index = 0; rc >= 0 && bit_index < bit_times; bit_index++) {
-        rc = encode_bit(s, s->audio.freqs[s->channel][1], s->gain * gains[1], &state);
+        rc = encode_bit(s, s->audio.freqs[s->channel][1], s->gain, &state);
         if (rc >= 0) samples += rc; else return -1;
     }
 
@@ -107,29 +106,27 @@ int encode_bytes(struct encode_state *s, size_t byte_count, unsigned bytes[byte_
         if (s->verbosity)
             printf("writing byte %#x\n", byte);
 
-        double gains[] = { s->bitamp ? .7 : 1., 1. };
-
         for (int bit_index = 0; rc >= 0 && bit_index < s->audio.start_bits; bit_index++) {
-            rc = encode_bit(s, s->audio.freqs[s->channel][0], s->gain * gains[0], &state);
+            rc = encode_bit(s, s->audio.freqs[s->channel][0], s->gain, &state);
             if (rc >= 0) samples += rc; else return -1;
         }
 
         for (int bit_index = 0; rc >= 0 && bit_index < s->audio.data_bits; bit_index++) {
             unsigned bit = !!(byte & (1 << bit_index));
             double freq = s->audio.freqs[s->channel][bit];
-            rc = encode_bit(s, freq, s->gain * gains[bit], &state);
+            rc = encode_bit(s, freq, s->gain, &state);
             if (rc >= 0) samples += rc; else return -1;
         }
 
         int oddness = POPCNT(byte) & 1;
         for (int bit_index = 0; rc >= 0 && bit_index < s->audio.parity_bits; bit_index++) {
             // assume EVEN parity for now
-            rc = encode_bit(s, s->audio.freqs[s->channel][oddness], s->gain * gains[1], &state);
+            rc = encode_bit(s, s->audio.freqs[s->channel][oddness], s->gain, &state);
             if (rc >= 0) samples += rc; else return -1;
         }
 
         for (int bit_index = 0; rc >= 0 && bit_index < s->audio.stop_bits; bit_index++) {
-            rc = encode_bit(s, s->audio.freqs[s->channel][1], s->gain * gains[1], &state);
+            rc = encode_bit(s, s->audio.freqs[s->channel][1], s->gain, &state);
             if (rc >= 0) samples += rc; else return -1;
         }
     }
