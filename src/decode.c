@@ -235,6 +235,7 @@ static const struct filter_config coeffs[CHAN_max][BIT_max] PROGMEM = {
 };
 
 bool top(
+        uint8_t channel,
         uint8_t window_size,
         int8_t threshold,
         int8_t offset,
@@ -262,8 +263,8 @@ bool top(
 
     FILTER_OUT_DATA f[2] = { };
     if (
-            ! filter(&coeffs[CHAN_ZERO][BIT_ZERO], &filt_states[0], in, &f[0])
-        ||  ! filter(&coeffs[CHAN_ZERO][BIT_ONE ], &filt_states[1], in, &f[1])
+            ! filter(&coeffs[channel][BIT_ZERO], &filt_states[0], in, &f[0])
+        ||  ! filter(&coeffs[channel][BIT_ONE ], &filt_states[1], in, &f[1])
         )
         return false;
 
@@ -291,13 +292,14 @@ bool top(
 
 int main(int argc, char *argv[])
 {
-    if (argc != 4) {
-        WARN("Supply summation window size, hysteresis, and sample offset");
+    if (argc != 5) {
+        WARN("Supply channel, summation window size, hysteresis, and sample offset");
         exit(EXIT_FAILURE);
     }
 
     char **arg = &argv[1];
 
+    int channel = strtol(*arg++, NULL, 0);
     int window_size = strtol(*arg++, NULL, 0);
     int hysteresis = strtol(*arg++, NULL, 0);
     int offset = strtol(*arg++, NULL, 0);
@@ -316,7 +318,7 @@ int main(int argc, char *argv[])
         }
 
         DECODE_OUT_DATA out = EOF;
-        if (top(window_size, hysteresis, offset, in, &out))
+        if (top(channel, window_size, hysteresis, offset, in, &out))
             putchar(out);
     }
 
