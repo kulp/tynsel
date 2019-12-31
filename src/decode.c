@@ -5,6 +5,7 @@
 #define BITWIDTH 27 /* 8000 / 300 */
 #define THRESHOLD 0
 #define RMS_THRESHOLD 50000
+#define MAX_RMS_SAMPLES 7 // empirically-determined sweet-spot
 
 #define COEFF_FRACTIONAL_BITS 14
 
@@ -226,7 +227,7 @@ bool top(
         DECODE_OUT_DATA *out
     )
 {
-    static RMS_OUT_DATA large[2][BITWIDTH] = { }; // largest conceivable window size
+    static RMS_OUT_DATA large[2][MAX_RMS_SAMPLES] = { };
     static struct rms_state rms_states[2] = {
         { .window = large[0] },
         { .window = large[1] },
