@@ -11,9 +11,9 @@
 
 #if 0
 typedef float FILTER_COEFF;
+typedef float FILTER_STATE_DATA;
 #define FLOAT_TO_COEFF(x) (x)
 #define FILTER_MULT(a, b) ((a) * (b))
-typedef float FILTER_STATE_DATA;
 #else
 typedef int16_t FILTER_COEFF;
 typedef int16_t FILTER_STATE_DATA;
