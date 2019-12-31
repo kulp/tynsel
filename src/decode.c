@@ -128,23 +128,19 @@ struct rms_state {
     bool primed;
 };
 
-struct rms_config {
-    uint8_t window_size;
-};
-
 // TODO rename -- we do not actually do the "root" part of RMS since it is
 // expensive and for our purposes unnecessary.
-static bool rms(const struct rms_config *c, struct rms_state *s, RMS_IN_DATA datum, RMS_OUT_DATA *out)
+static bool rms(const uint8_t window_size, struct rms_state *s, RMS_IN_DATA datum, RMS_OUT_DATA *out)
 {
     s->sum -= s->window[s->ptr];
     s->window[s->ptr] = (RMS_OUT_DATA)(datum * datum);
     s->sum += s->window[s->ptr];
 
-    if (s->ptr == c->window_size - 1)
+    if (s->ptr == window_size - 1)
         s->primed = true;
 
     // Avoid expensive modulo
-    if (++s->ptr >= c->window_size)
+    if (++s->ptr >= window_size)
         s->ptr = 0;
 
     if (s->primed)
@@ -220,7 +216,7 @@ static bool filter(const struct filter_config *c, struct filter_state *s, FILTER
 
 bool top(
         const struct filter_config filter_config[2],
-        const struct rms_config rms_config,
+        uint8_t window_size,
         const struct runs_config run_conf,
         int8_t offset,
         FILTER_IN_DATA in,
@@ -254,8 +250,8 @@ bool top(
 
     RMS_OUT_DATA ra = 0, rb = 0;
     if (
-            ! rms(&rms_config, &rms_states[0], f[0] - in, &ra)
-        ||  ! rms(&rms_config, &rms_states[1], f[1] - in, &rb)
+            ! rms(window_size, &rms_states[0], f[0] - in, &ra)
+        ||  ! rms(window_size, &rms_states[1], f[1] - in, &rb)
         )
         return false;
 
@@ -312,7 +308,6 @@ int top_main(int argc, char *argv[])
         *pa++ = FILTER_COEFF_read(*arg++);
     }
 
-    struct rms_config rms_config = { .window_size = window_size };
     struct runs_config run_conf = { .threshold = hysteresis };
 
     FILE *stream = stdin;
@@ -329,7 +324,7 @@ int top_main(int argc, char *argv[])
         }
 
         DECODE_OUT_DATA out = EOF;
-        if (top(filter_config, rms_config, run_conf, offset, in, &out))
+        if (top(filter_config, window_size, run_conf, offset, in, &out))
             putchar(out);
     }
 
