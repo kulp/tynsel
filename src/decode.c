@@ -220,28 +220,18 @@ enum channel { CHAN_ZERO, CHAN_ONE, CHAN_max };
 enum bit { BIT_ZERO, BIT_ONE, BIT_max };
 
 static const struct filter_config coeffs[CHAN_max][BIT_max] PROGMEM = {
-    [CHAN_ZERO] = {
-        [BIT_ZERO] = {   // pei_tseng_notch(1070/(8000/2),150/(8000/2))
-            .b = { FLOAT_TO_COEFF(+0.942850f), FLOAT_TO_COEFF(-1.258100f), FLOAT_TO_COEFF(+0.942850f) },
-            .a = { FLOAT_TO_COEFF(+1.000000f), FLOAT_TO_COEFF(-1.258100f), FLOAT_TO_COEFF(+0.885690f) },
-        },
-
-        [BIT_ONE] = {   // pei_tseng_notch(1270/(8000/2),150/(8000/2))
-            .b = { FLOAT_TO_COEFF(+0.943270f), FLOAT_TO_COEFF(-1.023340f), FLOAT_TO_COEFF(+0.943270f) },
-            .a = { FLOAT_TO_COEFF(+1.000000f), FLOAT_TO_COEFF(-1.023340f), FLOAT_TO_COEFF(+0.886540f) },
-        },
-    },
-    [CHAN_ONE] = {
-        [BIT_ZERO] = {   // pei_tseng_notch(2025/(8000/2),150/(8000/2))
-            .b = { FLOAT_TO_COEFF(+0.944342f), FLOAT_TO_COEFF(+0.037082f), FLOAT_TO_COEFF(+0.944342f) },
-            .a = { FLOAT_TO_COEFF(+1.000000f), FLOAT_TO_COEFF(+0.037082f), FLOAT_TO_COEFF(+0.888683f) },
-        },
-
-        [BIT_ONE] = {   // pei_tseng_notch(2225/(8000/2),150/(8000/2))
-            .b = { FLOAT_TO_COEFF(+0.944590f), FLOAT_TO_COEFF(+0.332110f), FLOAT_TO_COEFF(+0.944590f) },
-            .a = { FLOAT_TO_COEFF(+1.000000f), FLOAT_TO_COEFF(+0.332110f), FLOAT_TO_COEFF(+0.889170f) },
-        },
-    },
+    [CHAN_ZERO][BIT_ZERO] =
+            #include "coeffs_1070_8000_150.h"
+        ,
+    [CHAN_ZERO][BIT_ONE] =
+            #include "coeffs_1270_8000_150.h"
+        ,
+    [CHAN_ONE][BIT_ZERO] =
+            #include "coeffs_2025_8000_150.h"
+        ,
+    [CHAN_ONE][BIT_ONE] =
+            #include "coeffs_2225_8000_150.h"
+        ,
 };
 
 bool top(

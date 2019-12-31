@@ -42,6 +42,10 @@ gen: encode.o audio.o
 suite: LDLIBS += -lsndfile
 suite: filters.o streamdecode.o audio.o
 
+avr-decode.o decode.o: INCLUDE += .
+coeffs_%.h: scripts/gen_notch.m
+	$(realpath $<) $$(echo $* | (IFS=_; read a b c ; echo $$a $$b $$c)) > $@
+
 %.d: %.c
 	@$(COMPILE.c) -MM -MG -MF $@ $<
 

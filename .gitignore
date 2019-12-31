@@ -6,4 +6,5 @@ gen
 *.o
 wrap
 *.d
+coeffs_*.h
 decode
