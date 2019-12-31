@@ -149,23 +149,19 @@ static bool rms(const uint8_t window_size, struct rms_state *s, RMS_IN_DATA datu
     return s->primed;
 }
 
-struct runs_config {
-    int8_t threshold;
-};
-
 struct runs_state {
     RUNS_OUT_DATA current;
 };
 
-static bool runs(const struct runs_config *c, struct runs_state *s, RUNS_IN_DATA da, RUNS_IN_DATA db, RUNS_OUT_DATA *out)
+static bool runs(int8_t threshold, struct runs_state *s, RUNS_IN_DATA da, RUNS_IN_DATA db, RUNS_OUT_DATA *out)
 {
     int8_t inc = (da > db) ?  1 :
                  (da < db) ? -1 :
                               0 ;
     s->current = (RUNS_OUT_DATA)(s->current + inc);
 
-    const int8_t max = (int8_t) c->threshold;
-    const int8_t min = (int8_t)-c->threshold;
+    const int8_t max = (int8_t) threshold;
+    const int8_t min = (int8_t)-threshold;
 
     if (s->current > max)
         s->current = max;
@@ -217,7 +213,7 @@ static bool filter(const struct filter_config *c, struct filter_state *s, FILTER
 bool top(
         const struct filter_config filter_config[2],
         uint8_t window_size,
-        const struct runs_config run_conf,
+        int8_t threshold,
         int8_t offset,
         FILTER_IN_DATA in,
         DECODE_OUT_DATA *out
@@ -259,7 +255,7 @@ bool top(
         return false;
 
     RUNS_OUT_DATA ro = 0;
-    if (! runs(&run_conf, &run_state, ra, rb, &ro))
+    if (! runs(threshold, &run_state, ra, rb, &ro))
         return false;
 
     return decode(&dec_conf, &dec_state, offset, ro, out);
@@ -308,8 +304,6 @@ int top_main(int argc, char *argv[])
         *pa++ = FILTER_COEFF_read(*arg++);
     }
 
-    struct runs_config run_conf = { .threshold = hysteresis };
-
     FILE *stream = stdin;
     while (true) {
         FILTER_IN_DATA in = 0;
@@ -324,7 +318,7 @@ int top_main(int argc, char *argv[])
         }
 
         DECODE_OUT_DATA out = EOF;
-        if (top(filter_config, window_size, run_conf, offset, in, &out))
+        if (top(filter_config, window_size, hysteresis, offset, in, &out))
             putchar(out);
     }
 
