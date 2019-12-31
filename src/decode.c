@@ -12,14 +12,12 @@
 #if 0
 typedef float FILTER_COEFF;
 #define FILTER_COEFF_read(Arg) strtof(Arg, NULL)
-#define FILTER_COEFF_as_float(Arg) (Arg)
 #define FILTER_MULT(a, b) ((a) * (b))
 typedef float FILTER_STATE_DATA;
 #else
 typedef int16_t FILTER_COEFF;
 typedef int16_t FILTER_STATE_DATA;
 #define FILTER_COEFF_read(Arg) ldexpf(strtof((Arg), NULL), COEFF_FRACTIONAL_BITS)
-#define FILTER_COEFF_as_float(Arg) ldexpf(Arg, -COEFF_FRACTIONAL_BITS)
 #define FILTER_MULT(a, b) (((a) * (b)) >> COEFF_FRACTIONAL_BITS)
 #endif
 
