@@ -1,3 +1,5 @@
+.DELETE_ON_ERROR:
+
 ifneq ($(DEBUG),)
 CFLAGS += -g -O0
 CPPFLAGS += -DDEBUG
