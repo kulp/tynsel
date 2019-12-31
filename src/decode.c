@@ -210,13 +210,15 @@ static bool filter(const struct filter_config *c, struct filter_state *s, FILTER
     return true;
 }
 
-static const struct filter_config coeffs[2] = {
-    [0] = {   // pei_tseng_notch(1070/(8000/2),150/(8000/2))
+enum bit { BIT_ZERO, BIT_ONE, BIT_max };
+
+static const struct filter_config coeffs[BIT_max] = {
+    [BIT_ZERO] = {   // pei_tseng_notch(1070/(8000/2),150/(8000/2))
         .b = { FLOAT_TO_COEFF(+0.94285f), FLOAT_TO_COEFF(-1.25810f), FLOAT_TO_COEFF(+0.94285f) },
         .a = { FLOAT_TO_COEFF(+1.00000f), FLOAT_TO_COEFF(-1.25810f), FLOAT_TO_COEFF(+0.88569f) },
     },
 
-    [1] = {   // pei_tseng_notch(1270/(8000/2),150/(8000/2))
+    [BIT_ONE] = {   // pei_tseng_notch(1270/(8000/2),150/(8000/2))
         .b = { FLOAT_TO_COEFF(+0.94327f), FLOAT_TO_COEFF(-1.02334f), FLOAT_TO_COEFF(+0.94327f) },
         .a = { FLOAT_TO_COEFF(+1.00000f), FLOAT_TO_COEFF(-1.02334f), FLOAT_TO_COEFF(+0.88654f) },
     },
@@ -250,8 +252,8 @@ bool top(
 
     FILTER_OUT_DATA f[2] = { };
     if (
-            ! filter(&coeffs[0], &filt_states[0], in, &f[0])
-        ||  ! filter(&coeffs[1], &filt_states[1], in, &f[1])
+            ! filter(&coeffs[BIT_ZERO], &filt_states[0], in, &f[0])
+        ||  ! filter(&coeffs[BIT_ONE ], &filt_states[1], in, &f[1])
         )
         return false;
 
