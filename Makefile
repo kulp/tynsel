@@ -11,7 +11,7 @@ CPPFLAGS += -std=c99
 
 all: suite gen sip decode
 
-avr-%: ARCH_FLAGS += -mmcu=avrxmega3
+avr-%: ARCH_FLAGS += -mmcu=attiny412
 
 avr-%: CC = avr-gcc
 avr-%: LD = avr-gcc
