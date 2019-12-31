@@ -217,6 +217,57 @@ static bool filter(const struct filter_config *c, struct filter_state *s, FILTER
     return true;
 }
 
+bool top(
+        const struct filter_config filter_config[2],
+        const struct rms_config rms_config,
+        const struct runs_config run_conf,
+        int8_t offset,
+        FILTER_IN_DATA in,
+        DECODE_OUT_DATA *out
+    )
+{
+    static RMS_OUT_DATA large[2][BITWIDTH] = { }; // largest conceivable window size
+    static struct rms_state rms_states[2] = {
+        { .window = large[0] },
+        { .window = large[1] },
+    };
+
+    static struct filter_state filt_states[2] = { };
+
+    static struct runs_state run_state = { .current = 0 };
+
+    static struct bits_state dec_state = { .off = -1, .last = THRESHOLD };
+    static const struct bits_config dec_conf = {
+        .start_bits  = 1,
+        .data_bits   = 7,
+        .parity_bits = 1,
+        .stop_bits   = 2,
+    };
+
+    FILTER_OUT_DATA f[2] = { };
+    if (
+            ! filter(&filter_config[0], &filt_states[0], in, &f[0])
+        ||  ! filter(&filter_config[1], &filt_states[1], in, &f[1])
+        )
+        return false;
+
+    RMS_OUT_DATA ra = 0, rb = 0;
+    if (
+            ! rms(&rms_config, &rms_states[0], f[0] - in, &ra)
+        ||  ! rms(&rms_config, &rms_states[1], f[1] - in, &rb)
+        )
+        return false;
+
+    if (ra < RMS_THRESHOLD || rb < RMS_THRESHOLD)
+        return false;
+
+    RUNS_OUT_DATA ro = 0;
+    if (! runs(&run_conf, &run_state, ra, rb, &ro))
+        return false;
+
+    return decode(&dec_conf, &dec_state, offset, ro, out);
+}
+
 #ifndef __AVR__
 #include <stdio.h>
 #include <math.h>
@@ -260,29 +311,12 @@ int top_main(int argc, char *argv[])
         *pa++ = FILTER_COEFF_read(*arg++);
     }
 
-    RMS_OUT_DATA large[2][BITWIDTH] = { }; // largest conceivable window size
     struct rms_config rms_config = { .window_size = window_size };
-    struct rms_state rms_states[2] = {
-        { .window = large[0] },
-        { .window = large[1] },
-    };
-
-    struct filter_state filt_states[2] = { };
-
     struct runs_config run_conf = { .threshold = hysteresis };
-    struct runs_state run_state = { .current = 0 };
-
-    struct bits_state dec_state = { .off = -1, .last = THRESHOLD };
-    const struct bits_config dec_conf = {
-        .start_bits  = 1,
-        .data_bits   = 7,
-        .parity_bits = 1,
-        .stop_bits   = 2,
-    };
 
     while (!feof(stdin)) {
-        int i = 0;
-        int result = scanf("%d", &i);
+        FILTER_IN_DATA in = 0;
+        int result = scanf("%hd", &in);
         if (result == EOF)
             break;
 
@@ -291,29 +325,8 @@ int top_main(int argc, char *argv[])
             exit(EXIT_FAILURE);
         }
 
-        FILTER_OUT_DATA f[2] = { };
-        if (
-                ! filter(&filter_config[0], &filt_states[0], i, &f[0])
-            ||  ! filter(&filter_config[1], &filt_states[1], i, &f[1])
-            )
-            continue;
-
-        RMS_OUT_DATA ra = 0, rb = 0;
-        if (
-                ! rms(&rms_config, &rms_states[0], f[0] - i, &ra)
-            ||  ! rms(&rms_config, &rms_states[1], f[1] - i, &rb)
-            )
-            continue;
-
-        if (ra < RMS_THRESHOLD || rb < RMS_THRESHOLD)
-            continue;
-
-        RUNS_OUT_DATA ro = 0;
-        if (! runs(&run_conf, &run_state, ra, rb, &ro))
-            continue;
-
         DECODE_OUT_DATA out = EOF;
-        if (decode(&dec_conf, &dec_state, offset, ro, &out))
+        if (top(filter_config, rms_config, run_conf, offset, in, &out))
             putchar(out);
     }
 
