@@ -223,7 +223,6 @@ static const struct filter_config coeffs[2] = {
 };
 
 bool top(
-        const struct filter_config filter_config[2],
         uint8_t window_size,
         int8_t threshold,
         int8_t offset,
@@ -251,8 +250,8 @@ bool top(
 
     FILTER_OUT_DATA f[2] = { };
     if (
-            ! filter(&filter_config[0], &filt_states[0], in, &f[0])
-        ||  ! filter(&filter_config[1], &filt_states[1], in, &f[1])
+            ! filter(&coeffs[0], &filt_states[0], in, &f[0])
+        ||  ! filter(&coeffs[1], &filt_states[1], in, &f[1])
         )
         return false;
 
@@ -279,42 +278,16 @@ bool top(
 
 int top_main(int argc, char *argv[])
 {
-    if (argc != 16) {
-        WARN("Supply summation window size, hysteresis, sample offset, and two pairs of six coefficients (b,b,b,a,a,a)");
+    if (argc != 4) {
+        WARN("Supply summation window size, hysteresis, and sample offset");
         exit(EXIT_FAILURE);
     }
-
-    struct filter_config filter_config[2] = { };
 
     char **arg = &argv[1];
 
     int window_size = strtol(*arg++, NULL, 0);
     int hysteresis = strtol(*arg++, NULL, 0);
     int offset = strtol(*arg++, NULL, 0);
-
-    {
-        FILTER_COEFF *pb = filter_config[0].b;
-        *pb++ = FILTER_COEFF_read(*arg++);
-        *pb++ = FILTER_COEFF_read(*arg++);
-        *pb++ = FILTER_COEFF_read(*arg++);
-
-        FILTER_COEFF *pa = filter_config[0].a;
-        *pa++ = FILTER_COEFF_read(*arg++);
-        *pa++ = FILTER_COEFF_read(*arg++);
-        *pa++ = FILTER_COEFF_read(*arg++);
-    }
-
-    {
-        FILTER_COEFF *pb = filter_config[1].b;
-        *pb++ = FILTER_COEFF_read(*arg++);
-        *pb++ = FILTER_COEFF_read(*arg++);
-        *pb++ = FILTER_COEFF_read(*arg++);
-
-        FILTER_COEFF *pa = filter_config[1].a;
-        *pa++ = FILTER_COEFF_read(*arg++);
-        *pa++ = FILTER_COEFF_read(*arg++);
-        *pa++ = FILTER_COEFF_read(*arg++);
-    }
 
     FILE *stream = stdin;
     while (true) {
@@ -330,7 +303,7 @@ int top_main(int argc, char *argv[])
         }
 
         DECODE_OUT_DATA out = EOF;
-        if (top(filter_config, window_size, hysteresis, offset, in, &out))
+        if (top(window_size, hysteresis, offset, in, &out))
             putchar(out);
     }
 
