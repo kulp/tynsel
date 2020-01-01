@@ -35,7 +35,7 @@ static int parse_opts(struct encode_state *s, int argc, char *argv[], const char
     while ((ch = getopt(argc, argv, "C:G:S:T:P:D:s:I:L:o:" "v")) != -1) {
         switch (ch) {
             case 'C': s->channel             = strtol(optarg, NULL, 0); break;
-            case 'G': s->gain                = strtod(optarg, NULL);    break;
+            case 'G': s->gain                = strtof(optarg, NULL);    break;
             case 'S': s->audio.start_bits    = strtol(optarg, NULL, 0); break;
             case 'T': s->audio.stop_bits     = strtol(optarg, NULL, 0); break;
             case 'P': s->audio.parity_bits   = strtol(optarg, NULL, 0); break;

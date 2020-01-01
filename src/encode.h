@@ -43,7 +43,7 @@ struct encode_state {
     struct audio_state audio;
     int verbosity;
     unsigned channel;
-    double gain;
+    float gain;
     struct {
         void *userdata;
         int (*put_samples)(struct audio_state *a, size_t count, double sample[count], void *userdata);
