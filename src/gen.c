@@ -85,7 +85,7 @@ int main(int argc, char* argv[])
     const char *output_file = NULL;
     struct encode_state _s = {
         .audio = {
-            .sample_rate = 44100,
+            .sample_rate = 8000,
             .baud_rate   = 300, // TODO make baud_rate configurable
             .start_bits  = 1,
             .data_bits   = 8,
