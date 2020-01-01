@@ -154,15 +154,15 @@ struct runs_state {
     RUNS_OUT_DATA current;
 };
 
-static bool runs(int8_t threshold, struct runs_state *s, RUNS_IN_DATA da, RUNS_IN_DATA db, RUNS_OUT_DATA *out)
+static bool runs(int8_t hysteresis, struct runs_state *s, RUNS_IN_DATA da, RUNS_IN_DATA db, RUNS_OUT_DATA *out)
 {
     int8_t inc = (da > db) ?  1 :
                  (da < db) ? -1 :
                               0 ;
     s->current = (RUNS_OUT_DATA)(s->current + inc);
 
-    const int8_t max = (int8_t) threshold;
-    const int8_t min = (int8_t)-threshold;
+    const int8_t max = (int8_t) hysteresis;
+    const int8_t min = (int8_t)-hysteresis;
 
     if (s->current > max)
         s->current = max;
@@ -237,7 +237,7 @@ static const struct filter_config coeffs[CHAN_max][BIT_max] PROGMEM = {
 bool top(
         uint8_t channel,
         uint8_t window_size,
-        int8_t threshold,
+        int8_t hysteresis,
         int8_t offset,
         FILTER_IN_DATA in,
         DECODE_OUT_DATA *out
@@ -279,7 +279,7 @@ bool top(
         return false;
 
     RUNS_OUT_DATA ro = 0;
-    if (! runs(threshold, &run_state, ra, rb, &ro))
+    if (! runs(hysteresis, &run_state, ra, rb, &ro))
         return false;
 
     return decode(&dec_conf, &dec_state, offset, ro, out);
