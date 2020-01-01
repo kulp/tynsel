@@ -2,9 +2,10 @@
 #include <stdint.h>
 #include <stdio.h>
 
+#include "encode.h"
+
 const int SAMPLE_RATE = 8000;
 const int BAUD_RATE = 300;
-const int FREQUENCY = 1270;
 const size_t SAMPLES_PER_BIT = (SAMPLE_RATE + BAUD_RATE - 1) / BAUD_RATE; // round up (err on the slow side)
 
 #define DATA_TYPE uint16_t
@@ -46,10 +47,23 @@ static inline PHASE_STEP get_phase_step(FREQ_TYPE freq)
     return MINOR_PER_CYCLE * freq / SAMPLE_RATE;
 }
 
-int encode_bit(size_t max_samples, DATA_TYPE output[max_samples], const DATA_TYPE quadrant[TABLE_SIZE])
+static inline FREQ_TYPE get_frequency(enum channel channel, enum bit bit)
+{
+    static const FREQ_TYPE freqs[CHAN_max][BIT_max] = {
+        [CHAN_ZERO][BIT_ZERO] = 1070,
+        [CHAN_ZERO][BIT_ONE ] = 1270,
+        [CHAN_ONE ][BIT_ZERO] = 2025,
+        [CHAN_ONE ][BIT_ONE ] = 2225,
+    };
+
+    return freqs[channel][bit];
+}
+
+int encode_bit(enum channel channel, enum bit bit, size_t max_samples, DATA_TYPE output[max_samples], const DATA_TYPE quadrant[TABLE_SIZE])
 {
     PHASE_STATE phase = 0;
-    const PHASE_STEP step = get_phase_step(FREQUENCY);
+    const FREQ_TYPE frequency = get_frequency(channel, bit);
+    const PHASE_STEP step = get_phase_step(frequency);
 
     size_t samples = (max_samples > SAMPLES_PER_BIT) ? SAMPLES_PER_BIT : max_samples;
     for (size_t i = 0; i < samples; i++) {
@@ -82,7 +96,7 @@ int main()
 
     DATA_TYPE output[SAMPLES_PER_BIT];
 
-    int samples = encode_bit(sizeof(output) / sizeof(*output), output, quadrant);
+    int samples = encode_bit(CHAN_ZERO, BIT_ONE, sizeof(output) / sizeof(*output), output, quadrant);
 
     for (int i = 0; i < samples; i++) {
         printf("samples[%3d] = % f\n", i, 2.0f * (float)(output[i] - CAT(DATA_TYPE,MAX) / 2) / CAT(DATA_TYPE,MAX));
