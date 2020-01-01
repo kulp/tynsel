@@ -43,13 +43,26 @@ void run(int samples, DATA_TYPE output[samples], const DATA_TYPE quadrant[TABLE_
     }
 }
 
+// Creates a quarter-wave sine table, scaled by the given maximum value.
+// Valid indices into the table are [0,TABLE_SIZE).
+// Input indices are augmented by 0.5 before computing the sine, on the
+// assumption that TABLE_SIZE is a power of two and that we want to do
+// arithmetic with powers of two. If we did not compensate somehow, we would
+// either have two entries for zero (when flipping the quadrant), two entries
+// for max (also during flipping), or an uneven gap between the minimum
+// positive and minimum negative output values.
+static void make_sine_table(DATA_TYPE sines[TABLE_SIZE], DATA_TYPE max)
+{
+    for (unsigned int i = 0; i < TABLE_SIZE; i++) {
+        sines[i] = (sinf(2 * M_PI * (i + 0.5) / MAJOR_PER_CYCLE) - 1) * max - 1;
+    }
+}
+
 int main()
 {
     DATA_TYPE quadrant[TABLE_SIZE];
 
-    for (unsigned int i = 0; i < TABLE_SIZE; i++) {
-        quadrant[i] = (sinf(2 * M_PI * (i + 0.5) / MAJOR_PER_CYCLE) - 1) * (CAT(DATA_TYPE,MAX) / 2) - 1;
-    }
+    make_sine_table(quadrant, CAT(DATA_TYPE,MAX) / 2);
 
     const int samples = TABLE_SIZE * 8;
     DATA_TYPE output[samples];
