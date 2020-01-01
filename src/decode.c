@@ -1,6 +1,8 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+#include "encode.h"
+
 #define BITWIDTH 27 /* 8000 / 300 */
 #define THRESHOLD 0
 #define MAX_RMS_SAMPLES 7 // empirically-determined sweet-spot
@@ -214,9 +216,6 @@ static bool filter(const struct filter_config * PROGMEM c, struct filter_state *
 
     return true;
 }
-
-enum channel { CHAN_ZERO, CHAN_ONE, CHAN_max };
-enum bit { BIT_ZERO, BIT_ONE, BIT_max };
 
 static const struct filter_config coeffs[CHAN_max][BIT_max] PROGMEM = {
     [CHAN_ZERO][BIT_ZERO] =

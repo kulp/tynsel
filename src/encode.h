@@ -25,6 +25,9 @@
 
 #include <stddef.h>
 
+enum channel { CHAN_ZERO, CHAN_ONE, CHAN_max };
+enum bit { BIT_ZERO, BIT_ONE, BIT_max };
+
 struct audio_state {
     unsigned sample_rate;
     double sample_offset;
