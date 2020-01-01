@@ -93,7 +93,7 @@ int main(int argc, char* argv[])
             .stop_bits   = 2,
         },
         .verbosity = 0,
-        .channel   = 1,
+        .channel   = 0,
         .gain      = 0.5,
         .cb.put_samples = sample_callback,
     }, *s = &_s;
