@@ -37,6 +37,9 @@
 #define MAJOR_PER_CYCLE (TABLE_SIZE * 4)
 #define MINOR_PER_CYCLE (MAJOR_PER_CYCLE * (1u << (PHASE_FRACTION_BITS)))
 
+enum channel { CHAN_ZERO, CHAN_ONE, CHAN_max };
+enum bit { BIT_ZERO, BIT_ONE, BIT_max };
+
 typedef struct {
     const DATA_TYPE (*quadrant)[TABLE_SIZE];
     PHASE_TYPE phase;
@@ -45,6 +48,9 @@ typedef PHASE_TYPE PHASE_STEP;
 
 typedef struct {
     SAMPLE_STATE sample_state;
+    size_t samples_remaining;
+    PHASE_STEP step;
+    enum channel channel;
 } BIT_STATE;
 
 typedef struct {
@@ -58,9 +64,6 @@ typedef struct {
 static const unsigned int SAMPLE_RATE = 8000;
 static const unsigned int BAUD_RATE = 300;
 static const size_t SAMPLES_PER_BIT = (SAMPLE_RATE + BAUD_RATE - 1) / BAUD_RATE; // round up (err on the slow side)
-
-enum channel { CHAN_ZERO, CHAN_ONE, CHAN_max };
-enum bit { BIT_ZERO, BIT_ONE, BIT_max };
 
 struct audio_state {
     unsigned sample_rate;
