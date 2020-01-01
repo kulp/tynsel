@@ -108,8 +108,6 @@ int encode_bytes(struct encode_state *s, size_t byte_count, unsigned bytes[byte_
     struct put_state state = { .last_quadrant = 0 };
     for (unsigned byte_index = 0; byte_index < byte_count; byte_index++) {
         unsigned byte = bytes[byte_index];
-        if (s->verbosity)
-            printf("writing byte %#x\n", byte);
 
         for (int bit_index = 0; rc >= 0 && bit_index < s->audio.start_bits; bit_index++) {
             rc = encode_bit(s, bell103_freqs[s->channel][0], s->gain, &state);
