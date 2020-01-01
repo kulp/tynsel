@@ -11,7 +11,7 @@ CFLAGS += -Wall -Wextra -Wunused
 
 CPPFLAGS += -std=c99
 
-all: gen wrap decode
+all: gen decode
 
 avr-%: ARCH_FLAGS += -mmcu=attiny412
 
@@ -28,8 +28,6 @@ avr-%.o: %.c
 	$(COMPILE.c) -o $@ $<
 
 decode: CFLAGS += -O3
-
-wrap: CFLAGS += -Os -fomit-frame-pointer
 
 vpath %.c src
 
@@ -49,5 +47,5 @@ coeffs_%.h: scripts/gen_notch.m
 -include $(patsubst %.c,avr-%.d,$(notdir $(wildcard src/*.c)))
 
 clean:
-	rm -f *.d *.o gen wrap decode
+	rm -f *.d *.o gen decode
 

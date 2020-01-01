@@ -24,10 +24,33 @@
 
 #include <errno.h>
 #include <getopt.h>
+#include <math.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+#define int16_tMAX INT16_MAX
+#define  int8_tMAX  INT8_MAX
+
+#define CAT(X,Y) CAT_(X,Y)
+#define CAT_(X,Y) X ## Y
+
+// Creates a quarter-wave sine table, scaled by the given gain.
+// Valid indices into the table are [0,TABLE_SIZE).
+// Input indices are augmented by 0.5 before computing the sine, on the
+// assumption that TABLE_SIZE is a power of two and that we want to do
+// arithmetic with powers of two. If we did not compensate somehow, we would
+// either have two entries for zero (when flipping the quadrant), two entries
+// for max (also during flipping), or an uneven gap between the minimum
+// positive and minimum negative output values.
+static void make_sine_table(DATA_TYPE sines[TABLE_SIZE], float gain)
+{
+    const DATA_TYPE max = (CAT(DATA_TYPE,MAX) / 2);
+    for (unsigned int i = 0; i < TABLE_SIZE; i++) {
+        sines[i] = gain * sinf(2 * M_PI * (i + 0.5) / MAJOR_PER_CYCLE) * max - 1;
+    }
+}
 
 static int parse_opts(struct encode_state *s, int argc, char *argv[], const char **filename)
 {
@@ -52,12 +75,11 @@ static int parse_opts(struct encode_state *s, int argc, char *argv[], const char
 }
 
 // returns zero on failure
-static int sample_callback(struct audio_state *a, size_t count, double samples[count], void *userdata)
+static int sample_callback(struct audio_state *a, size_t count, DATA_TYPE samples[count], void *userdata)
 {
     (void)a;
     for (size_t i = 0; i < count; i++) {
-        int16_t out = (int16_t)(samples[i] * INT16_MAX);
-        int result = fwrite(&out, sizeof out, 1, userdata);
+        int result = fwrite(&samples[i], sizeof samples[i], 1, userdata);
         if (result != 1)
             return 0;
     }
@@ -126,11 +148,13 @@ int main(int argc, char* argv[])
         }
     }
 
+    DATA_TYPE sines[TABLE_SIZE];
+    make_sine_table(sines, s->gain);
+    s->bit_state.sample_state.quadrant = &sines;
+
     encode_carrier(s, 1 + s->audio.sample_rate / s->audio.baud_rate);
 
-    int samples = encode_bytes(s, byte_count, bytes);
-    if (samples < 0)
-        fprintf(stderr, "Error while encoding %zd bytes : %s\n", byte_count, strerror(errno));
+    encode_bytes(s, byte_count, bytes);
 
     encode_carrier(s, 1 + s->audio.sample_rate / s->audio.baud_rate);
 
