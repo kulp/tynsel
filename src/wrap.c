@@ -11,6 +11,8 @@ const size_t SAMPLES_PER_BIT = (SAMPLE_RATE + BAUD_RATE - 1) / BAUD_RATE; // rou
 #define PHASE_TYPE uint16_t
 #define PHASE_FRACTION_BITS 8
 
+#define FREQ_TYPE uint16_t
+
 #define TABLE_SIZE 64u
 #define MAJOR_PER_CYCLE (TABLE_SIZE * 4)
 #define MINOR_PER_CYCLE (MAJOR_PER_CYCLE * (1 << (PHASE_FRACTION_BITS)))
@@ -39,10 +41,15 @@ DATA_TYPE get_sample(PHASE_STATE *phase, PHASE_STEP step, const DATA_TYPE quadra
     return quadrant[lookup] ^ half;
 }
 
+static inline PHASE_STEP get_phase_step(FREQ_TYPE freq)
+{
+    return MINOR_PER_CYCLE * freq / SAMPLE_RATE;
+}
+
 int encode_bit(size_t max_samples, DATA_TYPE output[max_samples], const DATA_TYPE quadrant[TABLE_SIZE])
 {
     PHASE_STATE phase = 0;
-    const PHASE_STEP step = MINOR_PER_CYCLE * FREQUENCY / SAMPLE_RATE;
+    const PHASE_STEP step = get_phase_step(FREQUENCY);
 
     size_t samples = (max_samples > SAMPLES_PER_BIT) ? SAMPLES_PER_BIT : max_samples;
     for (size_t i = 0; i < samples; i++) {
