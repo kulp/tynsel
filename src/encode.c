@@ -63,17 +63,13 @@ static inline FREQ_TYPE get_frequency(enum channel channel, enum bit bit)
     return freqs[channel][bit];
 }
 
-static bool encode_bit(BIT_STATE *s, enum channel channel, enum bit bit, size_t max_samples, DATA_TYPE output[max_samples])
+static bool encode_bit(BIT_STATE *s, bool newbit, enum channel channel, enum bit bit, DATA_TYPE *out)
 {
     const FREQ_TYPE frequency = get_frequency(channel, bit);
     const PHASE_STEP step = get_phase_step(frequency);
 
-    size_t samples = (max_samples > SAMPLES_PER_BIT) ? SAMPLES_PER_BIT : max_samples;
-    for (size_t i = 0; i < samples; i++) {
-        encode_sample(&s->sample_state, step, &output[i]);
-    }
-
-    return true;
+    (void)newbit;
+    return encode_sample(&s->sample_state, step, out);
 }
 
 void encode_carrier(struct encode_state *s, size_t bit_times)
@@ -82,7 +78,9 @@ void encode_carrier(struct encode_state *s, size_t bit_times)
 
     for (unsigned bit_index = 0; rc >= 0 && bit_index < bit_times; bit_index++) {
         DATA_TYPE output[SAMPLES_PER_BIT];
-        rc = encode_bit(&s->bit_state, s->channel, BIT_ONE, SAMPLES_PER_BIT, output);
+        for (DATA_TYPE *out = output; out < &output[SAMPLES_PER_BIT]; out++)
+            while (! encode_bit(&s->bit_state, true, s->channel, BIT_ONE, out))
+                ; // spin
         s->cb.put_samples(&s->audio, SAMPLES_PER_BIT, output, s->cb.userdata);
     }
 }
@@ -96,25 +94,33 @@ void encode_bytes(struct encode_state *s, size_t byte_count, unsigned bytes[byte
         unsigned byte = bytes[byte_index];
 
         for (int bit_index = 0; rc >= 0 && bit_index < s->audio.start_bits; bit_index++) {
-            rc = encode_bit(&s->bit_state, s->channel, BIT_ZERO, SAMPLES_PER_BIT, output);
+            for (DATA_TYPE *out = output; out < &output[SAMPLES_PER_BIT]; out++)
+                while (! encode_bit(&s->bit_state, true, s->channel, BIT_ZERO, out))
+                    ; // spin
             s->cb.put_samples(&s->audio, SAMPLES_PER_BIT, output, s->cb.userdata);
         }
 
         for (int bit_index = 0; rc >= 0 && bit_index < s->audio.data_bits; bit_index++) {
             unsigned bit = !!(byte & (1 << bit_index));
-            rc = encode_bit(&s->bit_state, s->channel, bit, SAMPLES_PER_BIT, output);
+            for (DATA_TYPE *out = output; out < &output[SAMPLES_PER_BIT]; out++)
+                while (! encode_bit(&s->bit_state, true, s->channel, bit, out))
+                    ; // spin
             s->cb.put_samples(&s->audio, SAMPLES_PER_BIT, output, s->cb.userdata);
         }
 
         int oddness = POPCNT(byte) & 1;
         for (int bit_index = 0; rc >= 0 && bit_index < s->audio.parity_bits; bit_index++) {
             // assume EVEN parity for now
-            rc = encode_bit(&s->bit_state, s->channel, oddness, SAMPLES_PER_BIT, output);
+            for (DATA_TYPE *out = output; out < &output[SAMPLES_PER_BIT]; out++)
+                while (! encode_bit(&s->bit_state, true, s->channel, oddness, out))
+                    ; // spin
             s->cb.put_samples(&s->audio, SAMPLES_PER_BIT, output, s->cb.userdata);
         }
 
         for (int bit_index = 0; rc >= 0 && bit_index < s->audio.stop_bits; bit_index++) {
-            rc = encode_bit(&s->bit_state, s->channel, BIT_ONE, SAMPLES_PER_BIT, output);
+            for (DATA_TYPE *out = output; out < &output[SAMPLES_PER_BIT]; out++)
+                while (! encode_bit(&s->bit_state, true, s->channel, BIT_ONE, out))
+                    ; // spin
             s->cb.put_samples(&s->audio, SAMPLES_PER_BIT, output, s->cb.userdata);
         }
     }
