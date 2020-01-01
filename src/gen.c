@@ -22,7 +22,6 @@
 
 #define _XOPEN_SOURCE 600
 #include "encode.h"
-#include "common.h"
 
 #include <stdlib.h>
 #include <getopt.h>
