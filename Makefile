@@ -11,7 +11,7 @@ CFLAGS += -Wall -Wextra -Wunused
 
 CPPFLAGS += -std=c99
 
-all: suite gen wrap decode
+all: gen wrap decode
 
 avr-%: ARCH_FLAGS += -mmcu=attiny412
 
@@ -39,9 +39,6 @@ CPPFLAGS += $(patsubst %,-I%,$(INCLUDE))
 gen: LDLIBS += -lsndfile
 gen: encode.o audio.o
 
-suite: LDLIBS += -lsndfile
-suite: filters.o streamdecode.o audio.o
-
 avr-decode.o decode.o: INCLUDE += .
 coeffs_%.h: scripts/gen_notch.m
 	$(realpath $<) $$(echo $* | (IFS=_; read a b c ; echo $$a $$b $$c)) > $@
@@ -52,5 +49,5 @@ coeffs_%.h: scripts/gen_notch.m
 -include $(patsubst %.c,%.d,$(notdir $(wildcard *.c src/recognisers/*.c src/*.c)))
 
 clean:
-	rm -f *.d *.o gen suite wrap decode
+	rm -f *.d *.o gen wrap decode
 
