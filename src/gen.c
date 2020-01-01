@@ -101,18 +101,17 @@ int main(int argc, char* argv[])
     int rc = parse_opts(s, argc, argv, &output_file);
     if (rc)
         return rc;
-    if (!output_file) {
-        fprintf(stderr, "No file specified to generate -- use `-o'\n");
-        return -1;
-    }
 
     if (s->channel > 1) {
         fprintf(stderr, "Invalid channel %d\n", s->channel);
         return -1;
     }
 
-    FILE *file = s->cb.userdata = fopen(output_file, "w");
-    if (!file) {
+    if (!output_file && s->verbosity)
+        fprintf(stderr, "No file specified to generate -- using stdout\n");
+
+    s->cb.userdata = output_file ? fopen(output_file, "w") : stdout;
+    if (!s->cb.userdata) {
         fprintf(stderr, "Failed to open `%s' : %s\n", output_file, strerror(errno));
         exit(EXIT_FAILURE);
     }
