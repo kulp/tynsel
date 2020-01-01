@@ -48,7 +48,7 @@ struct encode_state {
         void *userdata;
         int (*put_samples)(struct audio_state *a, size_t count, double sample[count], void *userdata);
     } cb;
-    int index, length; // sample offset and length (for silence at ends)
+    int index; // sample offset
 };
 
 // returns number of samples emitted, or -1
