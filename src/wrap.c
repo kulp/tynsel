@@ -30,7 +30,7 @@ const size_t SAMPLES_PER_BIT = (SAMPLE_RATE + BAUD_RATE - 1) / BAUD_RATE; // rou
 typedef PHASE_TYPE PHASE_STATE;
 typedef PHASE_TYPE PHASE_STEP;
 
-DATA_TYPE get_sample(PHASE_STATE *phase, PHASE_STEP step, const DATA_TYPE quadrant[TABLE_SIZE])
+static DATA_TYPE encode_sample(PHASE_STATE *phase, PHASE_STEP step, const DATA_TYPE quadrant[TABLE_SIZE])
 {
     uint8_t top = *phase >> PHASE_FRACTION_BITS;
     DATA_TYPE  half    = TEST_BIT(top, 7);
@@ -59,7 +59,7 @@ static inline FREQ_TYPE get_frequency(enum channel channel, enum bit bit)
     return freqs[channel][bit];
 }
 
-int encode_bit(enum channel channel, enum bit bit, size_t max_samples, DATA_TYPE output[max_samples], const DATA_TYPE quadrant[TABLE_SIZE])
+static int encode_bit(enum channel channel, enum bit bit, size_t max_samples, DATA_TYPE output[max_samples], const DATA_TYPE quadrant[TABLE_SIZE])
 {
     PHASE_STATE phase = 0;
     const FREQ_TYPE frequency = get_frequency(channel, bit);
@@ -67,7 +67,7 @@ int encode_bit(enum channel channel, enum bit bit, size_t max_samples, DATA_TYPE
 
     size_t samples = (max_samples > SAMPLES_PER_BIT) ? SAMPLES_PER_BIT : max_samples;
     for (size_t i = 0; i < samples; i++) {
-        output[i] = get_sample(&phase, step, quadrant);
+        output[i] = encode_sample(&phase, step, quadrant);
     }
 
     return samples;
