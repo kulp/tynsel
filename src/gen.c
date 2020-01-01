@@ -133,13 +133,13 @@ int main(int argc, char* argv[])
         // TODO put more samples at once
         s->cb.put_samples(&s->audio, 1, &zero, s->cb.userdata);
 
-    encode_carrier(s, 20);
+    encode_carrier(s, 1 + s->audio.sample_rate / s->audio.baud_rate);
 
     int samples = encode_bytes(s, byte_count, bytes);
     if (samples < 0)
         fprintf(stderr, "Error while encoding %zd bytes : %s\n", byte_count, strerror(errno));
 
-    encode_carrier(s, 20);
+    encode_carrier(s, 1 + s->audio.sample_rate / s->audio.baud_rate);
 
     for (int i = samples + s->index; i < s->length; i++)
         s->cb.put_samples(&s->audio, 1, &zero, s->cb.userdata);
