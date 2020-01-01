@@ -3,7 +3,9 @@
 #include <stdio.h>
 
 const int SAMPLE_RATE = 8000;
+const int BAUD_RATE = 300;
 const int FREQUENCY = 1270;
+const size_t SAMPLES_PER_BIT = (SAMPLE_RATE + BAUD_RATE - 1) / BAUD_RATE; // round up (err on the slow side)
 
 #define DATA_TYPE uint16_t
 #define PHASE_TYPE uint16_t
@@ -21,7 +23,11 @@ const int FREQUENCY = 1270;
 
 #define TEST_BIT(Word,Index) (((Word) & (1 << (Index))) ? -1 : 0)
 
-DATA_TYPE get_sample(PHASE_TYPE *phase, PHASE_TYPE step, const DATA_TYPE quadrant[TABLE_SIZE])
+// For now, the only state is the phase itself
+typedef PHASE_TYPE PHASE_STATE;
+typedef PHASE_TYPE PHASE_STEP;
+
+DATA_TYPE get_sample(PHASE_STATE *phase, PHASE_STEP step, const DATA_TYPE quadrant[TABLE_SIZE])
 {
     uint8_t top = *phase >> PHASE_FRACTION_BITS;
     DATA_TYPE  half    = TEST_BIT(top, 7);
@@ -33,14 +39,17 @@ DATA_TYPE get_sample(PHASE_TYPE *phase, PHASE_TYPE step, const DATA_TYPE quadran
     return quadrant[lookup] ^ half;
 }
 
-void run(int samples, DATA_TYPE output[samples], const DATA_TYPE quadrant[TABLE_SIZE])
+int encode_bit(size_t max_samples, DATA_TYPE output[max_samples], const DATA_TYPE quadrant[TABLE_SIZE])
 {
-    PHASE_TYPE phase = 0;
-    const PHASE_TYPE step = MINOR_PER_CYCLE * FREQUENCY / SAMPLE_RATE;
+    PHASE_STATE phase = 0;
+    const PHASE_STEP step = MINOR_PER_CYCLE * FREQUENCY / SAMPLE_RATE;
 
-    for (int i = 0; i < samples; i++) {
+    size_t samples = (max_samples > SAMPLES_PER_BIT) ? SAMPLES_PER_BIT : max_samples;
+    for (size_t i = 0; i < samples; i++) {
         output[i] = get_sample(&phase, step, quadrant);
     }
+
+    return samples;
 }
 
 // Creates a quarter-wave sine table, scaled by the given maximum value.
@@ -64,10 +73,9 @@ int main()
 
     make_sine_table(quadrant, CAT(DATA_TYPE,MAX) / 2);
 
-    const int samples = TABLE_SIZE * 8;
-    DATA_TYPE output[samples];
+    DATA_TYPE output[SAMPLES_PER_BIT];
 
-    run(samples, output, quadrant);
+    int samples = encode_bit(sizeof(output) / sizeof(*output), output, quadrant);
 
     for (int i = 0; i < samples; i++) {
         printf("samples[%3d] = % f\n", i, 2.0f * (float)(output[i] - CAT(DATA_TYPE,MAX) / 2) / CAT(DATA_TYPE,MAX));
