@@ -20,15 +20,14 @@
  * IN THE SOFTWARE.
  */
 
-#define _XOPEN_SOURCE 600
 #include "encode.h"
 
-#include <stdlib.h>
-#include <getopt.h>
-#include <string.h>
 #include <errno.h>
-#include <stdio.h>
+#include <getopt.h>
 #include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 static int parse_opts(struct encode_state *s, int argc, char *argv[], const char **filename)
 {
