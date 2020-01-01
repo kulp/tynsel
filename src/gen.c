@@ -27,8 +27,8 @@
 #include <getopt.h>
 #include <string.h>
 #include <errno.h>
-
-#include <sndfile.h>
+#include <stdio.h>
+#include <stdint.h>
 
 static int parse_opts(struct encode_state *s, int argc, char *argv[], const char **filename)
 {
@@ -54,10 +54,18 @@ static int parse_opts(struct encode_state *s, int argc, char *argv[], const char
     return 0;
 }
 
+// returns zero on failure
 static int sample_callback(struct audio_state *a, size_t count, double samples[count], void *userdata)
 {
     (void)a;
-    return sf_write_double(userdata, samples, count);
+    for (size_t i = 0; i < count; i++) {
+        int16_t out = (int16_t)(samples[i] * INT16_MAX);
+        int result = fwrite(&out, sizeof out, 1, userdata);
+        if (result != 1)
+            return 0;
+    }
+
+    return 1;
 }
 
 static int parse_number(const char *in, char **next, int base)
@@ -104,18 +112,10 @@ int main(int argc, char* argv[])
         return -1;
     }
 
-    SNDFILE *sf;
-    {
-        SF_INFO sinfo = {
-            .samplerate = s->audio.sample_rate,
-            .channels   = 1,
-            .format     = SF_FORMAT_WAV | SF_FORMAT_PCM_16,
-        };
-        sf = s->cb.userdata = sf_open(output_file, SFM_WRITE, &sinfo);
-        if (!sf) {
-            fprintf(stderr, "Failed to open `%s' : %s\n", output_file, strerror(errno));
-            exit(EXIT_FAILURE);
-        }
+    FILE *file = s->cb.userdata = fopen(output_file, "w");
+    if (!file) {
+        fprintf(stderr, "Failed to open `%s' : %s\n", output_file, strerror(errno));
+        exit(EXIT_FAILURE);
     }
 
     size_t byte_count = argc - optind;
@@ -145,8 +145,6 @@ int main(int argc, char* argv[])
 
     for (int i = samples + s->index; i < s->length; i++)
         s->cb.put_samples(&s->audio, 1, &zero, s->cb.userdata);
-
-    sf_close(sf);
 
     return 0;
 }

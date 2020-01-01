@@ -36,7 +36,6 @@ vpath %.c src src/recognisers
 
 CPPFLAGS += $(patsubst %,-I%,$(INCLUDE))
 
-gen: LDLIBS += -lsndfile
 gen: encode.o
 
 avr-decode.o decode.o: INCLUDE += .
