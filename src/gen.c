@@ -84,7 +84,6 @@ int main(int argc, char* argv[])
             .data_bits   = 8,
             .parity_bits = 0,
             .stop_bits   = 2,
-            .freqs       = bell103_freqs,
         },
         .verbosity = 0,
         .channel   = 1,

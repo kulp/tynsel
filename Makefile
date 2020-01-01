@@ -37,7 +37,7 @@ vpath %.c src src/recognisers
 CPPFLAGS += $(patsubst %,-I%,$(INCLUDE))
 
 gen: LDLIBS += -lsndfile
-gen: encode.o audio.o
+gen: encode.o
 
 avr-decode.o decode.o: INCLUDE += .
 coeffs_%.h: scripts/gen_notch.m

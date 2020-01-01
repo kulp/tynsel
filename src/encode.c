@@ -27,6 +27,13 @@
 #include <math.h>
 #include <stdio.h>
 
+static const double bell103_freqs[2][2] = {
+    { 1070., 1270. },
+    { 2025., 2225. },
+};
+
+#define SAMPLES_PER_BIT(a) ((double)(a)->sample_rate / (a)->baud_rate)
+
 // TODO redefine POPCNT for different compilers than GCC
 #define POPCNT(x) __builtin_popcount(x)
 
@@ -88,7 +95,7 @@ int encode_carrier(struct encode_state *s, size_t bit_times)
     struct put_state state = { .last_quadrant = 0 };
 
     for (unsigned bit_index = 0; rc >= 0 && bit_index < bit_times; bit_index++) {
-        rc = encode_bit(s, s->audio.freqs[s->channel][1], s->gain, &state);
+        rc = encode_bit(s, bell103_freqs[s->channel][1], s->gain, &state);
         if (rc >= 0) samples += rc; else return -1;
     }
 
@@ -107,13 +114,13 @@ int encode_bytes(struct encode_state *s, size_t byte_count, unsigned bytes[byte_
             printf("writing byte %#x\n", byte);
 
         for (int bit_index = 0; rc >= 0 && bit_index < s->audio.start_bits; bit_index++) {
-            rc = encode_bit(s, s->audio.freqs[s->channel][0], s->gain, &state);
+            rc = encode_bit(s, bell103_freqs[s->channel][0], s->gain, &state);
             if (rc >= 0) samples += rc; else return -1;
         }
 
         for (int bit_index = 0; rc >= 0 && bit_index < s->audio.data_bits; bit_index++) {
             unsigned bit = !!(byte & (1 << bit_index));
-            double freq = s->audio.freqs[s->channel][bit];
+            double freq = bell103_freqs[s->channel][bit];
             rc = encode_bit(s, freq, s->gain, &state);
             if (rc >= 0) samples += rc; else return -1;
         }
@@ -121,12 +128,12 @@ int encode_bytes(struct encode_state *s, size_t byte_count, unsigned bytes[byte_
         int oddness = POPCNT(byte) & 1;
         for (int bit_index = 0; rc >= 0 && bit_index < s->audio.parity_bits; bit_index++) {
             // assume EVEN parity for now
-            rc = encode_bit(s, s->audio.freqs[s->channel][oddness], s->gain, &state);
+            rc = encode_bit(s, bell103_freqs[s->channel][oddness], s->gain, &state);
             if (rc >= 0) samples += rc; else return -1;
         }
 
         for (int bit_index = 0; rc >= 0 && bit_index < s->audio.stop_bits; bit_index++) {
-            rc = encode_bit(s, s->audio.freqs[s->channel][1], s->gain, &state);
+            rc = encode_bit(s, bell103_freqs[s->channel][1], s->gain, &state);
             if (rc >= 0) samples += rc; else return -1;
         }
     }

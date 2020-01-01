@@ -23,9 +23,18 @@
 #ifndef ENCODE_H_
 #define ENCODE_H_
 
-#include "audio.h"
-
 #include <stddef.h>
+
+struct audio_state {
+    unsigned sample_rate;
+    double sample_offset;
+    const unsigned baud_rate;
+
+    int start_bits,
+        data_bits,
+        parity_bits,
+        stop_bits;
+};
 
 struct encode_state {
     struct audio_state audio;
