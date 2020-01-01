@@ -3,6 +3,7 @@ set -euo pipefail
 here=$(dirname $0)
 input_file=$1
 channel=0
+threshold=10
 
 source $here/bash_functions
 
@@ -16,7 +17,7 @@ do
                 out=$here/out/$rms_samples,$hysteresis,$offset
                 if [[ ! -e $out ]] # assume existence implies previous completion
                 then
-                    $here/../decode $channel $rms_samples $hysteresis $offset < $input_file 2> /dev/null > $out
+                    $here/../decode $channel $rms_samples $threshold $hysteresis $offset < $input_file 2> /dev/null > $out
                 fi
             ) &
         done

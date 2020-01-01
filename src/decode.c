@@ -3,7 +3,6 @@
 
 #define BITWIDTH 27 /* 8000 / 300 */
 #define THRESHOLD 0
-#define RMS_THRESHOLD 50000
 #define MAX_RMS_SAMPLES 7 // empirically-determined sweet-spot
 
 #define COEFF_FRACTIONAL_BITS 14
@@ -237,6 +236,7 @@ static const struct filter_config coeffs[CHAN_max][BIT_max] PROGMEM = {
 bool top(
         uint8_t channel,
         uint8_t window_size,
+        uint16_t threshold,
         int8_t hysteresis,
         int8_t offset,
         FILTER_IN_DATA in,
@@ -275,7 +275,7 @@ bool top(
         )
         return false;
 
-    if (ra < RMS_THRESHOLD || rb < RMS_THRESHOLD)
+    if (ra < threshold || rb < threshold)
         return false;
 
     RUNS_OUT_DATA ro = 0;
@@ -292,8 +292,8 @@ bool top(
 
 int main(int argc, char *argv[])
 {
-    if (argc != 5) {
-        WARN("Supply channel, summation window size, hysteresis, and sample offset");
+    if (argc != 6) {
+        WARN("Supply channel, summation window size, power threshold, hysteresis, and sample offset");
         exit(EXIT_FAILURE);
     }
 
@@ -301,6 +301,7 @@ int main(int argc, char *argv[])
 
     int channel = strtol(*arg++, NULL, 0);
     int window_size = strtol(*arg++, NULL, 0);
+    int threshold = strtol(*arg++, NULL, 0);
     int hysteresis = strtol(*arg++, NULL, 0);
     int offset = strtol(*arg++, NULL, 0);
 
@@ -318,7 +319,7 @@ int main(int argc, char *argv[])
         }
 
         DECODE_OUT_DATA out = EOF;
-        if (top(channel, window_size, hysteresis, offset, in, &out))
+        if (top(channel, window_size, threshold, hysteresis, offset, in, &out))
             putchar(out);
     }
 
