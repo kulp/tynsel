@@ -23,6 +23,7 @@
 #ifndef ENCODE_H_
 #define ENCODE_H_
 
+#include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
 
@@ -45,6 +46,14 @@ typedef PHASE_TYPE PHASE_STEP;
 typedef struct {
     SAMPLE_STATE sample_state;
 } BIT_STATE;
+
+typedef struct {
+    BIT_STATE bit_state;
+    uint16_t current_word;
+    uint16_t next_word;
+    uint8_t bits_remaining;
+    bool buffer_full;
+} BYTE_STATE;
 
 static const unsigned int SAMPLE_RATE = 8000;
 static const unsigned int BAUD_RATE = 300;
