@@ -31,8 +31,7 @@ decode: CFLAGS += -O3
 
 wrap: CFLAGS += -Os -fomit-frame-pointer
 
-INCLUDE += src src/recognisers
-vpath %.c src src/recognisers
+vpath %.c src
 
 CPPFLAGS += $(patsubst %,-I%,$(INCLUDE))
 
@@ -45,7 +44,7 @@ coeffs_%.h: scripts/gen_notch.m
 %.d: %.c
 	@$(COMPILE.c) -MM -MG -MF $@ $<
 
--include $(patsubst %.c,%.d,$(notdir $(wildcard *.c src/recognisers/*.c src/*.c)))
+-include $(patsubst %.c,%.d,$(notdir $(wildcard *.c src/*.c)))
 
 clean:
 	rm -f *.d *.o gen wrap decode
