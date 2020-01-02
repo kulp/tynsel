@@ -44,7 +44,7 @@ coeffs_%.h: scripts/gen_notch.m
 %.d: %.c
 	@$(COMPILE.c) -MM -MG -MF $@ $<
 
--include $(patsubst %.c,%.d,$(notdir $(wildcard *.c src/*.c)))
+-include $(patsubst %.c,%.d,$(notdir $(wildcard src/*.c)))
 
 clean:
 	rm -f *.d *.o gen wrap decode
