@@ -26,8 +26,6 @@
 #include <stdbool.h>
 #include <stdio.h>
 
-#define SAMPLES_PER_BIT(a) ((double)(a)->sample_rate / (a)->baud_rate)
-
 // TODO redefine POPCNT for different compilers than GCC
 #define POPCNT(x) __builtin_popcount(x)
 
@@ -65,11 +63,26 @@ static inline FREQ_TYPE get_frequency(enum channel channel, enum bit bit)
 
 static bool encode_bit(BIT_STATE *s, bool newbit, enum channel channel, enum bit bit, DATA_TYPE *out)
 {
-    const FREQ_TYPE frequency = get_frequency(channel, bit);
-    const PHASE_STEP step = get_phase_step(frequency);
+    bool busy = s->samples_remaining > 0;
 
-    (void)newbit;
-    return encode_sample(&s->sample_state, step, out);
+    if (! busy) {
+        s->samples_remaining = SAMPLES_PER_BIT;
+        if (newbit) {
+            s->channel = channel;
+        } else {
+            // if no new bit, switch back to the idle bit in the most-recent channel
+            bit = 1;
+        }
+        s->step = get_phase_step(get_frequency(s->channel, bit));
+    }
+
+    if (s->samples_remaining) {
+        if (encode_sample(&s->sample_state, s->step, out)) {
+            s->samples_remaining--;
+        }
+    }
+
+    return ! busy;
 }
 
 bool push_raw_word(BYTE_STATE *s, bool restart, enum channel channel, uint16_t word, DATA_TYPE *out)
@@ -77,50 +90,52 @@ bool push_raw_word(BYTE_STATE *s, bool restart, enum channel channel, uint16_t w
     bool busy = s->bits_remaining > 0;
     bool full = s->buffer_full;
 
-    bool newbit = false;
-    enum bit bit = 1; // idle bit
+    enum bit bit = s->current_word & 1;
 
     #define BOOL_TRIAD(A,B,C) (((A) << 2) | ((B) << 1) | ((C) << 0))
     switch (BOOL_TRIAD(restart, full, busy)) {
         case BOOL_TRIAD(true , true , false): // full, need to fill and emit
             s->current_word = s->next_word;
             s->buffer_full = false;
+            s->bits_remaining = 11; // TODO compute
             // FALLTHROUGH
         case BOOL_TRIAD(true , false, true ): // emitting, need to fill
         case BOOL_TRIAD(true , false, false): // idle, need to fill
             s->next_word = word;
             s->buffer_full = true;
-            return push_raw_word(s, restart, channel, word, out); // tail recursion
+            return push_raw_word(s, false, channel, word, out); // tail recursion
+
+        case BOOL_TRIAD(true , true , true ): // full, emitting, no room
+            if (encode_bit(&s->bit_state, busy, channel, bit, out)) {
+                s->current_word >>= 1;
+                s->bits_remaining--;
+            }
+            return false;
+
+        case BOOL_TRIAD(false, false, false): // idle
+            return encode_bit(&s->bit_state, busy, channel, bit, out);
 
         case BOOL_TRIAD(false, true , false): // full, need to emit
             s->current_word = s->next_word;
             s->buffer_full = false;
+            s->bits_remaining = 11; // TODO compute
+            busy = true;
             // FALLTHROUGH
         case BOOL_TRIAD(false, true , true ): // full, emitting
         case BOOL_TRIAD(false, false, true ): // emitting
-            bit = s->current_word & 1;
-            s->current_word >>= 1;
-            s->bits_remaining--;
-            // FALLTHROUGH
-        case BOOL_TRIAD(false, false, false): // idle
-        case BOOL_TRIAD(true , true , true ): // full, emitting, no room
-            return encode_bit(&s->bit_state, newbit, channel, bit, out);
+            if (encode_bit(&s->bit_state, busy, channel, bit, out)) {
+                s->current_word >>= 1;
+                s->bits_remaining--;
+            }
+            return true;
     }
 
     return false; // this is meant to be unreachable
 }
 
-void encode_carrier(struct encode_state *s, size_t bit_times)
+bool encode_carrier(BYTE_STATE *s, bool restart, enum channel channel, DATA_TYPE *out)
 {
-    int rc = 0;
-
-    for (unsigned bit_index = 0; rc >= 0 && bit_index < bit_times; bit_index++) {
-        DATA_TYPE output[SAMPLES_PER_BIT];
-        for (DATA_TYPE *out = output; out < &output[SAMPLES_PER_BIT]; out++)
-            while (! encode_bit(&s->bit_state, true, s->channel, BIT_ONE, out))
-                ; // spin
-        s->cb.put_samples(&s->audio, SAMPLES_PER_BIT, output, s->cb.userdata);
-    }
+    return push_raw_word(s, restart, channel, (uint16_t)-1u, out);
 }
 
 static inline bool compute_parity(enum parity parity, uint8_t byte)
@@ -155,44 +170,8 @@ static inline uint16_t make_word(const struct audio_state *a, enum parity parity
     return word;
 }
 
-void encode_bytes(struct encode_state *s, size_t byte_count, unsigned bytes[byte_count])
+bool encode_bytes(struct encode_state *s, bool restart, enum channel channel, uint8_t byte, DATA_TYPE *out)
 {
-    int rc = 0;
-
-    for (unsigned byte_index = 0; byte_index < byte_count; byte_index++) {
-        DATA_TYPE output[SAMPLES_PER_BIT];
-        unsigned byte = bytes[byte_index];
-
-        for (int bit_index = 0; rc >= 0 && bit_index < s->audio.start_bits; bit_index++) {
-            for (DATA_TYPE *out = output; out < &output[SAMPLES_PER_BIT]; out++)
-                while (! encode_bit(&s->bit_state, true, s->channel, BIT_ZERO, out))
-                    ; // spin
-            s->cb.put_samples(&s->audio, SAMPLES_PER_BIT, output, s->cb.userdata);
-        }
-
-        for (int bit_index = 0; rc >= 0 && bit_index < s->audio.data_bits; bit_index++) {
-            unsigned bit = !!(byte & (1 << bit_index));
-            for (DATA_TYPE *out = output; out < &output[SAMPLES_PER_BIT]; out++)
-                while (! encode_bit(&s->bit_state, true, s->channel, bit, out))
-                    ; // spin
-            s->cb.put_samples(&s->audio, SAMPLES_PER_BIT, output, s->cb.userdata);
-        }
-
-        bool parity = compute_parity(s->audio.parity, byte);
-        for (int bit_index = 0; rc >= 0 && bit_index < s->audio.parity_bits; bit_index++) {
-            for (DATA_TYPE *out = output; out < &output[SAMPLES_PER_BIT]; out++)
-                while (! encode_bit(&s->bit_state, true, s->channel, parity, out))
-                    ; // spin
-            s->cb.put_samples(&s->audio, SAMPLES_PER_BIT, output, s->cb.userdata);
-        }
-
-        for (int bit_index = 0; rc >= 0 && bit_index < s->audio.stop_bits; bit_index++) {
-            for (DATA_TYPE *out = output; out < &output[SAMPLES_PER_BIT]; out++)
-                while (! encode_bit(&s->bit_state, true, s->channel, BIT_ONE, out))
-                    ; // spin
-            s->cb.put_samples(&s->audio, SAMPLES_PER_BIT, output, s->cb.userdata);
-        }
-    }
+    return push_raw_word(&s->byte_state, restart, channel, make_word(&s->audio, s->audio.parity, byte), out);
 }
-
 

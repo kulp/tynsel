@@ -67,9 +67,6 @@ static const unsigned int BAUD_RATE = 300;
 static const size_t SAMPLES_PER_BIT = (SAMPLE_RATE + BAUD_RATE - 1) / BAUD_RATE; // round up (err on the slow side)
 
 struct audio_state {
-    unsigned sample_rate;
-    const unsigned baud_rate;
-
     int start_bits,
         data_bits,
         parity_bits,
@@ -80,7 +77,7 @@ struct audio_state {
 
 struct encode_state {
     struct audio_state audio;
-    BIT_STATE bit_state;
+    BYTE_STATE byte_state;
     int verbosity;
     unsigned channel;
     float gain;
@@ -91,9 +88,9 @@ struct encode_state {
 };
 
 // returns number of samples emitted, or -1
-void encode_bytes(struct encode_state *s, size_t byte_count, unsigned bytes[byte_count]);
+bool encode_bytes(struct encode_state *s, bool restart, enum channel channel, uint8_t byte, DATA_TYPE *out);
 bool push_raw_word(BYTE_STATE *s, bool restart, enum channel channel, uint16_t word, DATA_TYPE *out);
-void encode_carrier(struct encode_state *s, size_t bit_times);
+bool encode_carrier(BYTE_STATE *s, bool restart, enum channel channel, DATA_TYPE *out);
 
 #endif
 

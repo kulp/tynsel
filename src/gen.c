@@ -64,7 +64,6 @@ static int parse_opts(struct encode_state *s, int argc, char *argv[], const char
             case 'P': s->audio.parity_bits   = strtol(optarg, NULL, 0); break;
             case 'D': s->audio.data_bits     = strtol(optarg, NULL, 0); break;
             case 'p': s->audio.parity        = strtol(optarg, NULL, 0); break;
-            case 's': s->audio.sample_rate   = strtol(optarg, NULL, 0); break;
             case 'o': *filename              = optarg;                  break;
 
             case 'v': s->verbosity++;                                   break;
@@ -106,8 +105,6 @@ int main(int argc, char* argv[])
     const char *output_file = NULL;
     struct encode_state _s = {
         .audio = {
-            .sample_rate = 8000,
-            .baud_rate   = 300, // TODO make baud_rate configurable
             .start_bits  = 1,
             .data_bits   = 8,
             .parity_bits = 0,
@@ -151,13 +148,28 @@ int main(int argc, char* argv[])
 
     DATA_TYPE sines[TABLE_SIZE];
     make_sine_table(sines, s->gain);
-    s->bit_state.sample_state.quadrant = &sines;
+    s->byte_state.bit_state.sample_state.quadrant = &sines;
 
-    encode_carrier(s, 1 + s->audio.sample_rate / s->audio.baud_rate);
+    for (size_t i = 0; i < SAMPLES_PER_BIT; /* incremented inside loop */) {
+        DATA_TYPE out = 0;
+        if (encode_carrier(&s->byte_state, true, s->channel, &out))
+            i++;
+        s->cb.put_samples(&s->audio, 1, &out, s->cb.userdata);
+    }
 
-    encode_bytes(s, byte_count, bytes);
+    for (size_t b = 0; b < byte_count; /* incremented inside loop */) {
+        DATA_TYPE out = 0;
+        if (encode_bytes(s, true, s->channel, bytes[b], &out))
+            b++;
+        s->cb.put_samples(&s->audio, 1, &out, s->cb.userdata);
+    }
 
-    encode_carrier(s, 1 + s->audio.sample_rate / s->audio.baud_rate);
+    for (size_t i = 0; i < SAMPLES_PER_BIT; /* incremented inside loop */) {
+        DATA_TYPE out = 0;
+        if (encode_carrier(&s->byte_state, true, s->channel, &out))
+            i++;
+        s->cb.put_samples(&s->audio, 1, &out, s->cb.userdata);
+    }
 
     return 0;
 }
