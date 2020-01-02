@@ -86,6 +86,7 @@ struct encode_state {
 
 // returns number of samples emitted, or -1
 void encode_bytes(struct encode_state *s, size_t byte_count, unsigned bytes[byte_count]);
+bool push_raw_word(BYTE_STATE *s, bool restart, enum channel channel, uint16_t word, DATA_TYPE *out);
 void encode_carrier(struct encode_state *s, size_t bit_times);
 
 #endif

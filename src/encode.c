@@ -72,6 +72,44 @@ static bool encode_bit(BIT_STATE *s, bool newbit, enum channel channel, enum bit
     return encode_sample(&s->sample_state, step, out);
 }
 
+bool push_raw_word(BYTE_STATE *s, bool restart, enum channel channel, uint16_t word, DATA_TYPE *out)
+{
+    bool busy = s->bits_remaining > 0;
+    bool full = s->buffer_full;
+
+    bool newbit = false;
+    enum bit bit = 1; // idle bit
+
+    #define BOOL_TRIAD(A,B,C) (((A) << 2) | ((B) << 1) | ((C) << 0))
+    switch (BOOL_TRIAD(restart, full, busy)) {
+        case BOOL_TRIAD(true , true , false): // full, need to fill and emit
+            s->current_word = s->next_word;
+            s->buffer_full = false;
+            // FALLTHROUGH
+        case BOOL_TRIAD(true , false, true ): // emitting, need to fill
+        case BOOL_TRIAD(true , false, false): // idle, need to fill
+            s->next_word = word;
+            s->buffer_full = true;
+            return push_raw_word(s, restart, channel, word, out); // tail recursion
+
+        case BOOL_TRIAD(false, true , false): // full, need to emit
+            s->current_word = s->next_word;
+            s->buffer_full = false;
+            // FALLTHROUGH
+        case BOOL_TRIAD(false, true , true ): // full, emitting
+        case BOOL_TRIAD(false, false, true ): // emitting
+            bit = s->current_word & 1;
+            s->current_word >>= 1;
+            s->bits_remaining--;
+            // FALLTHROUGH
+        case BOOL_TRIAD(false, false, false): // idle
+        case BOOL_TRIAD(true , true , true ): // full, emitting, no room
+            return encode_bit(&s->bit_state, newbit, channel, bit, out);
+    }
+
+    return false; // this is meant to be unreachable
+}
+
 void encode_carrier(struct encode_state *s, size_t bit_times)
 {
     int rc = 0;
