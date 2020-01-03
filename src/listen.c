@@ -26,12 +26,10 @@
 #include <stdio.h>
 #include <math.h>
 
-#define WARN(Fmt,...) fprintf(stderr, Fmt "\n", ##__VA_ARGS__)
-
 int main(int argc, char *argv[])
 {
     if (argc != 6) {
-        WARN("Supply channel, summation window size, power threshold, hysteresis, and sample offset");
+        fputs("Supply channel, summation window size, power threshold, hysteresis, and sample offset\n", stderr);
         exit(EXIT_FAILURE);
     }
 
@@ -52,7 +50,7 @@ int main(int argc, char *argv[])
             if (feof(stream))
                 break;
 
-            WARN("fread failed");
+            perror("fread failed");
             exit(EXIT_FAILURE);
         }
 
