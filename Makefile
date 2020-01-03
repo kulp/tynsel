@@ -11,7 +11,7 @@ CFLAGS += -Wall -Wextra -Wunused
 
 CPPFLAGS += -std=c99
 
-all: gen decode
+all: gen listen
 
 avr-%: ARCH_FLAGS = -mmcu=attiny412
 
@@ -29,13 +29,14 @@ avr-%: LDFLAGS += -nostdlib
 avr-%.o: %.c
 	$(COMPILE.c) -o $@ $<
 
-decode: CFLAGS += -O3
+listen: CFLAGS += -O3
 
 vpath %.c src
 
 CPPFLAGS += $(patsubst %,-I%,$(INCLUDE))
 
 gen: encode.o
+listen: decode.o
 
 avr-decode.o decode.o: INCLUDE += .
 coeffs_%.h: scripts/gen_notch.m
@@ -49,5 +50,5 @@ coeffs_%.h: scripts/gen_notch.m
 -include $(patsubst %.c,avr-%.d,$(notdir $(wildcard src/*.c)))
 
 clean:
-	rm -f *.d *.o gen decode
+	rm -f *.d *.o gen listen
 

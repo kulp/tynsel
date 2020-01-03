@@ -10,7 +10,7 @@ ${TRAP:-trap} "rm -rf $temp" EXIT
 echo $string > $temp/str
 make -Bj && ./gen $(perl -e 'print join " ", map unpack("c"), map { split // } <>' $temp/str) |
     tee $temp/gen-raw |
-    ./decode 0 7 10 10 12 |
+    ./listen 0 7 10 10 12 |
     tee $temp/decoded |
     cmp $temp/str &&
     echo good || (echo bad: $temp ; false)

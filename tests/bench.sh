@@ -17,7 +17,7 @@ do
                 out=$here/out/$rms_samples,$hysteresis,$offset
                 if [[ ! -e $out ]] # assume existence implies previous completion
                 then
-                    $here/../decode $channel $rms_samples $threshold $hysteresis $offset < $input_file 2> /dev/null > $out
+                    $here/../listen $channel $rms_samples $threshold $hysteresis $offset < $input_file 2> /dev/null > $out
                 fi
             ) &
         done
