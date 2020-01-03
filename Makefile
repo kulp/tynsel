@@ -5,8 +5,6 @@ CFLAGS += -g -O0
 CPPFLAGS += -DDEBUG
 endif
 
-CPPFLAGS += $(patsubst %,-D%,$(DEFINE))
-
 CFLAGS += -Wall -Wextra -Wunused
 
 CPPFLAGS += -std=c99
@@ -33,12 +31,10 @@ listen: CFLAGS += -O3
 
 vpath %.c src
 
-CPPFLAGS += $(patsubst %,-I%,$(INCLUDE))
-
 gen: encode.o
 listen: decode.o
 
-avr-decode.o decode.o: INCLUDE += .
+avr-decode.o decode.o: CPPFLAGS += -I.
 coeffs_%.h: scripts/gen_notch.m
 	$(realpath $<) $$(echo $* | (IFS=_; read a b c ; echo $$a $$b $$c)) > $@
 
