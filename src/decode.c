@@ -26,7 +26,7 @@
 #define THRESHOLD 0
 #define MAX_RMS_SAMPLES 7 // empirically-determined sweet-spot
 
-#ifdef __AVR__
+#if defined(__AVR__)
 #define WARN(...) (void)(__VA_ARGS__)
 #include <avr/pgmspace.h>
 #else
