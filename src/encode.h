@@ -39,6 +39,7 @@
 
 enum channel { CHAN_ZERO, CHAN_ONE, CHAN_max };
 enum bit { BIT_ZERO, BIT_ONE, BIT_max };
+enum parity { PARITY_SPACE, PARITY_MARK, PARITY_EVEN, PARITY_ODD };
 
 typedef struct {
     const DATA_TYPE (*quadrant)[TABLE_SIZE];

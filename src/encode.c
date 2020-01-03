@@ -123,6 +123,19 @@ void encode_carrier(struct encode_state *s, size_t bit_times)
     }
 }
 
+static inline bool compute_parity(enum parity parity, uint8_t byte)
+{
+    bool oddness = POPCNT(byte) & 1;
+    switch (parity) {
+        case PARITY_SPACE: return false;
+        case PARITY_MARK : return true;
+        case PARITY_EVEN : return  oddness; // make the number of bits even
+        case PARITY_ODD  : return ~oddness; // keep the number of bits odd
+    }
+
+    return false; // this is meant to be unreachable
+}
+
 void encode_bytes(struct encode_state *s, size_t byte_count, unsigned bytes[byte_count])
 {
     int rc = 0;
