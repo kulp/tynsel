@@ -227,13 +227,13 @@ bool pump_decoder(
         DECODE_OUT_DATA *out
     )
 {
-    static RMS_OUT_DATA large[2][MAX_RMS_SAMPLES] = { };
+    static RMS_OUT_DATA large[2][MAX_RMS_SAMPLES] = { { 0 } };
     static struct rms_state rms_states[2] = {
         { .window = large[0] },
         { .window = large[1] },
     };
 
-    static struct filter_state filt_states[2] = { };
+    static struct filter_state filt_states[2] = { { .ptr = 0 } };
 
     static struct runs_state run_state = { .current = 0 };
 
@@ -245,7 +245,7 @@ bool pump_decoder(
         .stop_bits   = 2,
     };
 
-    FILTER_OUT_DATA f[2] = { };
+    FILTER_OUT_DATA f[2] = { 0 };
     if (
             ! filter(&coeffs[channel][BIT_ZERO], &filt_states[0], in, &f[0])
         ||  ! filter(&coeffs[channel][BIT_ONE ], &filt_states[1], in, &f[1])
