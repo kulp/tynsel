@@ -43,7 +43,7 @@ static bool encode_sample(SAMPLE_STATE *s, PHASE_STEP step, DATA_TYPE *out)
 
 static inline PHASE_STEP get_phase_step(FREQ_TYPE freq)
 {
-    return MINOR_PER_CYCLE * freq / SAMPLE_RATE;
+    return (PHASE_STEP)(MINOR_PER_CYCLE * freq / SAMPLE_RATE);
 }
 
 static inline FREQ_TYPE get_frequency(enum channel channel, enum bit bit)
