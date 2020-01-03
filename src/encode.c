@@ -26,9 +26,6 @@
 #include <stdbool.h>
 #include <stdio.h>
 
-// TODO redefine POPCNT for different compilers than GCC
-#define POPCNT(x) __builtin_popcount(x)
-
 #define TEST_BIT(Word,Index) (((Word) & (1 << (Index))) ? -1 : 0)
 
 static bool encode_sample(SAMPLE_STATE *s, PHASE_STEP step, DATA_TYPE *out)
@@ -143,14 +140,26 @@ bool encode_carrier(struct encode_state *s, bool restart, enum channel channel, 
     return push_raw_word(&s->byte_state, restart, channel, count_bits(&s->audio), (uint16_t)-1u, out);
 }
 
+static inline uint8_t popcnt(uint8_t x)
+{
+#if __GNUC__
+    return (uint8_t)__builtin_popcount(x);
+#else
+    uint8_t out = 0;
+    while (x >>= 1)
+        out = (uint8_t)(out + (x & 1u));
+    return out;
+#endif
+}
+
 static inline bool compute_parity(enum parity parity, uint8_t byte)
 {
-    bool oddness = POPCNT(byte) & 1;
+    bool oddness = popcnt(byte) & 1;
     switch (parity) {
         case PARITY_SPACE: return false;
         case PARITY_MARK : return true;
         case PARITY_EVEN : return  oddness; // make the number of bits even
-        case PARITY_ODD  : return ~oddness; // keep the number of bits odd
+        case PARITY_ODD  : return !oddness; // keep the number of bits odd
     }
 
     return false; // this is meant to be unreachable
