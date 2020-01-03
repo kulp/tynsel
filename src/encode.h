@@ -89,7 +89,7 @@ struct encode_state {
 
 // returns number of samples emitted, or -1
 bool encode_bytes(struct encode_state *s, bool restart, enum channel channel, uint8_t byte, DATA_TYPE *out);
-bool encode_carrier(BYTE_STATE *s, bool restart, enum channel channel, DATA_TYPE *out);
+bool encode_carrier(struct encode_state *s, bool restart, enum channel channel, DATA_TYPE *out);
 
 #endif
 

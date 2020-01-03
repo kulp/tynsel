@@ -152,7 +152,7 @@ int main(int argc, char* argv[])
 
     for (size_t i = 0; i < SAMPLES_PER_BIT; /* incremented inside loop */) {
         DATA_TYPE out = 0;
-        if (encode_carrier(&s->byte_state, true, s->channel, &out))
+        if (encode_carrier(s, true, s->channel, &out))
             i++;
         s->cb.put_samples(&s->audio, 1, &out, s->cb.userdata);
     }
@@ -166,7 +166,7 @@ int main(int argc, char* argv[])
 
     for (size_t i = 0; i < SAMPLES_PER_BIT; /* incremented inside loop */) {
         DATA_TYPE out = 0;
-        if (encode_carrier(&s->byte_state, true, s->channel, &out))
+        if (encode_carrier(s, true, s->channel, &out))
             i++;
         s->cb.put_samples(&s->audio, 1, &out, s->cb.userdata);
     }

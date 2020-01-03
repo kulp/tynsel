@@ -133,9 +133,14 @@ static bool push_raw_word(BYTE_STATE *s, bool restart, enum channel channel, uin
     return false; // this is meant to be unreachable
 }
 
-bool encode_carrier(BYTE_STATE *s, bool restart, enum channel channel, DATA_TYPE *out)
+static inline uint8_t count_bits(const struct audio_state *s)
 {
-    return push_raw_word(s, restart, channel, 11, (uint16_t)-1u, out);
+    return (uint8_t)(s->start_bits + s->data_bits + s->parity_bits + s->stop_bits);
+}
+
+bool encode_carrier(struct encode_state *s, bool restart, enum channel channel, DATA_TYPE *out)
+{
+    return push_raw_word(&s->byte_state, restart, channel, count_bits(&s->audio), (uint16_t)-1u, out);
 }
 
 static inline bool compute_parity(enum parity parity, uint8_t byte)
@@ -172,7 +177,7 @@ static inline uint16_t make_word(const struct audio_state *a, enum parity parity
 
 bool encode_bytes(struct encode_state *s, bool restart, enum channel channel, uint8_t byte, DATA_TYPE *out)
 {
-    uint8_t bit_count = 11; // TODO compute
+    uint8_t bit_count = count_bits(&s->audio);
     uint16_t word = make_word(&s->audio, s->audio.parity, byte);
     return push_raw_word(&s->byte_state, restart, channel, bit_count, word, out);
 }
