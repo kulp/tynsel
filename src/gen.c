@@ -171,5 +171,12 @@ int main(int argc, char* argv[])
         s->cb.put_samples(&s->audio, 1, &out, s->cb.userdata);
     }
 
+    // drain the encoder
+    {
+        DATA_TYPE out = 0;
+        while (! encode_carrier(s, true, s->channel, &out))
+            s->cb.put_samples(&s->audio, 1, &out, s->cb.userdata);
+    }
+
     return 0;
 }
