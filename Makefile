@@ -27,7 +27,7 @@ avr-%: LDFLAGS += -nostdlib
 avr-%.o: %.c
 	$(COMPILE.c) -o $@ $<
 
-listen: CFLAGS += -O3
+gen listen: CFLAGS += -O3
 
 vpath %.c src
 
