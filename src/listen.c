@@ -37,7 +37,7 @@ int main(int argc, char *argv[])
 
     char **arg = &argv[1];
 
-    int channel = strtol(*arg++, NULL, 0);
+    enum channel channel = strtol(*arg++, NULL, 0);
     int window_size = strtol(*arg++, NULL, 0);
     int threshold = strtol(*arg++, NULL, 0);
     int hysteresis = strtol(*arg++, NULL, 0);

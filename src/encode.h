@@ -77,7 +77,7 @@ struct encode_state {
     struct audio_state audio;
     BYTE_STATE byte_state;
     int verbosity;
-    unsigned channel;
+    enum channel channel;
     float gain;
     struct {
         void *userdata;
