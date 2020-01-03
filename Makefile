@@ -13,16 +13,18 @@ CPPFLAGS += -std=c99
 
 all: gen decode
 
-avr-%: ARCH_FLAGS += -mmcu=attiny412
+avr-%: ARCH_FLAGS = -mmcu=attiny412
 
 avr-%: CC = avr-gcc
 avr-%: LD = avr-gcc
-avr-%: CFLAGS += -Os $(ARCH_FLAGS)
+
+avr-%.o: CFLAGS += -Os $(ARCH_FLAGS)
+avr-%.o: CFLAGS += -ffunction-sections
+avr-%.o: CFLAGS += -Werror=conversion
+avr-%.o: CFLAGS += -fstack-usage
+
 avr-%: LDFLAGS += $(ARCH_FLAGS)
-avr-%: CFLAGS += -ffunction-sections
-avr-%: CFLAGS += -Werror=conversion
 avr-%: LDFLAGS += -nostdlib
-avr-%: CFLAGS += -fstack-usage
 
 avr-%.o: %.c
 	$(COMPILE.c) -o $@ $<
