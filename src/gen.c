@@ -48,7 +48,7 @@ static void make_sine_table(DATA_TYPE sines[TABLE_SIZE], float gain)
 {
     const DATA_TYPE max = (CAT(DATA_TYPE,MAX) / 2);
     for (unsigned int i = 0; i < TABLE_SIZE; i++) {
-        sines[i] = gain * sinf(2 * M_PI * (i + 0.5) / MAJOR_PER_CYCLE) * max - 1;
+        sines[i] = (DATA_TYPE)(gain * sinf(2 * M_PI * (i + 0.5) / MAJOR_PER_CYCLE) * max - 1);
     }
 }
 
