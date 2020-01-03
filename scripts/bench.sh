@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 here=$(dirname $0)
-input_file=$1
+input_file=${1?"Specify an input file name"}
 channel=0
 threshold=10
 
