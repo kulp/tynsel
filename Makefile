@@ -41,10 +41,12 @@ avr-decode.o decode.o: INCLUDE += .
 coeffs_%.h: scripts/gen_notch.m
 	$(realpath $<) $$(echo $* | (IFS=_; read a b c ; echo $$a $$b $$c)) > $@
 
-%.d: %.c
-	@$(COMPILE.c) -MM -MG -MF $@ $<
+%.d avr-%.d: %.c
+	@$(COMPILE.c) -MM -MG -MF $*.d $<
+	@$(COMPILE.c) -MM -MG -MT avr-$*.o -MF avr-$*.d $<
 
 -include $(patsubst %.c,%.d,$(notdir $(wildcard src/*.c)))
+-include $(patsubst %.c,avr-%.d,$(notdir $(wildcard src/*.c)))
 
 clean:
 	rm -f *.d *.o gen wrap decode
