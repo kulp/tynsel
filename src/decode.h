@@ -33,12 +33,12 @@
 #if 0
 typedef float FILTER_COEFF;
 typedef float FILTER_STATE_DATA;
-#define FLOAT_TO_COEFF(x) (x)
+#define DEFINE_COEFF(x) (x)
 #define FILTER_MULT(a, b) ((a) * (b))
 #else
 typedef int16_t FILTER_COEFF;
 typedef int16_t FILTER_STATE_DATA;
-#define FLOAT_TO_COEFF(x) ((FILTER_COEFF)((x) * (1 << COEFF_FRACTIONAL_BITS)))
+#define DEFINE_COEFF(x) ((FILTER_COEFF)((x) * (1 << COEFF_FRACTIONAL_BITS)))
 #define FILTER_MULT(a, b) (((a) * (b)) >> COEFF_FRACTIONAL_BITS)
 #endif
 

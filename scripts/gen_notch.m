@@ -14,7 +14,7 @@ pkg load signal;
 [b, a] = pei_tseng_notch(notch_freq / nyquist, notch_width / nyquist);
 printf('// pei_tseng_notch(%d/(%d/2),%d/(%d/2))\n', notch_freq, sample_rate, notch_width, sample_rate)
 printf('{\n')
-format = '    .%c = { FLOAT_TO_COEFF(%+6.6ff), FLOAT_TO_COEFF(%+6.6ff), FLOAT_TO_COEFF(%+6.6ff) },\n';
+format = '    .%c = { DEFINE_COEFF(%+6.6f), DEFINE_COEFF(%+6.6f), DEFINE_COEFF(%+6.6f) },\n';
 printf(format, 'b', b(1), b(2), b(3))
 printf(format, 'a', a(1), a(2), a(3))
 printf('}\n')
