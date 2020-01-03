@@ -26,7 +26,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#define DATA_TYPE int16_t
+#define DATA_TYPE int8_t
 #define PHASE_TYPE uint16_t
 #define PHASE_FRACTION_BITS 8
 

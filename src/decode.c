@@ -23,7 +23,7 @@ typedef int16_t FILTER_STATE_DATA;
 
 #define FILTER_COEFF_read(Arg) FLOAT_TO_COEFF(strtof((Arg), NULL))
 
-typedef int16_t FILTER_IN_DATA;
+typedef int8_t FILTER_IN_DATA;
 typedef FILTER_IN_DATA FILTER_OUT_DATA;
 
 #ifdef __AVR__
