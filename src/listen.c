@@ -56,7 +56,7 @@ int main(int argc, char *argv[])
             exit(EXIT_FAILURE);
         }
 
-        DECODE_OUT_DATA out = EOF;
+        DECODE_OUT_DATA out = 0;
         if (pump_decoder(channel, window_size, threshold, hysteresis, offset, in, &out))
             putchar(out);
     }

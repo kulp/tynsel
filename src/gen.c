@@ -87,11 +87,11 @@ static int sample_callback(struct audio_state *a, size_t count, DATA_TYPE sample
     return 1;
 }
 
-static int parse_number(const char *in, char **next, int base)
+static unsigned int parse_number(const char *in, char **next, int base)
 {
     if (!strncmp(in, "0b", 2)) {
         char *nn = NULL;
-        int result = strtol(in + 2, &nn, 2);
+        unsigned result = strtol(in + 2, &nn, 2);
         if (nn == in + 2)
             return 0;
         *next = nn;
@@ -134,9 +134,9 @@ int main(int argc, char* argv[])
         exit(EXIT_FAILURE);
     }
 
-    size_t byte_count = argc - optind;
+    int byte_count = argc - optind;
     unsigned bytes[byte_count];
-    for (unsigned byte_index = 0; byte_index < byte_count; byte_index++) {
+    for (int byte_index = 0; byte_index < byte_count; byte_index++) {
         char *next = NULL;
         char *thing = argv[byte_index + optind];
         bytes[byte_index] = parse_number(thing, &next, 0);
@@ -157,7 +157,7 @@ int main(int argc, char* argv[])
         s->cb.put_samples(&s->audio, 1, &out, s->cb.userdata);
     }
 
-    for (size_t b = 0; b < byte_count; /* incremented inside loop */) {
+    for (int b = 0; b < byte_count; /* incremented inside loop */) {
         DATA_TYPE out = 0;
         if (encode_bytes(s, true, s->channel, bytes[b], &out))
             b++;
