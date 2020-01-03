@@ -159,11 +159,10 @@ void encode_bytes(struct encode_state *s, size_t byte_count, unsigned bytes[byte
             s->cb.put_samples(&s->audio, SAMPLES_PER_BIT, output, s->cb.userdata);
         }
 
-        int oddness = POPCNT(byte) & 1;
+        bool parity = compute_parity(s->audio.parity, byte);
         for (int bit_index = 0; rc >= 0 && bit_index < s->audio.parity_bits; bit_index++) {
-            // assume EVEN parity for now
             for (DATA_TYPE *out = output; out < &output[SAMPLES_PER_BIT]; out++)
-                while (! encode_bit(&s->bit_state, true, s->channel, oddness, out))
+                while (! encode_bit(&s->bit_state, true, s->channel, parity, out))
                     ; // spin
             s->cb.put_samples(&s->audio, SAMPLES_PER_BIT, output, s->cb.userdata);
         }

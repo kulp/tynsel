@@ -74,6 +74,8 @@ struct audio_state {
         data_bits,
         parity_bits,
         stop_bits;
+
+    enum parity parity;
 };
 
 struct encode_state {
