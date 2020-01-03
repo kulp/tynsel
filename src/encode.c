@@ -85,7 +85,7 @@ static bool encode_bit(BIT_STATE *s, bool newbit, enum channel channel, enum bit
     return ! busy;
 }
 
-static bool push_raw_word(BYTE_STATE *s, bool restart, enum channel channel, uint16_t word, DATA_TYPE *out)
+static bool push_raw_word(BYTE_STATE *s, bool restart, enum channel channel, uint8_t bit_count, uint16_t word, DATA_TYPE *out)
 {
     bool busy = s->bits_remaining > 0;
     bool full = s->buffer_full;
@@ -97,13 +97,13 @@ static bool push_raw_word(BYTE_STATE *s, bool restart, enum channel channel, uin
         case BOOL_TRIAD(true , true , false): // full, need to fill and emit
             s->current_word = s->next_word;
             s->buffer_full = false;
-            s->bits_remaining = 11; // TODO compute
+            s->bits_remaining = bit_count;
             // FALLTHROUGH
         case BOOL_TRIAD(true , false, true ): // emitting, need to fill
         case BOOL_TRIAD(true , false, false): // idle, need to fill
             s->next_word = word;
             s->buffer_full = true;
-            return push_raw_word(s, false, channel, word, out); // tail recursion
+            return push_raw_word(s, false, channel, bit_count, word, out); // tail recursion
 
         case BOOL_TRIAD(true , true , true ): // full, emitting, no room
             if (encode_bit(&s->bit_state, busy, channel, bit, out)) {
@@ -118,7 +118,7 @@ static bool push_raw_word(BYTE_STATE *s, bool restart, enum channel channel, uin
         case BOOL_TRIAD(false, true , false): // full, need to emit
             s->current_word = s->next_word;
             s->buffer_full = false;
-            s->bits_remaining = 11; // TODO compute
+            s->bits_remaining = bit_count;
             busy = true;
             // FALLTHROUGH
         case BOOL_TRIAD(false, true , true ): // full, emitting
@@ -135,7 +135,7 @@ static bool push_raw_word(BYTE_STATE *s, bool restart, enum channel channel, uin
 
 bool encode_carrier(BYTE_STATE *s, bool restart, enum channel channel, DATA_TYPE *out)
 {
-    return push_raw_word(s, restart, channel, (uint16_t)-1u, out);
+    return push_raw_word(s, restart, channel, 11, (uint16_t)-1u, out);
 }
 
 static inline bool compute_parity(enum parity parity, uint8_t byte)
@@ -172,6 +172,8 @@ static inline uint16_t make_word(const struct audio_state *a, enum parity parity
 
 bool encode_bytes(struct encode_state *s, bool restart, enum channel channel, uint8_t byte, DATA_TYPE *out)
 {
-    return push_raw_word(&s->byte_state, restart, channel, make_word(&s->audio, s->audio.parity, byte), out);
+    uint8_t bit_count = 11; // TODO compute
+    uint16_t word = make_word(&s->audio, s->audio.parity, byte);
+    return push_raw_word(&s->byte_state, restart, channel, bit_count, word, out);
 }
 
