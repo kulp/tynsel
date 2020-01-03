@@ -5,8 +5,6 @@
 #define THRESHOLD 0
 #define MAX_RMS_SAMPLES 7 // empirically-determined sweet-spot
 
-#define FILTER_COEFF_read(Arg) FLOAT_TO_COEFF(strtof((Arg), NULL))
-
 #ifdef __AVR__
 #define WARN(...) (void)(__VA_ARGS__)
 #include <avr/pgmspace.h>
