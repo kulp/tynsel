@@ -275,7 +275,7 @@ bool top(
         )
         return false;
 
-    if (ra < threshold || rb < threshold)
+    if (ra < threshold && rb < threshold)
         return false;
 
     RUNS_OUT_DATA ro = 0;
