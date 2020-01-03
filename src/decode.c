@@ -244,14 +244,14 @@ bool pump_decoder(
         .stop_bits   = 2,
     };
 
-    FILTER_OUT_DATA f[2] = { 0 };
+    static FILTER_OUT_DATA f[2] = { 0 };
     if (
             ! filter(&coeffs[channel][BIT_ZERO], &filt_states[0], in, &f[0])
         ||  ! filter(&coeffs[channel][BIT_ONE ], &filt_states[1], in, &f[1])
         )
         return false;
 
-    RMS_OUT_DATA ra = 0, rb = 0;
+    static RMS_OUT_DATA ra = 0, rb = 0;
     if (
             ! rms(window_size, &rms_states[0], f[0] - in, &ra)
         ||  ! rms(window_size, &rms_states[1], f[1] - in, &rb)
@@ -261,7 +261,7 @@ bool pump_decoder(
     if (ra < threshold && rb < threshold)
         return false;
 
-    RUNS_OUT_DATA ro = 0;
+    static RUNS_OUT_DATA ro = 0;
     if (! runs(hysteresis, &run_state, ra, rb, &ro))
         return false;
 
