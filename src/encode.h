@@ -23,6 +23,8 @@
 #ifndef ENCODE_H_
 #define ENCODE_H_
 
+#include "types.h"
+
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -36,10 +38,6 @@
 #define TABLE_SIZE 64u
 #define MAJOR_PER_CYCLE (TABLE_SIZE * 4)
 #define MINOR_PER_CYCLE (MAJOR_PER_CYCLE * (1u << (PHASE_FRACTION_BITS)))
-
-enum channel { CHAN_ZERO, CHAN_ONE, CHAN_max };
-enum bit { BIT_ZERO, BIT_ONE, BIT_max };
-enum parity { PARITY_SPACE, PARITY_MARK, PARITY_EVEN, PARITY_ODD };
 
 typedef struct {
     const DATA_TYPE (*quadrant)[TABLE_SIZE];

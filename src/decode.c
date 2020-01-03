@@ -21,7 +21,6 @@
  */
 
 #include "decode.h"
-#include "encode.h"
 
 #define BITWIDTH 27 /* 8000 / 300 */
 #define THRESHOLD 0
@@ -218,7 +217,7 @@ static const struct filter_config coeffs[CHAN_max][BIT_max] PROGMEM = {
 };
 
 bool pump_decoder(
-        uint8_t channel,
+        enum channel channel,
         uint8_t window_size,
         uint16_t threshold,
         int8_t hysteresis,

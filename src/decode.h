@@ -23,6 +23,8 @@
 #ifndef DECODE_H_
 #define DECODE_H_
 
+#include "types.h"
+
 #include <stdbool.h>
 #include <stdint.h>
 
@@ -60,7 +62,7 @@ typedef RMS_OUT_DATA RUNS_IN_DATA;
 typedef RUNS_OUT_DATA DECODE_IN_DATA;
 
 bool pump_decoder(
-        uint8_t channel,
+        enum channel channel,
         uint8_t window_size,
         uint16_t threshold,
         int8_t hysteresis,
