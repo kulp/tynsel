@@ -12,7 +12,7 @@ function notch ()
 {
     local notch_freq=${1?"Supply a notch frequency"}
     local nyquist=$(( ${2:-8000} / 2 ))
-    local notch_width=${3:-100}
+    local notch_width=${3:-150}
 
     octave-cli --eval "pkg load signal; [b,a]=pei_tseng_notch($notch_freq/$nyquist,$notch_width/$nyquist); disp([b a])"
 }
