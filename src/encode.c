@@ -136,6 +136,25 @@ static inline bool compute_parity(enum parity parity, uint8_t byte)
     return false; // this is meant to be unreachable
 }
 
+static inline uint16_t make_word(const struct audio_state *a, enum parity parity, uint8_t byte)
+{
+    #define MASK(Width) ((1u << (Width)) - 1)
+    uint16_t word = 0;
+
+    word |= MASK(a->stop_bits) & -1u;
+
+    word <<= a->parity_bits;
+    word |= MASK(a->parity_bits) & compute_parity(parity, byte);
+
+    word <<= a->data_bits;
+    word |= MASK(a->data_bits) & byte;
+
+    word <<= a->start_bits;
+    word |= MASK(a->start_bits) & 0;
+
+    return word;
+}
+
 void encode_bytes(struct encode_state *s, size_t byte_count, unsigned bytes[byte_count])
 {
     int rc = 0;
