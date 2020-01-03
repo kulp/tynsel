@@ -85,7 +85,7 @@ static bool encode_bit(BIT_STATE *s, bool newbit, enum channel channel, enum bit
     return ! busy;
 }
 
-bool push_raw_word(BYTE_STATE *s, bool restart, enum channel channel, uint16_t word, DATA_TYPE *out)
+static bool push_raw_word(BYTE_STATE *s, bool restart, enum channel channel, uint16_t word, DATA_TYPE *out)
 {
     bool busy = s->bits_remaining > 0;
     bool full = s->buffer_full;
