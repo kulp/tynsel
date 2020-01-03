@@ -1,46 +1,11 @@
-#include <stdbool.h>
-#include <stdint.h>
-
+#include "decode.h"
 #include "encode.h"
 
 #define BITWIDTH 27 /* 8000 / 300 */
 #define THRESHOLD 0
 #define MAX_RMS_SAMPLES 7 // empirically-determined sweet-spot
 
-#define COEFF_FRACTIONAL_BITS 14
-
-#if 0
-typedef float FILTER_COEFF;
-typedef float FILTER_STATE_DATA;
-#define FLOAT_TO_COEFF(x) (x)
-#define FILTER_MULT(a, b) ((a) * (b))
-#else
-typedef int16_t FILTER_COEFF;
-typedef int16_t FILTER_STATE_DATA;
-#define FLOAT_TO_COEFF(x) ((FILTER_COEFF)((x) * (1 << COEFF_FRACTIONAL_BITS)))
-#define FILTER_MULT(a, b) (((a) * (b)) >> COEFF_FRACTIONAL_BITS)
-#endif
-
 #define FILTER_COEFF_read(Arg) FLOAT_TO_COEFF(strtof((Arg), NULL))
-
-typedef int8_t FILTER_IN_DATA;
-typedef FILTER_IN_DATA FILTER_OUT_DATA;
-
-#ifdef __AVR__
-typedef int16_t RMS_IN_DATA;
-// Consider using __uint24 for RMS_OUT_DATA if possible (code size optimization)
-typedef uint32_t RMS_OUT_DATA;
-typedef int8_t RUNS_OUT_DATA;
-typedef uint8_t DECODE_OUT_DATA;
-#else
-typedef int16_t RMS_IN_DATA;
-typedef uint32_t RMS_OUT_DATA;
-typedef int8_t RUNS_OUT_DATA;
-typedef uint8_t DECODE_OUT_DATA;
-#endif
-
-typedef RMS_OUT_DATA RUNS_IN_DATA;
-typedef RUNS_OUT_DATA DECODE_IN_DATA;
 
 #ifdef __AVR__
 #define WARN(...) (void)(__VA_ARGS__)
@@ -232,7 +197,7 @@ static const struct filter_config coeffs[CHAN_max][BIT_max] PROGMEM = {
         ,
 };
 
-bool top(
+bool pump_decoder(
         uint8_t channel,
         uint8_t window_size,
         uint16_t threshold,
@@ -318,7 +283,7 @@ int main(int argc, char *argv[])
         }
 
         DECODE_OUT_DATA out = EOF;
-        if (top(channel, window_size, threshold, hysteresis, offset, in, &out))
+        if (pump_decoder(channel, window_size, threshold, hysteresis, offset, in, &out))
             putchar(out);
     }
 
