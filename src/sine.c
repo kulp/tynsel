@@ -23,6 +23,7 @@
 #include "sine.h"
 
 #include <math.h>
+#include <stddef.h>
 
 #define int16_tMAX INT16_MAX
 #define  int8_tMAX  INT8_MAX
@@ -38,18 +39,18 @@
 // either have two entries for zero (when flipping the quadrant), two entries
 // for max (also during flipping), or an uneven gap between the minimum
 // positive and minimum negative output values.
-static void make_sine_table(ENCODE_DATA_TYPE sines[WAVE_TABLE_SIZE], float gain)
+static void make_sine_table(size_t size, ENCODE_DATA_TYPE sines[size], float gain)
 {
     const ENCODE_DATA_TYPE max = (CAT(ENCODE_DATA_TYPE,MAX) / 2);
-    for (unsigned int i = 0; i < WAVE_TABLE_SIZE; i++) {
-        sines[i] = (ENCODE_DATA_TYPE)(gain * sinf(2 * M_PI * (i + 0.5) / MAJOR_PER_CYCLE) * max - 1);
+    for (unsigned int i = 0; i < size; i++) {
+        sines[i] = (ENCODE_DATA_TYPE)(gain * sinf(2 * M_PI * (i + 0.5) / (size * 4)) * max - 1);
     }
 }
 
 void init_sines(ENCODE_DATA_TYPE (**sines)[WAVE_TABLE_SIZE], float gain)
 {
     static ENCODE_DATA_TYPE private_sines[WAVE_TABLE_SIZE];
-    make_sine_table(private_sines, gain);
+    make_sine_table(WAVE_TABLE_SIZE, private_sines, gain);
     *sines = &private_sines;
 }
 
