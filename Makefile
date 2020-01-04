@@ -47,5 +47,5 @@ coeffs_%.h: scripts/gen_notch.m
 -include $(patsubst %.c,avr-%.d,$(notdir $(wildcard src/*.c)))
 
 clean:
-	rm -f *.d *.o gen listen
+	rm -f *.d *.o gen listen coeffs_*.h
 
