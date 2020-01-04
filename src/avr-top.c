@@ -27,22 +27,26 @@ volatile DECODE_DATA_TYPE d_in = 0;
 volatile DECODE_OUT_DATA d_out = 0;
 volatile ENCODE_DATA_TYPE e_out = 0;
 
+volatile enum channel channel = CHAN_ZERO;
+volatile uint8_t window_size = 6;
+volatile uint16_t threshold = 256;
+volatile int8_t hysteresis = 10;
+volatile int8_t offset = 12;
+
+volatile SERIAL_CONFIG cs = {
+    .start_bits  = 1,
+    .data_bits   = 7,
+    .parity_bits = 1,
+    .stop_bits   = 2,
+    .parity      = PARITY_SPACE,
+};
+
+volatile uint8_t to_encode = 'K';
+
 int __attribute__((used)) main()
 {
-    const enum channel channel = CHAN_ZERO;
-    const uint8_t window_size = 6;
-    const uint16_t threshold = 256;
-    const int8_t hysteresis = 10;
-    const int8_t offset = 12;
-
-    SERIAL_CONFIG cs = {
-        .start_bits  = 1,
-        .data_bits   = 7,
-        .parity_bits = 1,
-        .stop_bits   = 2,
-        .parity      = PARITY_SPACE,
-    };
     BYTE_STATE bs = { .channel = channel };
+    SERIAL_CONFIG c = cs;
 
     while (true) {
         // TODO make a real implementation : this one serves simply to ensure that
@@ -52,7 +56,7 @@ int __attribute__((used)) main()
         d_out = d;
 
         ENCODE_DATA_TYPE e = e_out;
-        encode_bytes(&cs, &bs, true, channel, 'K', &e);
+        encode_bytes(&c, &bs, true, channel, to_encode, &e);
     }
 }
 
