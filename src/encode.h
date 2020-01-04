@@ -64,7 +64,8 @@ static const unsigned int BAUD_RATE = 300;
 static const size_t SAMPLES_PER_BIT = (SAMPLE_RATE + BAUD_RATE - 1) / BAUD_RATE; // round up (err on the slow side)
 
 typedef struct {
-    int start_bits,
+    uint8_t
+        start_bits,
         data_bits,
         parity_bits,
         stop_bits;
