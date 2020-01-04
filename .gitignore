@@ -8,5 +8,5 @@ wrap
 *.d
 coeffs_*.h
 listen
-sine
+sine-gen
 sinetable_64u_.h

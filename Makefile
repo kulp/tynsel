@@ -9,16 +9,12 @@ CFLAGS += -Wall -Wextra -Wunused
 
 CPPFLAGS += -std=c99
 
-all: gen listen sine
+all: gen listen sine-gen
 
-sine: CPPFLAGS += -DGENERATE_SINE_TABLE
-# `sine` binary is built directly from source to avoid erroneously reusing a
-# sine.o built elsewhere
-sine: sine.c
-	$(LINK.c) -o $@ $^
+sine-gen: sine.o
 
 SINETABLE_GAIN = 1.0
-sinetable_%_.h: sine
+sinetable_%_.h: sine-gen
 	$(realpath $<) $* $(SINETABLE_GAIN) > $@
 
 sine-precomp.o: CPPFLAGS += -I.
@@ -59,5 +55,5 @@ coeffs_%.h: scripts/gen_notch.m
 -include $(patsubst %.c,avr-%.d,$(notdir $(wildcard src/*.c)))
 
 clean:
-	rm -f *.d *.o gen listen coeffs_*.h sinetable_*.h
+	rm -f *.d *.o gen listen sine-gen coeffs_*.h sinetable_*.h
 

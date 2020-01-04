@@ -42,7 +42,7 @@
 // either have two entries for zero (when flipping the quadrant), two entries
 // for max (also during flipping), or an uneven gap between the minimum
 // positive and minimum negative output values.
-static void make_sine_table(size_t size, ENCODE_DATA_TYPE sines[size], float gain)
+void make_sine_table(size_t size, ENCODE_DATA_TYPE sines[size], float gain)
 {
     const ENCODE_DATA_TYPE max = (CAT(ENCODE_DATA_TYPE,MAX) / 2);
     for (unsigned int i = 0; i < size; i++) {
@@ -50,36 +50,10 @@ static void make_sine_table(size_t size, ENCODE_DATA_TYPE sines[size], float gai
     }
 }
 
-#if defined(GENERATE_SINE_TABLE)
-
-#include <stdio.h>
-#include <stdlib.h>
-
-int main(int argc, char *argv[])
-{
-    if (argc != 3)
-        exit(EXIT_FAILURE);
-
-    size_t size = strtoul(argv[1], NULL, 0);
-    float gain = strtof(argv[2], NULL);
-
-    ENCODE_DATA_TYPE sines[size];
-    make_sine_table(size, sines, gain);
-
-    puts("{");
-    for (size_t i = 0; i < size; i++)
-        printf("    %u,\n", sines[i]);
-    puts("}");
-}
-
-#else
-
 void init_sines(ENCODE_DATA_TYPE (**sines)[WAVE_TABLE_SIZE], float gain)
 {
     static ENCODE_DATA_TYPE private_sines[WAVE_TABLE_SIZE];
     make_sine_table(WAVE_TABLE_SIZE, private_sines, gain);
     *sines = &private_sines;
 }
-
-#endif
 
