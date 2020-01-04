@@ -22,14 +22,30 @@
 
 #include "sine.h"
 
-#include <math.h>
-#include <stddef.h>
+#define CAT(X,Y) CAT_(X,Y)
+#define CAT_(X,Y) X ## Y
+
+#define STR(X) STR_(X)
+#define STR_(X) # X
+
+#if defined(USE_PRECOMPUTED_SINE_TABLE)
+
+static ENCODE_DATA_TYPE generated_sines[WAVE_TABLE_SIZE] =
+    #include STR(CAT(CAT(sinetable_,WAVE_TABLE_SIZE),_.h))
+;
+void init_sines(ENCODE_DATA_TYPE (**sines)[WAVE_TABLE_SIZE], float gain)
+{
+    (void)gain; // unused -- it is too late now
+    *sines = &generated_sines;
+}
+
+#else
 
 #define int16_tMAX INT16_MAX
 #define  int8_tMAX  INT8_MAX
 
-#define CAT(X,Y) CAT_(X,Y)
-#define CAT_(X,Y) X ## Y
+#include <math.h>
+#include <stddef.h>
 
 // Creates a quarter-wave sine table, scaled by the given gain.
 // Valid indices into the table are [0,WAVE_TABLE_SIZE).
@@ -47,10 +63,38 @@ static void make_sine_table(size_t size, ENCODE_DATA_TYPE sines[size], float gai
     }
 }
 
+#if defined(GENERATE_SINE_TABLE)
+
+#include <stdio.h>
+#include <stdlib.h>
+
+int main(int argc, char *argv[])
+{
+    if (argc != 3)
+        exit(EXIT_FAILURE);
+
+    size_t size = strtoul(argv[1], NULL, 0);
+    float gain = strtof(argv[2], NULL);
+
+    ENCODE_DATA_TYPE sines[size];
+    make_sine_table(size, sines, gain);
+
+    puts("{");
+    for (size_t i = 0; i < size; i++)
+        printf("    %u,\n", sines[i]);
+    puts("}");
+}
+
+#else
+
 void init_sines(ENCODE_DATA_TYPE (**sines)[WAVE_TABLE_SIZE], float gain)
 {
     static ENCODE_DATA_TYPE private_sines[WAVE_TABLE_SIZE];
     make_sine_table(WAVE_TABLE_SIZE, private_sines, gain);
     *sines = &private_sines;
 }
+
+#endif
+
+#endif
 

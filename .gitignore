@@ -8,3 +8,5 @@ wrap
 *.d
 coeffs_*.h
 listen
+sine
+sinetable_64u_.h
