@@ -39,11 +39,11 @@ static int parse_opts(struct encode_state *s, int argc, char *argv[], const char
         switch (ch) {
             case 'C': s->channel             = strtol(optarg, NULL, 0); break;
             case 'G': s->gain                = strtof(optarg, NULL);    break;
-            case 'S': s->audio.start_bits    = strtol(optarg, NULL, 0); break;
-            case 'T': s->audio.stop_bits     = strtol(optarg, NULL, 0); break;
-            case 'P': s->audio.parity_bits   = strtol(optarg, NULL, 0); break;
-            case 'D': s->audio.data_bits     = strtol(optarg, NULL, 0); break;
-            case 'p': s->audio.parity        = strtol(optarg, NULL, 0); break;
+            case 'S': s->serial.start_bits   = strtol(optarg, NULL, 0); break;
+            case 'T': s->serial.stop_bits    = strtol(optarg, NULL, 0); break;
+            case 'P': s->serial.parity_bits  = strtol(optarg, NULL, 0); break;
+            case 'D': s->serial.data_bits    = strtol(optarg, NULL, 0); break;
+            case 'p': s->serial.parity       = strtol(optarg, NULL, 0); break;
             case 'o': *filename              = optarg;                  break;
 
             case 'v': s->verbosity++;                                   break;
@@ -72,7 +72,7 @@ int main(int argc, char* argv[])
 {
     const char *output_file = NULL;
     struct encode_state _s = {
-        .audio = {
+        .serial = {
             .start_bits  = 1,
             .data_bits   = 8,
             .parity_bits = 0,

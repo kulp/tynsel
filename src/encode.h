@@ -62,17 +62,17 @@ static const unsigned int SAMPLE_RATE = 8000;
 static const unsigned int BAUD_RATE = 300;
 static const size_t SAMPLES_PER_BIT = (SAMPLE_RATE + BAUD_RATE - 1) / BAUD_RATE; // round up (err on the slow side)
 
-struct audio_state {
+typedef struct {
     int start_bits,
         data_bits,
         parity_bits,
         stop_bits;
 
     enum parity parity;
-};
+} SERIAL_CONFIG;
 
 struct encode_state {
-    struct audio_state audio;
+    SERIAL_CONFIG serial;
     BYTE_STATE byte_state;
     int verbosity;
     enum channel channel;
