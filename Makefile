@@ -9,6 +9,9 @@ CFLAGS += -Wall -Wextra -Wunused
 
 CPPFLAGS += -std=c99
 
+# Look for generated files in the base directory
+CPPFLAGS += -I.
+
 all: gen listen sine-gen
 
 sine-gen: sine.o
@@ -43,7 +46,6 @@ gen: encode.o
 gen: sine.o
 listen: decode.o
 
-avr-decode.o decode.o: CPPFLAGS += -I.
 coeffs_%.h: scripts/gen_notch.m
 	$(realpath $<) $$(echo $* | (IFS=_; read a b c ; echo $$a $$b $$c)) > $@
 
