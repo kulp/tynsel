@@ -24,7 +24,7 @@
 
 #define BITWIDTH 27 /* 8000 / 300 */
 #define THRESHOLD 0
-#define MAX_RMS_SAMPLES 7 // empirically-determined sweet-spot
+#define MAX_RMS_SAMPLES 8
 
 #if defined(__AVR__)
 #define WARN(...) (void)(__VA_ARGS__)

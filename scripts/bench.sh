@@ -57,7 +57,7 @@ do
         noise $(compute_duration $byte_count) $noise_level > $noise
         mix $rand.audio $noise > $rand.audio.noised
 
-        for rms_samples in {5..7} # 7 is the hardcoded maximum in the embedded code at this time
+        for rms_samples in {5..8} # 8 is the hardcoded maximum in the embedded code at this time
         do
             for hysteresis in {4..11}
             do
