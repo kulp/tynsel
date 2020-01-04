@@ -29,7 +29,9 @@
 
 #define MAJOR_PER_CYCLE (WAVE_TABLE_SIZE * 4)
 
-void init_sines(ENCODE_DATA_TYPE (*sines)[WAVE_TABLE_SIZE], float gain);
+// init_sines fills the sines parameter, causing it to point to a static table
+// owned by sine.c
+void init_sines(ENCODE_DATA_TYPE (**sines)[WAVE_TABLE_SIZE], float gain);
 
 #endif
 

@@ -113,9 +113,9 @@ int main(int argc, char* argv[])
         }
     }
 
-    DATA_TYPE sines[WAVE_TABLE_SIZE];
+    DATA_TYPE (*sines)[WAVE_TABLE_SIZE];
     init_sines(&sines, s->gain);
-    s->byte_state.bit_state.sample_state.quadrant = &sines;
+    s->byte_state.bit_state.sample_state.quadrant = sines;
 
     for (size_t i = 0; i < SAMPLES_PER_BIT; /* incremented inside loop */) {
         DATA_TYPE out = 0;

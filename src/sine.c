@@ -46,8 +46,10 @@ static void make_sine_table(ENCODE_DATA_TYPE sines[WAVE_TABLE_SIZE], float gain)
     }
 }
 
-void init_sines(ENCODE_DATA_TYPE (*sines)[WAVE_TABLE_SIZE], float gain)
+void init_sines(ENCODE_DATA_TYPE (**sines)[WAVE_TABLE_SIZE], float gain)
 {
-    return make_sine_table(*sines, gain);
+    static ENCODE_DATA_TYPE private_sines[WAVE_TABLE_SIZE];
+    make_sine_table(private_sines, gain);
+    *sines = &private_sines;
 }
 
