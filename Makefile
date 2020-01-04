@@ -11,9 +11,7 @@ CPPFLAGS += -std=c99
 
 all: gen listen sine
 
-CPPFLAGS += -DUSE_PRECOMPUTED_SINE_TABLE
-
-sine: CPPFLAGS += -UUSE_PRECOMPUTED_SINE_TABLE -DGENERATE_SINE_TABLE
+sine: CPPFLAGS += -DGENERATE_SINE_TABLE
 # `sine` binary is built directly from source to avoid erroneously reusing a
 # sine.o built elsewhere
 sine: sine.c
@@ -23,8 +21,7 @@ SINETABLE_GAIN = 1.0
 sinetable_%_.h: sine
 	$(realpath $<) $* $(SINETABLE_GAIN) > $@
 
-sine.o: CPPFLAGS += -I.
-sine.o: CPPFLAGS += -DUSE_PRECOMPUTED_SINE_TABLE
+sine-precomp.o: CPPFLAGS += -I.
 
 avr-%: ARCH_FLAGS = -mmcu=attiny412
 

@@ -28,19 +28,6 @@
 #define STR(X) STR_(X)
 #define STR_(X) # X
 
-#if defined(USE_PRECOMPUTED_SINE_TABLE)
-
-static ENCODE_DATA_TYPE generated_sines[WAVE_TABLE_SIZE] =
-    #include STR(CAT(CAT(sinetable_,WAVE_TABLE_SIZE),_.h))
-;
-void init_sines(ENCODE_DATA_TYPE (**sines)[WAVE_TABLE_SIZE], float gain)
-{
-    (void)gain; // unused -- it is too late now
-    *sines = &generated_sines;
-}
-
-#else
-
 #define int16_tMAX INT16_MAX
 #define  int8_tMAX  INT8_MAX
 
@@ -93,8 +80,6 @@ void init_sines(ENCODE_DATA_TYPE (**sines)[WAVE_TABLE_SIZE], float gain)
     make_sine_table(WAVE_TABLE_SIZE, private_sines, gain);
     *sines = &private_sines;
 }
-
-#endif
 
 #endif
 
