@@ -10,3 +10,4 @@ coeffs_*.h
 listen
 sine-gen
 sinetable_64u_.h
+avr-top

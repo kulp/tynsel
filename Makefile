@@ -12,7 +12,7 @@ CPPFLAGS += -std=c99
 # Look for generated files in the base directory
 CPPFLAGS += -I.
 
-all: gen listen sine-gen
+all: gen listen sine-gen avr-top
 
 sine-gen: AVR_CFLAGS =#  ensure we do not get flags meant for embedded
 sine-gen: AVR_LDFLAGS =# ensure we do not get flags meant for embedded
@@ -42,6 +42,10 @@ avr-%: LDFLAGS += $(AVR_LDFLAGS)
 
 avr-%.o: %.c
 	$(COMPILE.c) -o $@ $<
+
+avr-top: avr-sine-precomp.o
+avr-top: avr-encode.o
+avr-top: avr-decode.o
 
 gen listen: CFLAGS += -O3
 
