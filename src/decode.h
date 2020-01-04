@@ -42,7 +42,7 @@ typedef int16_t FILTER_STATE_DATA;
 #define FILTER_MULT(a, b) (((a) * (b)) >> COEFF_FRACTIONAL_BITS)
 #endif
 
-typedef int8_t FILTER_IN_DATA;
+typedef int16_t FILTER_IN_DATA;
 typedef FILTER_IN_DATA FILTER_OUT_DATA;
 
 #ifdef __AVR__
