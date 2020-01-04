@@ -30,29 +30,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define int16_tMAX INT16_MAX
-#define  int8_tMAX  INT8_MAX
-
-#define CAT(X,Y) CAT_(X,Y)
-#define CAT_(X,Y) X ## Y
-
 typedef ENCODE_DATA_TYPE DATA_TYPE;
-
-// Creates a quarter-wave sine table, scaled by the given gain.
-// Valid indices into the table are [0,WAVE_TABLE_SIZE).
-// Input indices are augmented by 0.5 before computing the sine, on the
-// assumption that WAVE_TABLE_SIZE is a power of two and that we want to do
-// arithmetic with powers of two. If we did not compensate somehow, we would
-// either have two entries for zero (when flipping the quadrant), two entries
-// for max (also during flipping), or an uneven gap between the minimum
-// positive and minimum negative output values.
-static void make_sine_table(DATA_TYPE sines[WAVE_TABLE_SIZE], float gain)
-{
-    const DATA_TYPE max = (CAT(ENCODE_DATA_TYPE,MAX) / 2);
-    for (unsigned int i = 0; i < WAVE_TABLE_SIZE; i++) {
-        sines[i] = (DATA_TYPE)(gain * sinf(2 * M_PI * (i + 0.5) / MAJOR_PER_CYCLE) * max - 1);
-    }
-}
 
 static int parse_opts(struct encode_state *s, int argc, char *argv[], const char **filename)
 {

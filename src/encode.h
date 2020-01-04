@@ -23,6 +23,7 @@
 #ifndef ENCODE_H_
 #define ENCODE_H_
 
+#include "sine.h"
 #include "types.h"
 
 #include <stdbool.h>
@@ -34,8 +35,6 @@
 
 #define FREQ_TYPE uint16_t
 
-#define WAVE_TABLE_SIZE 64u
-#define MAJOR_PER_CYCLE (WAVE_TABLE_SIZE * 4)
 #define MINOR_PER_CYCLE (MAJOR_PER_CYCLE * (1u << (PHASE_FRACTION_BITS)))
 
 typedef struct {

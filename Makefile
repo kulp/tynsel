@@ -32,6 +32,7 @@ gen listen: CFLAGS += -O3
 vpath %.c src
 
 gen: encode.o
+gen: sine.o
 listen: decode.o
 
 avr-decode.o decode.o: CPPFLAGS += -I.
