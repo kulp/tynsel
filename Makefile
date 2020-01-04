@@ -12,6 +12,13 @@ CPPFLAGS += -std=c99
 # Look for generated files in the base directory
 CPPFLAGS += -I.
 
+ifneq ($(LTO),0)
+LTO_FLAGS += -flto=jobserver -fuse-linker-plugin
+endif
+
+AVR_CFLAGS += $(LTO_FLAGS)
+AVR_LDFLAGS += $(LTO_FLAGS)
+
 all: gen listen sine-gen avr-top
 
 sine-gen: AVR_CFLAGS =#  ensure we do not get flags meant for embedded
