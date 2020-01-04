@@ -2,7 +2,6 @@
 set -euo pipefail
 here=$(dirname $0)
 channel=0
-threshold=10
 bits_per_sample=16
 sample_rate=8000
 baud_rate=300
@@ -52,27 +51,30 @@ do
     random_bytes $byte_count > $rand
     for noise_level in 0 0.1 0.2 0.4 0.8
     do
-        generate_audio $rand > $rand.audio
-        noise=$(mktemp $outdir/noise.XXXXXX)
-        noise $(compute_duration $byte_count) $noise_level > $noise
-        mix $rand.audio $noise > $rand.audio.noised
-
-        for rms_samples in {5..8} # 8 is the hardcoded maximum in the embedded code at this time
+        for threshold in 1 16 256 1024
         do
-            for hysteresis in {4..11}
+            generate_audio $rand > $rand.audio
+            noise=$(mktemp $outdir/noise.XXXXXX)
+            noise $(compute_duration $byte_count) $noise_level > $noise
+            mix $rand.audio $noise > $rand.audio.noised
+
+            for rms_samples in {5..8} # 8 is the hardcoded maximum in the embedded code at this time
             do
-                for offset in {1..15}
+                for hysteresis in {4..11}
                 do
-                    (
-                        out=$outdir/bits_per_sample$bits_per_sample/chan$channel/run$run/noise$noise_level/window$rms_samples/threshold$threshold/hysteresis$hysteresis/offset$offset/$(basename $rand).decoded
-                        mkdir -p $(dirname $out)
-                        if [[ ! -e $out ]] # assume existence implies previous completion
-                        then
-                            $here/../listen $channel $rms_samples $threshold $hysteresis $offset < $rand.audio.noised 2> /dev/null > $out
-                        fi
-                    ) &
+                    for offset in {1..15}
+                    do
+                        (
+                            out=$outdir/bits_per_sample$bits_per_sample/chan$channel/run$run/noise$noise_level/window$rms_samples/threshold$threshold/hysteresis$hysteresis/offset$offset/$(basename $rand).decoded
+                            mkdir -p $(dirname $out)
+                            if [[ ! -e $out ]] # assume existence implies previous completion
+                            then
+                                $here/../listen $channel $rms_samples $threshold $hysteresis $offset < $rand.audio.noised 2> /dev/null > $out
+                            fi
+                        ) &
+                    done
+                    wait
                 done
-                wait
             done
         done
     done
