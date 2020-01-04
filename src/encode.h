@@ -27,7 +27,6 @@
 #include "types.h"
 
 #include <stdbool.h>
-#include <stddef.h>
 #include <stdint.h>
 
 #define PHASE_TYPE uint16_t
@@ -45,9 +44,9 @@ typedef PHASE_TYPE PHASE_STEP;
 
 typedef struct {
     SAMPLE_STATE sample_state;
-    size_t samples_remaining;
     PHASE_STEP step;
     enum channel channel;
+    uint8_t samples_remaining;
 } BIT_STATE;
 
 typedef struct {
@@ -61,7 +60,7 @@ typedef struct {
 
 static const unsigned int SAMPLE_RATE = 8000;
 static const unsigned int BAUD_RATE = 300;
-static const size_t SAMPLES_PER_BIT = (SAMPLE_RATE + BAUD_RATE - 1) / BAUD_RATE; // round up (err on the slow side)
+static const unsigned int SAMPLES_PER_BIT = (SAMPLE_RATE + BAUD_RATE - 1) / BAUD_RATE; // round up (err on the slow side)
 
 typedef struct {
     uint8_t
