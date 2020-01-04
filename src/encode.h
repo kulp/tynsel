@@ -72,16 +72,9 @@ typedef struct {
     enum parity parity;
 } SERIAL_CONFIG;
 
-struct encode_state {
-    SERIAL_CONFIG serial;
-    BYTE_STATE byte_state;
-    int verbosity;
-    float gain;
-};
-
 // returns number of samples emitted, or -1
-bool encode_bytes(struct encode_state *s, bool restart, enum channel channel, uint8_t byte, ENCODE_DATA_TYPE *out);
-bool encode_carrier(struct encode_state *s, bool restart, enum channel channel, ENCODE_DATA_TYPE *out);
+bool encode_bytes(const SERIAL_CONFIG *c, BYTE_STATE *s, bool restart, enum channel channel, uint8_t byte, ENCODE_DATA_TYPE *out);
+bool encode_carrier(const SERIAL_CONFIG *c, BYTE_STATE *s, bool restart, enum channel channel, ENCODE_DATA_TYPE *out);
 
 #endif
 

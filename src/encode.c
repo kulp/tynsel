@@ -137,9 +137,9 @@ static inline uint8_t count_bits(const SERIAL_CONFIG *s)
     return (uint8_t)(s->start_bits + s->data_bits + s->parity_bits + s->stop_bits);
 }
 
-bool encode_carrier(struct encode_state *s, bool restart, enum channel channel, DATA_TYPE *out)
+bool encode_carrier(const SERIAL_CONFIG *c, BYTE_STATE *s, bool restart, enum channel channel, DATA_TYPE *out)
 {
-    return push_raw_word(&s->byte_state, restart, channel, count_bits(&s->serial), (uint16_t)-1u, out);
+    return push_raw_word(s, restart, channel, count_bits(c), (uint16_t)-1u, out);
 }
 
 static inline uint8_t popcnt(uint8_t x)
@@ -167,7 +167,7 @@ static inline bool compute_parity(enum parity parity, uint8_t byte)
     return false; // this is meant to be unreachable
 }
 
-static inline uint16_t make_word(const SERIAL_CONFIG *s, enum parity parity, uint8_t byte)
+static inline uint16_t make_word(const SERIAL_CONFIG *s, uint8_t byte)
 {
     #define MASK(Width) ((1u << (Width)) - 1)
     uint16_t word = 0;
@@ -175,7 +175,7 @@ static inline uint16_t make_word(const SERIAL_CONFIG *s, enum parity parity, uin
     word |= MASK(s->stop_bits) & -1u;
 
     word <<= s->parity_bits;
-    word |= MASK(s->parity_bits) & compute_parity(parity, byte);
+    word |= MASK(s->parity_bits) & compute_parity(s->parity, byte);
 
     word <<= s->data_bits;
     word |= MASK(s->data_bits) & byte;
@@ -186,10 +186,10 @@ static inline uint16_t make_word(const SERIAL_CONFIG *s, enum parity parity, uin
     return word;
 }
 
-bool encode_bytes(struct encode_state *s, bool restart, enum channel channel, uint8_t byte, DATA_TYPE *out)
+bool encode_bytes(const SERIAL_CONFIG *c, BYTE_STATE *s, bool restart, enum channel channel, uint8_t byte, DATA_TYPE *out)
 {
-    uint8_t bit_count = count_bits(&s->serial);
-    uint16_t word = make_word(&s->serial, s->serial.parity, byte);
-    return push_raw_word(&s->byte_state, restart, channel, bit_count, word, out);
+    uint8_t bit_count = count_bits(c);
+    uint16_t word = make_word(c, byte);
+    return push_raw_word(s, restart, channel, bit_count, word, out);
 }
 

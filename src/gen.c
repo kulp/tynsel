@@ -32,6 +32,13 @@
 
 typedef ENCODE_DATA_TYPE DATA_TYPE;
 
+struct encode_state {
+    SERIAL_CONFIG serial;
+    BYTE_STATE byte_state;
+    int verbosity;
+    float gain;
+};
+
 static int parse_opts(struct encode_state *s, int argc, char *argv[], const char **filename)
 {
     int ch;
@@ -121,21 +128,21 @@ int main(int argc, char* argv[])
 
     for (size_t i = 0; i < SAMPLES_PER_BIT; /* incremented inside loop */) {
         DATA_TYPE out = 0;
-        if (encode_carrier(s, true, s->byte_state.channel, &out))
+        if (encode_carrier(&s->serial, &s->byte_state, true, s->byte_state.channel, &out))
             i++;
         fwrite(&out, sizeof out, 1, stream);
     }
 
     for (int b = 0; b < byte_count; /* incremented inside loop */) {
         DATA_TYPE out = 0;
-        if (encode_bytes(s, true, s->byte_state.channel, bytes[b], &out))
+        if (encode_bytes(&s->serial, &s->byte_state, true, s->byte_state.channel, bytes[b], &out))
             b++;
         fwrite(&out, sizeof out, 1, stream);
     }
 
     for (size_t i = 0; i < SAMPLES_PER_BIT; /* incremented inside loop */) {
         DATA_TYPE out = 0;
-        if (encode_carrier(s, true, s->byte_state.channel, &out))
+        if (encode_carrier(&s->serial, &s->byte_state, true, s->byte_state.channel, &out))
             i++;
         fwrite(&out, sizeof out, 1, stream);
     }
@@ -143,7 +150,7 @@ int main(int argc, char* argv[])
     // drain the encoder
     {
         DATA_TYPE out = 0;
-        while (! encode_carrier(s, true, s->byte_state.channel, &out))
+        while (! encode_carrier(&s->serial, &s->byte_state, true, s->byte_state.channel, &out))
             fwrite(&out, sizeof out, 1, stream);
     }
 
