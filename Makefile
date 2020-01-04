@@ -14,6 +14,9 @@ CPPFLAGS += -I.
 
 all: gen listen sine-gen
 
+sine-gen: AVR_CFLAGS =#  ensure we do not get flags meant for embedded
+sine-gen: AVR_LDFLAGS =# ensure we do not get flags meant for embedded
+sine-gen: CC = cc#       ensure we do not get compiler meant for embedded
 sine-gen: sine.o
 
 SINETABLE_GAIN = 1.0
@@ -27,13 +30,15 @@ avr-%: ARCH_FLAGS = -mmcu=attiny412
 avr-%: CC = avr-gcc
 avr-%: LD = avr-gcc
 
-avr-%.o: CFLAGS += -Os $(ARCH_FLAGS)
-avr-%.o: CFLAGS += -ffunction-sections
-avr-%.o: CFLAGS += -Werror=conversion
-avr-%.o: CFLAGS += -fstack-usage
+AVR_CFLAGS += -Os $(ARCH_FLAGS)
+AVR_CFLAGS += -ffunction-sections
+AVR_CFLAGS += -Werror=conversion
+AVR_CFLAGS += -fstack-usage
+avr-%.o: CFLAGS += $(AVR_CFLAGS)
 
-avr-%: LDFLAGS += $(ARCH_FLAGS)
-avr-%: LDFLAGS += -nostdlib
+AVR_LDFLAGS += $(ARCH_FLAGS)
+AVR_LDFLAGS += -nostdlib
+avr-%: LDFLAGS += $(AVR_LDFLAGS)
 
 avr-%.o: %.c
 	$(COMPILE.c) -o $@ $<
