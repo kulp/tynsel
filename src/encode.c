@@ -35,7 +35,7 @@ static bool encode_sample(SAMPLE_STATE *s, PHASE_STEP step, DATA_TYPE *out)
     uint8_t top = (uint8_t)(s->phase >> PHASE_FRACTION_BITS);
     DATA_TYPE  half    = (DATA_TYPE )TEST_BIT(top, 7);
     PHASE_TYPE quarter = (PHASE_TYPE)TEST_BIT(top, 6);
-    uint8_t lookup = (top ^ quarter) % TABLE_SIZE;
+    uint8_t lookup = (top ^ quarter) % WAVE_TABLE_SIZE;
 
     s->phase += step;
 
