@@ -23,6 +23,10 @@
 #ifndef TYPES_H_
 #define TYPES_H_
 
+#include <stdint.h>
+
+#define ENCODE_DATA_TYPE int16_t
+
 enum channel { CHAN_ZERO, CHAN_ONE, CHAN_max };
 enum bit { BIT_ZERO, BIT_ONE, BIT_max };
 enum parity { PARITY_SPACE, PARITY_MARK, PARITY_EVEN, PARITY_ODD };

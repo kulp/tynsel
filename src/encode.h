@@ -29,7 +29,6 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#define DATA_TYPE int16_t
 #define PHASE_TYPE uint16_t
 #define PHASE_FRACTION_BITS 8
 
@@ -40,7 +39,7 @@
 #define MINOR_PER_CYCLE (MAJOR_PER_CYCLE * (1u << (PHASE_FRACTION_BITS)))
 
 typedef struct {
-    const DATA_TYPE (*quadrant)[TABLE_SIZE];
+    const ENCODE_DATA_TYPE (*quadrant)[TABLE_SIZE];
     PHASE_TYPE phase;
 } SAMPLE_STATE;
 typedef PHASE_TYPE PHASE_STEP;
@@ -82,8 +81,8 @@ struct encode_state {
 };
 
 // returns number of samples emitted, or -1
-bool encode_bytes(struct encode_state *s, bool restart, enum channel channel, uint8_t byte, DATA_TYPE *out);
-bool encode_carrier(struct encode_state *s, bool restart, enum channel channel, DATA_TYPE *out);
+bool encode_bytes(struct encode_state *s, bool restart, enum channel channel, uint8_t byte, ENCODE_DATA_TYPE *out);
+bool encode_carrier(struct encode_state *s, bool restart, enum channel channel, ENCODE_DATA_TYPE *out);
 
 #endif
 

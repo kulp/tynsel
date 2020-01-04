@@ -36,6 +36,8 @@
 #define CAT(X,Y) CAT_(X,Y)
 #define CAT_(X,Y) X ## Y
 
+typedef ENCODE_DATA_TYPE DATA_TYPE;
+
 // Creates a quarter-wave sine table, scaled by the given gain.
 // Valid indices into the table are [0,TABLE_SIZE).
 // Input indices are augmented by 0.5 before computing the sine, on the
@@ -46,7 +48,7 @@
 // positive and minimum negative output values.
 static void make_sine_table(DATA_TYPE sines[TABLE_SIZE], float gain)
 {
-    const DATA_TYPE max = (CAT(DATA_TYPE,MAX) / 2);
+    const DATA_TYPE max = (CAT(ENCODE_DATA_TYPE,MAX) / 2);
     for (unsigned int i = 0; i < TABLE_SIZE; i++) {
         sines[i] = (DATA_TYPE)(gain * sinf(2 * M_PI * (i + 0.5) / MAJOR_PER_CYCLE) * max - 1);
     }

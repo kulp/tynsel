@@ -26,6 +26,8 @@
 #include <stdbool.h>
 #include <stdio.h>
 
+typedef ENCODE_DATA_TYPE DATA_TYPE;
+
 #define TEST_BIT(Word,Index) (((Word) & (1 << (Index))) ? -1 : 0)
 
 static bool encode_sample(SAMPLE_STATE *s, PHASE_STEP step, DATA_TYPE *out)
