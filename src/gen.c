@@ -75,18 +75,6 @@ static int parse_opts(struct encode_state *s, int argc, char *argv[], const char
 }
 
 // returns zero on failure
-static int sample_callback(struct audio_state *a, size_t count, DATA_TYPE samples[count], void *userdata)
-{
-    (void)a;
-    for (size_t i = 0; i < count; i++) {
-        int result = fwrite(&samples[i], sizeof samples[i], 1, userdata);
-        if (result != 1)
-            return 0;
-    }
-
-    return 1;
-}
-
 static unsigned int parse_number(const char *in, char **next, int base)
 {
     if (!strncmp(in, "0b", 2)) {
@@ -113,7 +101,6 @@ int main(int argc, char* argv[])
         .verbosity = 0,
         .channel   = 0,
         .gain      = 0.5,
-        .cb.put_samples = sample_callback,
     }, *s = &_s;
 
     int rc = parse_opts(s, argc, argv, &output_file);
@@ -128,8 +115,8 @@ int main(int argc, char* argv[])
     if (!output_file && s->verbosity)
         fprintf(stderr, "No file specified to generate -- using stdout\n");
 
-    s->cb.userdata = output_file ? fopen(output_file, "w") : stdout;
-    if (!s->cb.userdata) {
+    FILE *stream = output_file ? fopen(output_file, "w") : stdout;
+    if (! stream) {
         fprintf(stderr, "Failed to open `%s' : %s\n", output_file, strerror(errno));
         exit(EXIT_FAILURE);
     }
@@ -154,28 +141,28 @@ int main(int argc, char* argv[])
         DATA_TYPE out = 0;
         if (encode_carrier(s, true, s->channel, &out))
             i++;
-        s->cb.put_samples(&s->audio, 1, &out, s->cb.userdata);
+        fwrite(&out, sizeof out, 1, stream);
     }
 
     for (int b = 0; b < byte_count; /* incremented inside loop */) {
         DATA_TYPE out = 0;
         if (encode_bytes(s, true, s->channel, bytes[b], &out))
             b++;
-        s->cb.put_samples(&s->audio, 1, &out, s->cb.userdata);
+        fwrite(&out, sizeof out, 1, stream);
     }
 
     for (size_t i = 0; i < SAMPLES_PER_BIT; /* incremented inside loop */) {
         DATA_TYPE out = 0;
         if (encode_carrier(s, true, s->channel, &out))
             i++;
-        s->cb.put_samples(&s->audio, 1, &out, s->cb.userdata);
+        fwrite(&out, sizeof out, 1, stream);
     }
 
     // drain the encoder
     {
         DATA_TYPE out = 0;
         while (! encode_carrier(s, true, s->channel, &out))
-            s->cb.put_samples(&s->audio, 1, &out, s->cb.userdata);
+            fwrite(&out, sizeof out, 1, stream);
     }
 
     return 0;

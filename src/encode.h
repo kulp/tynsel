@@ -79,10 +79,6 @@ struct encode_state {
     int verbosity;
     enum channel channel;
     float gain;
-    struct {
-        void *userdata;
-        int (*put_samples)(struct audio_state *a, size_t count, DATA_TYPE sample[count], void *userdata);
-    } cb;
 };
 
 // returns number of samples emitted, or -1
