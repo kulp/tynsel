@@ -37,7 +37,7 @@ static int parse_opts(struct encode_state *s, int argc, char *argv[], const char
     int ch;
     while ((ch = getopt(argc, argv, "C:G:S:T:P:D:p:s:o:" "v")) != -1) {
         switch (ch) {
-            case 'C': s->channel             = strtol(optarg, NULL, 0); break;
+            case 'C': s->byte_state.channel  = strtol(optarg, NULL, 0); break;
             case 'G': s->gain                = strtof(optarg, NULL);    break;
             case 'S': s->serial.start_bits   = strtol(optarg, NULL, 0); break;
             case 'T': s->serial.stop_bits    = strtol(optarg, NULL, 0); break;
@@ -78,8 +78,10 @@ int main(int argc, char* argv[])
             .parity_bits = 0,
             .stop_bits   = 2,
         },
+        .byte_state = {
+            .channel = 0,
+        },
         .verbosity = 0,
-        .channel   = 0,
         .gain      = 0.5,
     }, *s = &_s;
 
@@ -87,8 +89,8 @@ int main(int argc, char* argv[])
     if (rc)
         return rc;
 
-    if (s->channel > 1) {
-        fprintf(stderr, "Invalid channel %d\n", s->channel);
+    if (s->byte_state.channel > 1) {
+        fprintf(stderr, "Invalid channel %d\n", s->byte_state.channel);
         return -1;
     }
 
@@ -119,21 +121,21 @@ int main(int argc, char* argv[])
 
     for (size_t i = 0; i < SAMPLES_PER_BIT; /* incremented inside loop */) {
         DATA_TYPE out = 0;
-        if (encode_carrier(s, true, s->channel, &out))
+        if (encode_carrier(s, true, s->byte_state.channel, &out))
             i++;
         fwrite(&out, sizeof out, 1, stream);
     }
 
     for (int b = 0; b < byte_count; /* incremented inside loop */) {
         DATA_TYPE out = 0;
-        if (encode_bytes(s, true, s->channel, bytes[b], &out))
+        if (encode_bytes(s, true, s->byte_state.channel, bytes[b], &out))
             b++;
         fwrite(&out, sizeof out, 1, stream);
     }
 
     for (size_t i = 0; i < SAMPLES_PER_BIT; /* incremented inside loop */) {
         DATA_TYPE out = 0;
-        if (encode_carrier(s, true, s->channel, &out))
+        if (encode_carrier(s, true, s->byte_state.channel, &out))
             i++;
         fwrite(&out, sizeof out, 1, stream);
     }
@@ -141,7 +143,7 @@ int main(int argc, char* argv[])
     // drain the encoder
     {
         DATA_TYPE out = 0;
-        while (! encode_carrier(s, true, s->channel, &out))
+        while (! encode_carrier(s, true, s->byte_state.channel, &out))
             fwrite(&out, sizeof out, 1, stream);
     }
 

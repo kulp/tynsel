@@ -52,6 +52,7 @@ typedef struct {
 
 typedef struct {
     BIT_STATE bit_state;
+    enum channel channel;
     uint16_t current_word;
     uint16_t next_word;
     uint8_t bits_remaining;
@@ -75,7 +76,6 @@ struct encode_state {
     SERIAL_CONFIG serial;
     BYTE_STATE byte_state;
     int verbosity;
-    enum channel channel;
     float gain;
 };
 
