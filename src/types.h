@@ -26,6 +26,7 @@
 #include <stdint.h>
 
 #define ENCODE_DATA_TYPE int16_t
+#define DECODE_DATA_TYPE int16_t
 
 enum channel { CHAN_ZERO, CHAN_ONE, CHAN_max };
 enum bit { BIT_ZERO, BIT_ONE, BIT_max };

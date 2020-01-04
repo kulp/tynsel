@@ -42,7 +42,7 @@ typedef int16_t FILTER_STATE_DATA;
 #define FILTER_MULT(a, b) (((a) * (b)) >> COEFF_FRACTIONAL_BITS)
 #endif
 
-typedef int16_t FILTER_IN_DATA;
+typedef DECODE_DATA_TYPE FILTER_IN_DATA;
 typedef FILTER_IN_DATA FILTER_OUT_DATA;
 
 #ifdef __AVR__
@@ -67,7 +67,7 @@ bool pump_decoder(
         uint16_t threshold,
         int8_t hysteresis,
         int8_t offset,
-        FILTER_IN_DATA in,
+        DECODE_DATA_TYPE in,
         DECODE_OUT_DATA *out
     );
 

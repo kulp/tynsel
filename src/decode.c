@@ -222,7 +222,7 @@ bool pump_decoder(
         uint16_t threshold,
         int8_t hysteresis,
         int8_t offset,
-        FILTER_IN_DATA in,
+        DECODE_DATA_TYPE in,
         DECODE_OUT_DATA *out
     )
 {
