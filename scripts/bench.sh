@@ -48,6 +48,7 @@ function compute_duration ()
 for run in {1..10}
 do
     rand=$(mktemp $outdir/random_bytes.XXXXXX)
+    stem=$(basename $rand)
     random_bytes $byte_count > $rand
     for noise_level in 0 0.1 0.2 0.4 0.8
     do
@@ -65,7 +66,7 @@ do
                     for offset in {1..15}
                     do
                         (
-                            out=$outdir/bits_per_sample$bits_per_sample/chan$channel/run$run/noise$noise_level/window$rms_samples/threshold$threshold/hysteresis$hysteresis/offset$offset/$(basename $rand).decoded
+                            out=$outdir/bits_per_sample$bits_per_sample/chan$channel/run$run.$stem/noise$noise_level/window$rms_samples/threshold$threshold/hysteresis$hysteresis/offset$offset/$stem.decoded
                             mkdir -p $(dirname $out)
                             if [[ ! -e $out ]] # assume existence implies previous completion
                             then
