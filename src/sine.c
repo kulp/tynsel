@@ -38,11 +38,16 @@
 // either have two entries for zero (when flipping the quadrant), two entries
 // for max (also during flipping), or an uneven gap between the minimum
 // positive and minimum negative output values.
-void make_sine_table(ENCODE_DATA_TYPE sines[WAVE_TABLE_SIZE], float gain)
+static void make_sine_table(ENCODE_DATA_TYPE sines[WAVE_TABLE_SIZE], float gain)
 {
     const ENCODE_DATA_TYPE max = (CAT(ENCODE_DATA_TYPE,MAX) / 2);
     for (unsigned int i = 0; i < WAVE_TABLE_SIZE; i++) {
         sines[i] = (ENCODE_DATA_TYPE)(gain * sinf(2 * M_PI * (i + 0.5) / MAJOR_PER_CYCLE) * max - 1);
     }
+}
+
+void init_sines(ENCODE_DATA_TYPE (*sines)[WAVE_TABLE_SIZE], float gain)
+{
+    return make_sine_table(*sines, gain);
 }
 

@@ -29,7 +29,7 @@
 
 #define MAJOR_PER_CYCLE (WAVE_TABLE_SIZE * 4)
 
-void make_sine_table(ENCODE_DATA_TYPE sines[WAVE_TABLE_SIZE], float gain);
+void init_sines(ENCODE_DATA_TYPE (*sines)[WAVE_TABLE_SIZE], float gain);
 
 #endif
 
