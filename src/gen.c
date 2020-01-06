@@ -62,19 +62,6 @@ static int parse_opts(struct encode_state *s, int argc, char *argv[], const char
 }
 
 // returns zero on failure
-static unsigned int parse_number(const char *in, char **next, int base)
-{
-    if (!strncmp(in, "0b", 2)) {
-        char *nn = NULL;
-        unsigned result = strtol(in + 2, &nn, 2);
-        if (nn == in + 2)
-            return 0;
-        *next = nn;
-        return result;
-    }
-    return strtol(in, next, base);
-}
-
 int main(int argc, char* argv[])
 {
     const char *output_file = NULL;
@@ -110,18 +97,6 @@ int main(int argc, char* argv[])
         exit(EXIT_FAILURE);
     }
 
-    int byte_count = argc - optind;
-    unsigned bytes[byte_count];
-    for (int byte_index = 0; byte_index < byte_count; byte_index++) {
-        char *next = NULL;
-        char *thing = argv[byte_index + optind];
-        bytes[byte_index] = parse_number(thing, &next, 0);
-        if (next == thing) {
-            fprintf(stderr, "Error parsing argument at index %d, `%s'\n", optind, thing);
-            return -1;
-        }
-    }
-
     DATA_TYPE (*sines)[WAVE_TABLE_SIZE];
     init_sines(&sines, s->gain);
     s->byte_state.bit_state.sample_state.quadrant = sines;
@@ -133,10 +108,12 @@ int main(int argc, char* argv[])
         fwrite(&out, sizeof out, 1, stream);
     }
 
-    for (int b = 0; b < byte_count; /* incremented inside loop */) {
+    char ch = 0;
+    rc = fread(&ch, 1, 1, stdin);
+    while (!feof(stdin)) {
         DATA_TYPE out = 0;
-        if (encode_bytes(&s->serial, &s->byte_state, true, s->byte_state.channel, bytes[b], &out))
-            b++;
+        if (encode_bytes(&s->serial, &s->byte_state, true, s->byte_state.channel, ch, &out))
+            rc = fread(&ch, 1, 1, stdin);
         fwrite(&out, sizeof out, 1, stream);
     }
 

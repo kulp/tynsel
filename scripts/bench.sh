@@ -29,7 +29,7 @@ function noise ()
 function generate_audio ()
 {
     local input_file=$1
-    $here/../gen -C $channel -s $sample_rate -G $gain $(perl -e 'print join q( ), map unpack(q(c)), map { split // } <>' $input_file)
+    $here/../gen -C $channel -s $sample_rate -G $gain < $input_file
 }
 
 function mix ()
