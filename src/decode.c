@@ -210,6 +210,7 @@ static const struct filter_config coeffs[CHAN_max][BIT_max] PROGMEM = {
 };
 
 bool pump_decoder(
+        const SERIAL_CONFIG *c,
         enum channel channel,
         uint8_t window_size,
         uint16_t threshold,
@@ -230,12 +231,6 @@ bool pump_decoder(
     static struct runs_state run_state = { .current = 0 };
 
     static struct bits_state dec_state = { .off = -1, .last = THRESHOLD };
-    static const SERIAL_CONFIG dec_conf = {
-        .start_bits  = 1,
-        .data_bits   = 7,
-        .parity_bits = 1,
-        .stop_bits   = 2,
-    };
 
     static FILTER_OUT_DATA f[2] = { 0 };
     if (
@@ -258,6 +253,6 @@ bool pump_decoder(
     if (! runs(hysteresis, &run_state, ra, rb, &ro))
         return false;
 
-    return decode(&dec_conf, &dec_state, offset, ro, out);
+    return decode(c, &dec_state, offset, ro, out);
 }
 

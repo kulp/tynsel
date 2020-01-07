@@ -52,7 +52,7 @@ int __attribute__((used)) main()
         // TODO make a real implementation : this one serves simply to ensure that
         // functions are seen by the compiler to be used
         DECODE_OUT_DATA d = 0;
-        pump_decoder(channel, window_size, threshold, hysteresis, offset, d_in, &d);
+        pump_decoder(&c, channel, window_size, threshold, hysteresis, offset, d_in, &d);
         d_out = d;
 
         ENCODE_DATA_TYPE e = e_out;

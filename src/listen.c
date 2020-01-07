@@ -46,6 +46,13 @@ int main(int argc, char *argv[])
     // Do not buffer output at all
     setvbuf(stdout, NULL, _IONBF, 0);
 
+    const SERIAL_CONFIG config = {
+        .start_bits  = 1,
+        .data_bits   = 7,
+        .parity_bits = 1,
+        .stop_bits   = 2,
+    };
+
     while (true) {
         FILTER_IN_DATA in = 0;
         int result = fread(&in, sizeof in, 1, stream);
@@ -59,7 +66,7 @@ int main(int argc, char *argv[])
         }
 
         DECODE_OUT_DATA out = 0;
-        if (pump_decoder(channel, window_size, threshold, hysteresis, offset, in, &out))
+        if (pump_decoder(&config, channel, window_size, threshold, hysteresis, offset, in, &out))
             putchar(out);
     }
 
