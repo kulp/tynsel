@@ -46,7 +46,7 @@ void make_sine_table(size_t size, ENCODE_DATA_TYPE sines[size], float gain)
 {
     const ENCODE_DATA_TYPE max = (CAT(ENCODE_DATA_TYPE,MAX) / 2);
     for (unsigned int i = 0; i < size; i++) {
-        sines[i] = (ENCODE_DATA_TYPE)(gain * sinf(2 * M_PI * (i + 0.5) / (size * 4)) * max - 1);
+        sines[i] = (ENCODE_DATA_TYPE)lroundf(gain * sinf(2 * M_PI * (i + 0.5) / (size * 4)) * max - 1);
     }
 }
 
