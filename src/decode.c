@@ -42,14 +42,7 @@ struct bits_state {
     DECODE_OUT_DATA byte;
 };
 
-struct bits_config {
-    uint8_t start_bits;
-    uint8_t data_bits;
-    uint8_t parity_bits;
-    uint8_t stop_bits;
-};
-
-static bool decode(const struct bits_config *c, struct bits_state *s, int8_t offset, DECODE_IN_DATA datum, DECODE_OUT_DATA *out)
+static bool decode(const SERIAL_CONFIG *c, struct bits_state *s, int8_t offset, DECODE_IN_DATA datum, DECODE_OUT_DATA *out)
 {
     const uint8_t before_parity = (uint8_t)(c->start_bits + c->data_bits);
     const uint8_t before_stop   = (uint8_t)(before_parity + c->parity_bits);
@@ -237,7 +230,7 @@ bool pump_decoder(
     static struct runs_state run_state = { .current = 0 };
 
     static struct bits_state dec_state = { .off = -1, .last = THRESHOLD };
-    static const struct bits_config dec_conf = {
+    static const SERIAL_CONFIG dec_conf = {
         .start_bits  = 1,
         .data_bits   = 7,
         .parity_bits = 1,
