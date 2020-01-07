@@ -62,16 +62,6 @@ static const unsigned int SAMPLE_RATE = 8000;
 static const unsigned int BAUD_RATE = 300;
 static const unsigned int SAMPLES_PER_BIT = (SAMPLE_RATE + BAUD_RATE - 1) / BAUD_RATE; // round up (err on the slow side)
 
-typedef struct {
-    uint8_t
-        start_bits,
-        data_bits,
-        parity_bits,
-        stop_bits;
-
-    enum parity parity;
-} SERIAL_CONFIG;
-
 // returns number of samples emitted, or -1
 bool encode_bytes(const SERIAL_CONFIG *c, BYTE_STATE *s, bool restart, enum channel channel, uint8_t byte, ENCODE_DATA_TYPE *out);
 bool encode_carrier(const SERIAL_CONFIG *c, BYTE_STATE *s, bool restart, enum channel channel, ENCODE_DATA_TYPE *out);

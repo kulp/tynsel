@@ -32,4 +32,14 @@ enum channel { CHAN_ZERO, CHAN_ONE, CHAN_max };
 enum bit { BIT_ZERO, BIT_ONE, BIT_max };
 enum parity { PARITY_SPACE, PARITY_MARK, PARITY_EVEN, PARITY_ODD };
 
+typedef struct {
+    uint8_t
+        start_bits,
+        data_bits,
+        parity_bits,
+        stop_bits;
+
+    enum parity parity;
+} SERIAL_CONFIG;
+
 #endif
