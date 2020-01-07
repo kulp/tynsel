@@ -41,6 +41,7 @@ AVR_CFLAGS += -Os $(ARCH_FLAGS)
 AVR_CFLAGS += -ffunction-sections
 AVR_CFLAGS += -Werror=conversion
 AVR_CFLAGS += -fstack-usage
+AVR_CFLAGS += -fshort-enums
 avr-%.o: CFLAGS += $(AVR_CFLAGS)
 
 AVR_LDFLAGS += $(ARCH_FLAGS)
