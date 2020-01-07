@@ -42,6 +42,10 @@ int main(int argc, char *argv[])
     int offset = strtol(*arg++, NULL, 0);
 
     FILE *stream = stdin;
+
+    // Do not buffer output at all
+    setvbuf(stdout, NULL, _IONBF, 0);
+
     while (true) {
         FILTER_IN_DATA in = 0;
         int result = fread(&in, sizeof in, 1, stream);
