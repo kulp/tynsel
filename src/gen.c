@@ -23,12 +23,18 @@
 #include "encode.h"
 
 #include <errno.h>
+#include <fcntl.h>
 #include <getopt.h>
 #include <math.h>
+#include <signal.h>
+#include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/time.h>
+#include <termios.h>
+#include <unistd.h>
 
 typedef ENCODE_DATA_TYPE DATA_TYPE;
 
@@ -37,12 +43,13 @@ struct encode_state {
     BYTE_STATE byte_state;
     int verbosity;
     float gain;
+    bool realtime;
 };
 
 static int parse_opts(struct encode_state *s, int argc, char *argv[], const char **filename)
 {
     int ch;
-    while ((ch = getopt(argc, argv, "C:G:S:T:P:D:p:s:o:" "v")) != -1) {
+    while ((ch = getopt(argc, argv, "C:G:S:T:P:D:p:s:o:r:" "v")) != -1) {
         switch (ch) {
             case 'C': s->byte_state.channel  = strtol(optarg, NULL, 0); break;
             case 'G': s->gain                = strtof(optarg, NULL);    break;
@@ -52,6 +59,7 @@ static int parse_opts(struct encode_state *s, int argc, char *argv[], const char
             case 'D': s->serial.data_bits    = strtol(optarg, NULL, 0); break;
             case 'p': s->serial.parity       = strtol(optarg, NULL, 0); break;
             case 'o': *filename              = optarg;                  break;
+            case 'r': s->realtime            = strtol(optarg, NULL, 0); break;
 
             case 'v': s->verbosity++;                                   break;
             default: fprintf(stderr, "args error before argument index %d\n", optind); return -1;
@@ -59,6 +67,11 @@ static int parse_opts(struct encode_state *s, int argc, char *argv[], const char
     }
 
     return 0;
+}
+
+static void null_handler(int ignored)
+{
+    (void)ignored;
 }
 
 // returns zero on failure
@@ -101,27 +114,74 @@ int main(int argc, char* argv[])
     init_sines(&sines, s->gain);
     s->byte_state.bit_state.sample_state.quadrant = sines;
 
-    for (size_t i = 0; i < SAMPLES_PER_BIT; /* incremented inside loop */) {
-        DATA_TYPE out = 0;
-        if (encode_carrier(&s->serial, &s->byte_state, true, s->byte_state.channel, &out))
-            i++;
-        fwrite(&out, sizeof out, 1, stream);
-    }
+    if (s->realtime) {
+        struct timeval tv = { .tv_usec = 1.0 / SAMPLE_RATE * 1000000 };
+        struct itimerval it = { .it_interval = tv, .it_value = tv };
 
-    char ch = 0;
-    rc = fread(&ch, 1, 1, stdin);
-    while (!feof(stdin)) {
-        DATA_TYPE out = 0;
-        if (encode_bytes(&s->serial, &s->byte_state, true, s->byte_state.channel, ch, &out))
-            rc = fread(&ch, 1, 1, stdin);
-        fwrite(&out, sizeof out, 1, stream);
-    }
+        // Do not buffer output at all
+        setvbuf(stdout, NULL, _IONBF, 0);
 
-    for (size_t i = 0; i < SAMPLES_PER_BIT; /* incremented inside loop */) {
+        // Ignore SIGALRM except to wake us up
+        signal(SIGALRM, null_handler);
+
+        // Set up periodic SIGALRM
+        setitimer(ITIMER_REAL, &it, NULL);
+
+        static struct termios tio;
+        tcgetattr(STDIN_FILENO, &tio);
+        // Enable extreme non-blocking (return from read() as quickly as possible,
+        // possibly with no data)
+        tio.c_lflag &= ~ICANON;
+        tio.c_cc[VMIN] = 0;
+        tio.c_cc[VTIME] = 0;
+        tcsetattr(STDIN_FILENO, TCSANOW, &tio);
+
+        sigset_t set;
+        sigemptyset(&set);
+
         DATA_TYPE out = 0;
-        if (encode_carrier(&s->serial, &s->byte_state, true, s->byte_state.channel, &out))
-            i++;
-        fwrite(&out, sizeof out, 1, stream);
+        while (true) { // detecting EOF is impossible, so Ctrl-C or Ctrl-\ is expected
+            fwrite(&out, sizeof out, 1, stream);
+
+            char ch = 0;
+            sigsuspend(&set);
+            int result = read(STDIN_FILENO, &ch, 1);
+
+            // The ignoring of the return value of encode_bytes implies that we
+            // do not expect the input to arrive at a higher rate than we can
+            // encode (about 300/11=27 characters per second). If data does in
+            // fact arrive faster than we can process it, bytes that are not
+            // accepted by encode_bytes will be dropped (because they will be
+            // replaced with a new byte by the next time encode_bytes is
+            // called). This is a reasonable behavior for "realtime" mode.
+            (void)encode_bytes(&s->serial, &s->byte_state, result > 0, s->byte_state.channel, ch, &out);
+
+            if (result < 0)
+                break;
+        }
+    } else {
+        for (size_t i = 0; i < SAMPLES_PER_BIT; /* incremented inside loop */) {
+            DATA_TYPE out = 0;
+            if (encode_carrier(&s->serial, &s->byte_state, true, s->byte_state.channel, &out))
+                i++;
+            fwrite(&out, sizeof out, 1, stream);
+        }
+
+        char ch = 0;
+        rc = fread(&ch, 1, 1, stdin);
+        while (!feof(stdin)) {
+            DATA_TYPE out = 0;
+            if (encode_bytes(&s->serial, &s->byte_state, true, s->byte_state.channel, ch, &out))
+                rc = fread(&ch, 1, 1, stdin);
+            fwrite(&out, sizeof out, 1, stream);
+        }
+
+        for (size_t i = 0; i < SAMPLES_PER_BIT; /* incremented inside loop */) {
+            DATA_TYPE out = 0;
+            if (encode_carrier(&s->serial, &s->byte_state, true, s->byte_state.channel, &out))
+                i++;
+            fwrite(&out, sizeof out, 1, stream);
+        }
     }
 
     // drain the encoder
