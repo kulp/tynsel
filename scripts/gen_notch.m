@@ -18,8 +18,9 @@ if a(1) != 1 || b(1) != b(3) || a(2) != b(2)
 endif
 printf('// pei_tseng_notch(%d/(%d/2),%d/(%d/2))\n', notch_freq, sample_rate, notch_width, sample_rate)
 printf('{\n')
-format = '    .%c = { DEFINE_COEFF(%+6.6f), DEFINE_COEFF(%+6.6f), DEFINE_COEFF(%+6.6f) },\n';
-printf(format, 'b', b(1), b(2), b(3))
-printf(format, 'a', a(1), a(2), a(3))
+format = '    .coeff_%s = DEFINE_COEFF(%+6.6f),\n';
+printf(format, 'b0', b(1))
+printf(format, 'b1', b(2))
+printf(format, 'a2', a(3))
 printf('}\n')
 

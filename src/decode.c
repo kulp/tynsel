@@ -154,7 +154,9 @@ static bool runs(int8_t hysteresis, struct runs_state *s, RUNS_IN_DATA da, RUNS_
 }
 
 struct filter_config {
-    FILTER_COEFF b[3], a[3];
+    FILTER_COEFF coeff_b0, coeff_b1, coeff_a2;
+#define coeff_b2 coeff_b0
+#define coeff_a1 coeff_b1
 };
 
 struct filter_state {
@@ -170,7 +172,7 @@ static bool filter(const struct filter_config * PROGMEM c, struct filter_state *
     // Avoid expensive modulo
     #define MOD(x,n) ((x) >= (n) ? (x) - (n) : (x))
     #define INDEX(x,n) (x)[MOD(s->ptr + (n) + 3, 3)]
-    #define RAW_COEFF(Type,Index) c->Type[Index]
+    #define RAW_COEFF(Type,Index) c->coeff_##Type##Index
 #if !defined(__AVR__) || defined(__AVR_PM_BASE_ADDRESS__)
     #define COEFF(Type,Index) RAW_COEFF(Type,Index)
 #else
