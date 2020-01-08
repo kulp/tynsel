@@ -170,10 +170,11 @@ static bool filter(const struct filter_config * PROGMEM c, struct filter_state *
     // Avoid expensive modulo
     #define MOD(x,n) ((x) >= (n) ? (x) - (n) : (x))
     #define INDEX(x,n) (x)[MOD(s->ptr + (n) + 3, 3)]
+    #define RAW_COEFF(Type,Index) c->Type[Index]
 #if !defined(__AVR__) || defined(__AVR_PM_BASE_ADDRESS__)
-    #define COEFF(Type,Index) c->Type[Index]
+    #define COEFF(Type,Index) RAW_COEFF(Type,Index)
 #else
-    #define COEFF(Type,Index) (FILTER_COEFF)pgm_read_word(&c->Type[Index])
+    #define COEFF(Type,Index) (FILTER_COEFF)pgm_read_word(&RAW_COEFF(Type,Index))
 #endif
 
     s->out[s->ptr] = 0
