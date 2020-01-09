@@ -53,7 +53,6 @@ static int parse_opts(struct encode_state *s, int argc, char *argv[], const char
         switch (ch) {
             case 'C': s->byte_state.channel  = strtol(optarg, NULL, 0); break;
             case 'G': s->gain                = strtof(optarg, NULL);    break;
-            case 'S': s->serial.start_bits   = strtol(optarg, NULL, 0); break;
             case 'T': s->serial.stop_bits    = strtol(optarg, NULL, 0); break;
             case 'P': s->serial.parity_bits  = strtol(optarg, NULL, 0); break;
             case 'D': s->serial.data_bits    = strtol(optarg, NULL, 0); break;
@@ -80,7 +79,6 @@ int main(int argc, char* argv[])
     const char *output_file = NULL;
     struct encode_state _s = {
         .serial = {
-            .start_bits  = 1,
             .data_bits   = 8,
             .parity_bits = 0,
             .stop_bits   = 2,

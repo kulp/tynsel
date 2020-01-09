@@ -47,7 +47,6 @@ int main(int argc, char *argv[])
     setvbuf(stdout, NULL, _IONBF, 0);
 
     const SERIAL_CONFIG config = {
-        .start_bits  = 1,
         .data_bits   = 7,
         .parity_bits = 1,
         .stop_bits   = 2,

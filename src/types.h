@@ -33,12 +33,13 @@ enum bit { BIT_ZERO, BIT_ONE, BIT_max };
 enum parity { PARITY_SPACE, PARITY_MARK, PARITY_EVEN, PARITY_ODD };
 
 typedef struct {
-    uint8_t start_bits;
     uint8_t data_bits;
     uint8_t parity_bits;
     uint8_t stop_bits;
 
     enum parity parity;
 } SERIAL_CONFIG;
+
+enum { NUM_START_BITS = 1 };
 
 #endif

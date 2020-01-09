@@ -34,7 +34,6 @@ volatile int8_t hysteresis = 10;
 volatile int8_t offset = 12;
 
 volatile SERIAL_CONFIG cs = {
-    .start_bits  = 1,
     .data_bits   = 7,
     .parity_bits = 1,
     .stop_bits   = 2,

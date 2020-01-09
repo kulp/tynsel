@@ -44,7 +44,7 @@ struct bits_state {
 
 static bool decode(const SERIAL_CONFIG *c, struct bits_state *s, int8_t offset, DECODE_IN_DATA datum, DECODE_OUT_DATA *out)
 {
-    const uint8_t before_parity = (uint8_t)(c->start_bits + c->data_bits);
+    const uint8_t before_parity = (uint8_t)(NUM_START_BITS + c->data_bits);
     const uint8_t before_stop   = (uint8_t)(before_parity + c->parity_bits);
     do {
         if (s->bit == 0 && datum >= THRESHOLD && s->last < THRESHOLD) {
@@ -58,7 +58,7 @@ static bool decode(const SERIAL_CONFIG *c, struct bits_state *s, int8_t offset, 
             // sample here
             uint8_t this_bit = datum < 0;
 
-            if (s->bit < c->start_bits) {
+            if (s->bit < NUM_START_BITS) {
                 // start bit(s)
                 if (this_bit != 0) {
                     WARN("Start bit is not 0");
