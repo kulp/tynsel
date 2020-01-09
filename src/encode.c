@@ -30,7 +30,7 @@ typedef ENCODE_DATA_TYPE DATA_TYPE;
 
 #define TEST_BIT(Word,Index) (((Word) & (1 << (Index))) ? -1 : 0)
 
-static bool encode_sample(SAMPLE_STATE *s, PHASE_STEP step, DATA_TYPE *out)
+static void encode_sample(SAMPLE_STATE *s, PHASE_STEP step, DATA_TYPE *out)
 {
     uint8_t top = (uint8_t)(s->phase >> PHASE_FRACTION_BITS);
     DATA_TYPE  half    = (DATA_TYPE )TEST_BIT(top, 7);
@@ -40,7 +40,6 @@ static bool encode_sample(SAMPLE_STATE *s, PHASE_STEP step, DATA_TYPE *out)
     s->phase += step;
 
     *out = (*s->quadrant)[lookup] ^ half;
-    return true; // this function is infallible
 }
 
 static inline PHASE_STEP get_phase_step(FREQ_TYPE freq)
@@ -76,9 +75,8 @@ static bool encode_bit(BIT_STATE *s, bool newbit, enum channel channel, enum bit
     }
 
     if (s->samples_remaining) {
-        if (encode_sample(&s->sample_state, s->step, out)) {
-            s->samples_remaining--;
-        }
+        encode_sample(&s->sample_state, s->step, out);
+        s->samples_remaining--;
     }
 
     return ! busy;
