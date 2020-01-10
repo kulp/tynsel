@@ -54,6 +54,10 @@ CONFIG_ATTRS uint8_t to_encode = 'K';
 #define EXTERN_PTR(Type, Name) \
     ({ extern Type Name; &Name; })
 
+// These flags will be tripped by interrupt handlers
+volatile bool encoder_ready = false;
+volatile bool decoder_ready = false;
+
 int __attribute__((used)) main()
 {
     BYTE_STATE bs = { .channel = channel };
@@ -65,14 +69,22 @@ int __attribute__((used)) main()
     CONFIG_LIST(DECLARE_LOCAL)
 
     while (true) {
-        // TODO make a real implementation : this one serves simply to ensure that
-        // functions are seen by the compiler to be used
-        DECODE_OUT_DATA d = 0;
-        pump_decoder(&c, channel, window_size, threshold, hysteresis, offset, d_in, &d);
-        d_out = d;
+        if (decoder_ready) {
+            decoder_ready = false;
 
-        ENCODE_DATA_TYPE e = e_out;
-        encode_bytes(&c, &bs, true, channel, to_encode, &e);
+            DECODE_OUT_DATA d = 0;
+            pump_decoder(&c, channel, window_size, threshold, hysteresis, offset, d_in, &d);
+            d_out = d;
+        }
+
+        if (encoder_ready) {
+            encoder_ready = false;
+
+            ENCODE_DATA_TYPE e = e_out;
+            encode_bytes(&c, &bs, true, channel, to_encode, &e);
+        }
+
+        __asm__("sleep");
     }
 }
 
