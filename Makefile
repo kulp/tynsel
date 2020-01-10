@@ -57,6 +57,10 @@ avr-top: avr-sine-precomp.o
 avr-top: avr-encode.o
 avr-top: avr-decode.o
 
+FLASH_SECTIONS = text data vectors
+%.hex: avr-%
+	avr-objcopy $(FLASH_SECTIONS:%=-j .%) -O ihex $< $@
+
 gen listen: CFLAGS += -O3
 
 vpath %.c src
