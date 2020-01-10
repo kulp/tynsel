@@ -53,7 +53,7 @@ int main(int argc, char *argv[])
     };
 
     while (true) {
-        FILTER_IN_DATA in = 0;
+        DECODE_DATA_TYPE in = 0;
         int result = fread(&in, sizeof in, 1, stream);
 
         if (result != 1) {
