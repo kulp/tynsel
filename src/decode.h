@@ -46,14 +46,13 @@ typedef DECODE_DATA_TYPE FILTER_IN_DATA;
 typedef FILTER_IN_DATA FILTER_OUT_DATA;
 
 #ifdef __AVR__
-typedef int16_t RMS_IN_DATA;
-// Consider using __uint24 for RMS_OUT_DATA if possible (code size optimization)
-typedef uint32_t RMS_OUT_DATA;
+typedef int8_t RMS_IN_DATA;
+typedef uint16_t RMS_OUT_DATA;
 typedef int8_t RUNS_OUT_DATA;
 typedef uint8_t DECODE_OUT_DATA;
 #else
-typedef int16_t RMS_IN_DATA;
-typedef uint32_t RMS_OUT_DATA;
+typedef int8_t RMS_IN_DATA;
+typedef uint16_t RMS_OUT_DATA;
 typedef int8_t RUNS_OUT_DATA;
 typedef uint8_t DECODE_OUT_DATA;
 #endif

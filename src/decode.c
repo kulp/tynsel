@@ -244,8 +244,8 @@ bool pump_decoder(
 
     static RMS_OUT_DATA ra = 0, rb = 0;
     if (
-            ! rms(window_size, &rms_states[0], f[0] - in, &ra)
-        ||  ! rms(window_size, &rms_states[1], f[1] - in, &rb)
+            ! rms(window_size, &rms_states[0], (int8_t)((f[0] - in) >> 8), &ra)
+        ||  ! rms(window_size, &rms_states[1], (int8_t)((f[1] - in) >> 8), &rb)
         )
         return false;
 
