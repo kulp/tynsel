@@ -31,8 +31,6 @@
 #include <avr/io.h>
 #include <avr/sleep.h>
 
-#define CONFIG_ATTRS volatile
-
 #define CONFIG_LIST(_) \
     _(enum channel, channel    , CHAN_ZERO) \
     _(uint8_t     , window_size, 6        ) \
@@ -42,18 +40,18 @@
     // end CONFIG_LIST
 
 #define DECLARE_FIELD(Type, Name, Value) \
-    CONFIG_ATTRS Type Name;
+    volatile Type Name;
 
 #define DESIGNATED_INITIALIZER(Type, Name, Value) \
     .Name = Value,
 
-CONFIG_ATTRS struct {
+volatile struct {
     CONFIG_LIST(DECLARE_FIELD)
 } config = {
     CONFIG_LIST(DESIGNATED_INITIALIZER)
 };
 
-CONFIG_ATTRS SERIAL_CONFIG cs = {
+volatile SERIAL_CONFIG cs = {
     .data_bits   = 7,
     .parity_bits = 1,
     .stop_bits   = 2,
