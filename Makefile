@@ -29,7 +29,9 @@ sinetable_%_.h: sine-gen
 
 sine-precomp.o: CPPFLAGS += -I.
 
-avr-%: ARCH_FLAGS = -mmcu=attiny412
+-include avr-site.mk
+
+avr-%: ARCH_FLAGS += -mmcu=attiny412
 
 avr-%: CC = avr-gcc
 avr-%: LD = avr-gcc
