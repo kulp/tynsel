@@ -23,24 +23,33 @@
 #include "decode.h"
 #include "encode.h"
 
-volatile DECODE_DATA_TYPE d_in = 0;
-volatile DECODE_OUT_DATA d_out = 0;
-volatile ENCODE_DATA_TYPE e_out = 0;
+#define CONFIG_ATTRS volatile
 
-volatile enum channel channel = CHAN_ZERO;
-volatile uint8_t window_size = 6;
-volatile uint16_t threshold = 256;
-volatile int8_t hysteresis = 10;
-volatile int8_t offset = 12;
+#define CONFIG_LIST(_) \
+    _(enum channel, channel    , CHAN_ZERO) \
+    _(uint8_t     , window_size, 6        ) \
+    _(uint16_t    , threshold  , 256      ) \
+    _(int8_t      , hysteresis , 10       ) \
+    _(int8_t      , offset     , 12       ) \
+    // end CONFIG_LIST
 
-volatile SERIAL_CONFIG cs = {
+#define DECLARE_GLOBAL(Type, Name, Value) \
+    CONFIG_ATTRS Type Name = Value;
+
+CONFIG_LIST(DECLARE_GLOBAL)
+
+CONFIG_ATTRS DECODE_DATA_TYPE d_in  = 0;
+CONFIG_ATTRS DECODE_OUT_DATA  d_out = 0;
+CONFIG_ATTRS ENCODE_DATA_TYPE e_out = 0;
+
+CONFIG_ATTRS SERIAL_CONFIG cs = {
     .data_bits   = 7,
     .parity_bits = 1,
     .stop_bits   = 2,
     .parity      = PARITY_SPACE,
 };
 
-volatile uint8_t to_encode = 'K';
+CONFIG_ATTRS uint8_t to_encode = 'K';
 
 int __attribute__((used)) main()
 {
