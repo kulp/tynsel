@@ -18,6 +18,7 @@ endif
 
 all: gen listen sine-gen avr-top
 
+sine-gen: AVR_CPPFLAGS =#ensure we do not get flags meant for embedded
 sine-gen: AVR_CFLAGS =#  ensure we do not get flags meant for embedded
 sine-gen: AVR_LDFLAGS =# ensure we do not get flags meant for embedded
 sine-gen: CC = cc#       ensure we do not get compiler meant for embedded
@@ -38,7 +39,9 @@ avr-%: LD = avr-gcc
 
 AVR_OPTFLAGS ?= -Os $(LTO_FLAGS)
 
-AVR_CFLAGS += $(ARCH_FLAGS)
+AVR_CPPFLAGS += $(ARCH_FLAGS)
+avr-%: CPPFLAGS += $(AVR_CPPFLAGS)
+
 AVR_CFLAGS += $(AVR_OPTFLAGS)
 AVR_CFLAGS += -ffunction-sections
 AVR_CFLAGS += -Werror=conversion
