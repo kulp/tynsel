@@ -75,12 +75,6 @@ ISR(ADC0_RESRDY_vect)
 int main()
 {
     BYTE_STATE bs = { .channel = config.channel };
-    SERIAL_CONFIG c = config.serial;
-
-#define DECLARE_LOCAL(Type, Name, Value) \
-    Type Name = config.Name;
-
-    CONFIG_LIST(DECLARE_LOCAL)
 
     DAC0.DATA = 0x7f; // half-scale output
     DAC0.CTRLA |= DAC_ENABLE_bm | DAC_OUTEN_bm;
@@ -91,7 +85,15 @@ int main()
 
             DECODE_OUT_DATA d = 0;
             DECODE_DATA_TYPE audio_in = (DECODE_DATA_TYPE)ADC0.RES;
-            pump_decoder(&c, channel, window_size, threshold, hysteresis, offset, audio_in, &d);
+            pump_decoder(
+                    &config.serial,
+                    config.channel,
+                    config.window_size,
+                    config.threshold,
+                    config.hysteresis,
+                    config.offset,
+                    audio_in,
+                    &d);
             serial_out = d;
         }
 
@@ -99,7 +101,7 @@ int main()
             encoder_ready = false;
 
             ENCODE_DATA_TYPE e = 0;
-            encode_bytes(&c, &bs, true, channel, serial_in, &e);
+            encode_bytes(&config.serial, &bs, true, config.channel, serial_in, &e);
             DAC0.DATA = (uint8_t)(e >> 8); // 16-bit data, 8-bit DAC
         }
 
