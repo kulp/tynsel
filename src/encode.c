@@ -142,7 +142,7 @@ bool encode_carrier(const SERIAL_CONFIG *c, BYTE_STATE *s, bool restart, enum ch
 
 static inline uint8_t popcnt(uint8_t x)
 {
-#if defined(__GNUC__) && ! defined(__AVR__) /* do not require libgcc on AVR */
+#if defined(__GNUC__)
     return (uint8_t)__builtin_popcount(x);
 #else
     uint8_t out = 0;
