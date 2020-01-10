@@ -41,10 +41,17 @@
     _(int8_t      , offset     , 12       ) \
     // end CONFIG_LIST
 
-#define DECLARE_GLOBAL(Type, Name, Value) \
-    CONFIG_ATTRS Type Name = Value;
+#define DECLARE_FIELD(Type, Name, Value) \
+    CONFIG_ATTRS Type Name;
 
-CONFIG_LIST(DECLARE_GLOBAL)
+#define DESIGNATED_INITIALIZER(Type, Name, Value) \
+    .Name = Value,
+
+CONFIG_ATTRS struct {
+    CONFIG_LIST(DECLARE_FIELD)
+} config = {
+    CONFIG_LIST(DESIGNATED_INITIALIZER)
+};
 
 CONFIG_ATTRS SERIAL_CONFIG cs = {
     .data_bits   = 7,
@@ -52,9 +59,6 @@ CONFIG_ATTRS SERIAL_CONFIG cs = {
     .stop_bits   = 2,
     .parity      = PARITY_SPACE,
 };
-
-#define EXTERN_PTR(Type, Name) \
-    ({ extern Type Name; &Name; })
 
 // These flags will be tripped by interrupt handlers
 volatile bool encoder_ready = false;
@@ -71,11 +75,11 @@ ISR(ADC0_RESRDY_vect)
 
 int main()
 {
-    BYTE_STATE bs = { .channel = channel };
+    BYTE_STATE bs = { .channel = config.channel };
     SERIAL_CONFIG c = cs;
 
 #define DECLARE_LOCAL(Type, Name, Value) \
-    Type Name = *EXTERN_PTR(CONFIG_ATTRS Type, Name);
+    Type Name = config.Name;
 
     CONFIG_LIST(DECLARE_LOCAL)
 
