@@ -23,6 +23,12 @@
 #include "decode.h"
 #include "encode.h"
 
+// Work around in-progress support for atxmega3
+#define SLEEP_CTRL SLPCTRL_CTRLA
+#define SLEEP_SEN_bm SLPCTRL_SEN_bm
+
+#include <avr/sleep.h>
+
 #define CONFIG_ATTRS volatile
 
 #define CONFIG_LIST(_) \
@@ -85,7 +91,7 @@ int main()
             encode_bytes(&c, &bs, true, channel, serial_in, &e);
         }
 
-        __asm__("sleep");
+        sleep_mode();
     }
 }
 
