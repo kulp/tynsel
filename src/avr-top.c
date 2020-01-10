@@ -46,16 +46,16 @@
     .Name = Value,
 
 volatile struct {
+    SERIAL_CONFIG serial;
     CONFIG_LIST(DECLARE_FIELD)
 } config = {
+    .serial = {
+        .data_bits   = 7,
+        .parity_bits = 1,
+        .stop_bits   = 2,
+        .parity      = PARITY_SPACE,
+    },
     CONFIG_LIST(DESIGNATED_INITIALIZER)
-};
-
-volatile SERIAL_CONFIG cs = {
-    .data_bits   = 7,
-    .parity_bits = 1,
-    .stop_bits   = 2,
-    .parity      = PARITY_SPACE,
 };
 
 // These flags will be tripped by interrupt handlers
@@ -74,7 +74,7 @@ ISR(ADC0_RESRDY_vect)
 int main()
 {
     BYTE_STATE bs = { .channel = config.channel };
-    SERIAL_CONFIG c = cs;
+    SERIAL_CONFIG c = config.serial;
 
 #define DECLARE_LOCAL(Type, Name, Value) \
     Type Name = config.Name;
