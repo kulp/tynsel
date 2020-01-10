@@ -28,6 +28,7 @@
 #define SLEEP_SEN_bm SLPCTRL_SEN_bm
 
 #include <avr/interrupt.h>
+#include <avr/io.h>
 #include <avr/sleep.h>
 
 #define CONFIG_ATTRS volatile
@@ -64,7 +65,6 @@ volatile DECODE_OUT_DATA serial_in  = 0;
 volatile DECODE_OUT_DATA serial_out = 0;
 
 volatile DECODE_DATA_TYPE audio_in  = 0;
-volatile ENCODE_DATA_TYPE audio_out = 0;
 
 ISR(ADC0_RESRDY_vect)
 {
@@ -81,6 +81,9 @@ int main()
 
     CONFIG_LIST(DECLARE_LOCAL)
 
+    DAC0.DATA = 0x7f; // half-scale output
+    DAC0.CTRLA |= DAC_ENABLE_bm | DAC_OUTEN_bm;
+
     while (true) {
         if (decoder_ready) {
             decoder_ready = false;
@@ -93,8 +96,9 @@ int main()
         if (encoder_ready) {
             encoder_ready = false;
 
-            ENCODE_DATA_TYPE e = audio_out;
+            ENCODE_DATA_TYPE e = 0;
             encode_bytes(&c, &bs, true, channel, serial_in, &e);
+            DAC0.DATA = (uint8_t)(e >> 8); // 16-bit data, 8-bit DAC
         }
 
         sleep_mode();
