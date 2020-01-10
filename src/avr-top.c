@@ -38,10 +38,6 @@
 
 CONFIG_LIST(DECLARE_GLOBAL)
 
-CONFIG_ATTRS DECODE_DATA_TYPE d_in  = 0;
-CONFIG_ATTRS DECODE_OUT_DATA  d_out = 0;
-CONFIG_ATTRS ENCODE_DATA_TYPE e_out = 0;
-
 CONFIG_ATTRS SERIAL_CONFIG cs = {
     .data_bits   = 7,
     .parity_bits = 1,
@@ -49,14 +45,19 @@ CONFIG_ATTRS SERIAL_CONFIG cs = {
     .parity      = PARITY_SPACE,
 };
 
-CONFIG_ATTRS uint8_t to_encode = 'K';
-
 #define EXTERN_PTR(Type, Name) \
     ({ extern Type Name; &Name; })
 
 // These flags will be tripped by interrupt handlers
 volatile bool encoder_ready = false;
 volatile bool decoder_ready = false;
+
+// Serial in and out
+volatile DECODE_OUT_DATA serial_in  = 0;
+volatile DECODE_OUT_DATA serial_out = 0;
+
+volatile DECODE_DATA_TYPE audio_in  = 0;
+volatile ENCODE_DATA_TYPE audio_out = 0;
 
 int __attribute__((used)) main()
 {
@@ -73,15 +74,15 @@ int __attribute__((used)) main()
             decoder_ready = false;
 
             DECODE_OUT_DATA d = 0;
-            pump_decoder(&c, channel, window_size, threshold, hysteresis, offset, d_in, &d);
-            d_out = d;
+            pump_decoder(&c, channel, window_size, threshold, hysteresis, offset, audio_in, &d);
+            serial_out = d;
         }
 
         if (encoder_ready) {
             encoder_ready = false;
 
-            ENCODE_DATA_TYPE e = e_out;
-            encode_bytes(&c, &bs, true, channel, to_encode, &e);
+            ENCODE_DATA_TYPE e = audio_out;
+            encode_bytes(&c, &bs, true, channel, serial_in, &e);
         }
 
         __asm__("sleep");
