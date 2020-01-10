@@ -64,7 +64,7 @@ bool pump_decoder(
         const SERIAL_CONFIG *config,
         enum channel channel,
         uint8_t window_size,
-        uint16_t threshold,
+        RMS_OUT_DATA threshold,
         int8_t hysteresis,
         int8_t offset,
         DECODE_DATA_TYPE in,

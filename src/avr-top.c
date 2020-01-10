@@ -28,7 +28,7 @@
 #define CONFIG_LIST(_) \
     _(enum channel, channel    , CHAN_ZERO) \
     _(uint8_t     , window_size, 6        ) \
-    _(uint16_t    , threshold  , 256      ) \
+    _(RMS_OUT_DATA, threshold  , 256      ) \
     _(int8_t      , hysteresis , 10       ) \
     _(int8_t      , offset     , 12       ) \
     // end CONFIG_LIST
