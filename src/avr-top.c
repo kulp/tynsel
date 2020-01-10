@@ -59,7 +59,7 @@ volatile DECODE_OUT_DATA serial_out = 0;
 volatile DECODE_DATA_TYPE audio_in  = 0;
 volatile ENCODE_DATA_TYPE audio_out = 0;
 
-int __attribute__((used)) main()
+int main()
 {
     BYTE_STATE bs = { .channel = channel };
     SERIAL_CONFIG c = cs;

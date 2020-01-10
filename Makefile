@@ -49,7 +49,6 @@ avr-%.o: CFLAGS += $(AVR_CFLAGS)
 
 AVR_LDFLAGS += $(AVR_OPTFLAGS)
 AVR_LDFLAGS += $(ARCH_FLAGS)
-AVR_LDFLAGS += -nostdlib
 avr-%: LDFLAGS += $(AVR_LDFLAGS)
 
 avr-%.o: %.c
