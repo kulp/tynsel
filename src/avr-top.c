@@ -27,6 +27,7 @@
 #define SLEEP_CTRL SLPCTRL_CTRLA
 #define SLEEP_SEN_bm SLPCTRL_SEN_bm
 
+#include <avr/interrupt.h>
 #include <avr/sleep.h>
 
 #define CONFIG_ATTRS volatile
@@ -64,6 +65,11 @@ volatile DECODE_OUT_DATA serial_out = 0;
 
 volatile DECODE_DATA_TYPE audio_in  = 0;
 volatile ENCODE_DATA_TYPE audio_out = 0;
+
+ISR(ADC0_RESRDY_vect)
+{
+    decoder_ready = true;
+}
 
 int main()
 {
