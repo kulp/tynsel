@@ -16,6 +16,13 @@ ifneq ($(LTO),0)
 LTO_FLAGS += -flto=jobserver -fuse-linker-plugin
 endif
 
+ifneq ($(ENCODE_BITS),)
+CPPFLAGS += -DENCODE_BITS=$(ENCODE_BITS)
+endif
+ifneq ($(DECODE_BITS),)
+CPPFLAGS += -DDECODE_BITS=$(DECODE_BITS)
+endif
+
 all: gen listen sine-gen avr-top
 
 sine-gen: AVR_CPPFLAGS =#ensure we do not get flags meant for embedded

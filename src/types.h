@@ -25,8 +25,21 @@
 
 #include <stdint.h>
 
-#define ENCODE_DATA_TYPE int16_t
-#define DECODE_DATA_TYPE int16_t
+#ifndef ENCODE_BITS
+#define ENCODE_BITS 16
+#endif
+#ifndef DECODE_BITS
+#define DECODE_BITS ENCODE_BITS
+#endif
+
+#define CAT(X,Y) CAT_(X,Y)
+#define CAT_(X,Y) X ## Y
+
+#define TYPE(Prefix, Bits, Suffix) \
+    CAT(Prefix,CAT(Bits,Suffix))
+
+#define ENCODE_DATA_TYPE TYPE(int, ENCODE_BITS, _t)
+#define DECODE_DATA_TYPE TYPE(int, DECODE_BITS, _t)
 
 enum channel { CHAN_ZERO, CHAN_ONE, CHAN_max };
 enum bit { BIT_ZERO, BIT_ONE, BIT_max };
