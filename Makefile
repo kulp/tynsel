@@ -16,9 +16,6 @@ ifneq ($(LTO),0)
 LTO_FLAGS += -flto=jobserver -fuse-linker-plugin
 endif
 
-AVR_CFLAGS += $(LTO_FLAGS)
-AVR_LDFLAGS += $(LTO_FLAGS)
-
 all: gen listen sine-gen avr-top
 
 sine-gen: AVR_CFLAGS =#  ensure we do not get flags meant for embedded
@@ -37,7 +34,10 @@ avr-%: ARCH_FLAGS = -mmcu=attiny412
 avr-%: CC = avr-gcc
 avr-%: LD = avr-gcc
 
-AVR_CFLAGS += -Os $(ARCH_FLAGS)
+AVR_OPTFLAGS ?= -Os $(LTO_FLAGS)
+
+AVR_CFLAGS += $(ARCH_FLAGS)
+AVR_CFLAGS += $(AVR_OPTFLAGS)
 AVR_CFLAGS += -ffunction-sections
 AVR_CFLAGS += -Werror=conversion
 AVR_CFLAGS += -fstack-usage
@@ -45,6 +45,7 @@ AVR_CFLAGS += -fshort-enums
 AVR_CFLAGS += -Wpadded
 avr-%.o: CFLAGS += $(AVR_CFLAGS)
 
+AVR_LDFLAGS += $(AVR_OPTFLAGS)
 AVR_LDFLAGS += $(ARCH_FLAGS)
 AVR_LDFLAGS += -nostdlib
 avr-%: LDFLAGS += $(AVR_LDFLAGS)
