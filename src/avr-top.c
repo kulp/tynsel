@@ -27,6 +27,7 @@
 #define SLEEP_CTRL SLPCTRL_CTRLA
 #define SLEEP_SEN_bm SLPCTRL_SEN_bm
 
+#include <avr/eeprom.h>
 #include <avr/interrupt.h>
 #include <avr/io.h>
 #include <avr/sleep.h>
@@ -40,15 +41,15 @@
     // end CONFIG_LIST
 
 #define DECLARE_FIELD(Type, Name, Value) \
-    volatile Type Name;
+    Type Name;
 
 #define DESIGNATED_INITIALIZER(Type, Name, Value) \
     .Name = Value,
 
-volatile struct {
+static struct CONFIG {
     SERIAL_CONFIG serial;
     CONFIG_LIST(DECLARE_FIELD)
-} config = {
+} config EEMEM = {
     .serial = {
         .data_bits   = 7,
         .parity_bits = 1,
