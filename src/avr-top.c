@@ -51,10 +51,18 @@ CONFIG_ATTRS SERIAL_CONFIG cs = {
 
 CONFIG_ATTRS uint8_t to_encode = 'K';
 
+#define EXTERN_PTR(Type, Name) \
+    ({ extern Type Name; &Name; })
+
 int __attribute__((used)) main()
 {
     BYTE_STATE bs = { .channel = channel };
     SERIAL_CONFIG c = cs;
+
+#define DECLARE_LOCAL(Type, Name, Value) \
+    Type Name = *EXTERN_PTR(CONFIG_ATTRS Type, Name);
+
+    CONFIG_LIST(DECLARE_LOCAL)
 
     while (true) {
         // TODO make a real implementation : this one serves simply to ensure that
