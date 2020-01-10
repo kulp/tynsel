@@ -64,8 +64,6 @@ volatile bool decoder_ready = false;
 volatile DECODE_OUT_DATA serial_in  = 0;
 volatile DECODE_OUT_DATA serial_out = 0;
 
-volatile DECODE_DATA_TYPE audio_in  = 0;
-
 ISR(ADC0_RESRDY_vect)
 {
     decoder_ready = true;
@@ -89,6 +87,7 @@ int main()
             decoder_ready = false;
 
             DECODE_OUT_DATA d = 0;
+            DECODE_DATA_TYPE audio_in = (DECODE_DATA_TYPE)ADC0.RES;
             pump_decoder(&c, channel, window_size, threshold, hysteresis, offset, audio_in, &d);
             serial_out = d;
         }

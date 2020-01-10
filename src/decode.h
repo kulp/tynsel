@@ -45,17 +45,10 @@ typedef int16_t FILTER_STATE_DATA;
 typedef DECODE_DATA_TYPE FILTER_IN_DATA;
 typedef FILTER_IN_DATA FILTER_OUT_DATA;
 
-#ifdef __AVR__
 typedef int8_t RMS_IN_DATA;
 typedef uint16_t RMS_OUT_DATA;
 typedef int8_t RUNS_OUT_DATA;
 typedef uint8_t DECODE_OUT_DATA;
-#else
-typedef int8_t RMS_IN_DATA;
-typedef uint16_t RMS_OUT_DATA;
-typedef int8_t RUNS_OUT_DATA;
-typedef uint8_t DECODE_OUT_DATA;
-#endif
 
 typedef RMS_OUT_DATA RUNS_IN_DATA;
 typedef RUNS_OUT_DATA DECODE_IN_DATA;
