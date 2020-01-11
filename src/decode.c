@@ -107,7 +107,7 @@ static bool decode(const SERIAL_CONFIG *c, struct bits_state *s, int8_t offset, 
 }
 
 struct rms_state {
-    RMS_OUT_DATA *window;
+    RMS_OUT_DATA window[MAX_RMS_SAMPLES];
     RMS_OUT_DATA sum;
     uint8_t ptr;
     bool primed;
@@ -229,11 +229,7 @@ bool pump_decoder(
         DECODE_OUT_DATA *out
     )
 {
-    static RMS_OUT_DATA large[2][MAX_RMS_SAMPLES] = { { 0 } };
-    static struct rms_state rms_states[2] = {
-        { .window = large[0] },
-        { .window = large[1] },
-    };
+    static struct rms_state rms_states[2] = { { .ptr = 0 } };
 
     static struct filter_state filt_states[2] = { { .ptr = 0 } };
 
