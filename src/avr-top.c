@@ -77,15 +77,7 @@ int main()
 
             DECODE_OUT_DATA d = 0;
             DECODE_DATA_TYPE audio_in = (DECODE_DATA_TYPE)ADC0.RES;
-            pump_decoder(
-                    &config.serial,
-                    config.audio.channel,
-                    config.audio.window_size,
-                    config.audio.threshold,
-                    config.audio.hysteresis,
-                    config.audio.offset,
-                    audio_in,
-                    &d);
+            pump_decoder(&config.serial, &config.audio, audio_in, &d);
             serial_out = d;
         }
 

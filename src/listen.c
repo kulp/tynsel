@@ -35,11 +35,19 @@ int main(int argc, char *argv[])
 
     char **arg = &argv[1];
 
-    enum channel channel = strtol(*arg++, NULL, 0);
+    int channel     = strtol(*arg++, NULL, 0);
     int window_size = strtol(*arg++, NULL, 0);
-    int threshold = strtol(*arg++, NULL, 0);
-    int hysteresis = strtol(*arg++, NULL, 0);
-    int offset = strtol(*arg++, NULL, 0);
+    int threshold   = strtol(*arg++, NULL, 0);
+    int hysteresis  = strtol(*arg++, NULL, 0);
+    int offset      = strtol(*arg++, NULL, 0);
+
+    const AUDIO_CONFIG audio = {
+        .channel     = channel,
+        .window_size = window_size,
+        .threshold   = threshold,
+        .hysteresis  = hysteresis,
+        .offset      = offset,
+    };
 
     FILE *stream = stdin;
 
@@ -65,7 +73,7 @@ int main(int argc, char *argv[])
         }
 
         DECODE_OUT_DATA out = 0;
-        if (pump_decoder(&config, channel, window_size, threshold, hysteresis, offset, in, &out))
+        if (pump_decoder(&config, &audio, in, &out))
             putchar(out);
     }
 

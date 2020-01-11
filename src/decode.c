@@ -220,11 +220,7 @@ static const struct filter_config coeffs[CHAN_max][BIT_max] PROGMEM = {
 
 bool pump_decoder(
         const SERIAL_CONFIG *c,
-        enum channel channel,
-        uint8_t window_size,
-        RMS_OUT_DATA threshold,
-        int8_t hysteresis,
-        int8_t offset,
+        const AUDIO_CONFIG *audio,
         DECODE_DATA_TYPE in,
         DECODE_OUT_DATA *out
     )
@@ -239,25 +235,25 @@ bool pump_decoder(
 
     static FILTER_OUT_DATA f[2] = { 0 };
     if (
-            ! filter(&coeffs[channel][BIT_ZERO], &filt_states[0], in, &f[0])
-        ||  ! filter(&coeffs[channel][BIT_ONE ], &filt_states[1], in, &f[1])
+            ! filter(&coeffs[audio->channel][BIT_ZERO], &filt_states[0], in, &f[0])
+        ||  ! filter(&coeffs[audio->channel][BIT_ONE ], &filt_states[1], in, &f[1])
         )
         return false;
 
     static RMS_OUT_DATA ra = 0, rb = 0;
     if (
-            ! rms(window_size, &rms_states[0], (int8_t)SHRINK((FILTER_OUT_DATA)(f[0] - in), int8_t), &ra)
-        ||  ! rms(window_size, &rms_states[1], (int8_t)SHRINK((FILTER_OUT_DATA)(f[1] - in), int8_t), &rb)
+            ! rms(audio->window_size, &rms_states[0], (int8_t)SHRINK((FILTER_OUT_DATA)(f[0] - in), int8_t), &ra)
+        ||  ! rms(audio->window_size, &rms_states[1], (int8_t)SHRINK((FILTER_OUT_DATA)(f[1] - in), int8_t), &rb)
         )
         return false;
 
-    if (ra < threshold && rb < threshold)
+    if (ra < audio->threshold && rb < audio->threshold)
         return false;
 
     static RUNS_OUT_DATA ro = 0;
-    if (! runs(hysteresis, &run_state, ra, rb, &ro))
+    if (! runs(audio->hysteresis, &run_state, ra, rb, &ro))
         return false;
 
-    return decode(c, &dec_state, offset, ro, out);
+    return decode(c, &dec_state, audio->offset, ro, out);
 }
 
