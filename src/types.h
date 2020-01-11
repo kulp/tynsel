@@ -38,8 +38,10 @@
 #define TYPE(Prefix, Bits, Suffix) \
     CAT(Prefix,CAT(Bits,Suffix))
 
-#define ENCODE_DATA_TYPE TYPE(int, ENCODE_BITS, _t)
-#define DECODE_DATA_TYPE TYPE(int, DECODE_BITS, _t)
+#define SIZED(Bits) TYPE(int, Bits, _t)
+
+#define ENCODE_DATA_TYPE SIZED(ENCODE_BITS)
+#define DECODE_DATA_TYPE SIZED(DECODE_BITS)
 
 #define SINE_TABLE_TYPE ENCODE_DATA_TYPE
 
