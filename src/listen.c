@@ -47,6 +47,8 @@ static int parse_opts(AUDIO_CONFIG *c, int argc, char *argv[])
 
 int main(int argc, char *argv[])
 {
+    FILE *input_stream = stdin;
+
     AUDIO_CONFIG audio = {
         .channel     = CHAN_ZERO,
         .window_size = 7,
@@ -57,8 +59,6 @@ int main(int argc, char *argv[])
 
     if (parse_opts(&audio, argc, argv))
         exit(EXIT_FAILURE);
-
-    FILE *stream = stdin;
 
     // Do not buffer output at all
     setvbuf(stdout, NULL, _IONBF, 0);
@@ -71,10 +71,10 @@ int main(int argc, char *argv[])
 
     while (true) {
         DECODE_DATA_TYPE in = 0;
-        int result = fread(&in, sizeof in, 1, stream);
+        int result = fread(&in, sizeof in, 1, input_stream);
 
         if (result != 1) {
-            if (feof(stream))
+            if (feof(input_stream))
                 break;
 
             perror("fread failed");
