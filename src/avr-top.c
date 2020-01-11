@@ -32,23 +32,17 @@
 #include <avr/io.h>
 #include <avr/sleep.h>
 
-#define CONFIG_LIST(_) \
-    _(enum channel, channel    , CHAN_ZERO) \
-    _(uint8_t     , window_size, 6        ) \
-    _(RMS_OUT_DATA, threshold  , 256      ) \
-    _(int8_t      , hysteresis , 10       ) \
-    _(int8_t      , offset     , 12       ) \
-    // end CONFIG_LIST
-
-#define DECLARE_FIELD(Type, Name, Value) \
-    Type Name;
-
-#define DESIGNATED_INITIALIZER(Type, Name, Value) \
-    .Name = Value,
+typedef struct {
+    enum channel channel;
+    uint8_t      window_size;
+    RMS_OUT_DATA threshold;
+    int8_t       hysteresis;
+    int8_t       offset;
+} AUDIO_CONFIG;
 
 static struct CONFIG {
     SERIAL_CONFIG serial;
-    CONFIG_LIST(DECLARE_FIELD)
+    AUDIO_CONFIG audio;
 } config EEMEM = {
     .serial = {
         .data_bits   = 7,
@@ -56,7 +50,13 @@ static struct CONFIG {
         .stop_bits   = 2,
         .parity      = PARITY_SPACE,
     },
-    CONFIG_LIST(DESIGNATED_INITIALIZER)
+    .audio = {
+        .channel     = CHAN_ZERO,
+        .window_size = 6,
+        .threshold   = 256,
+        .hysteresis  = 10,
+        .offset      = 12,
+    },
 };
 
 // These flags will be tripped by interrupt handlers
@@ -74,7 +74,7 @@ ISR(ADC0_RESRDY_vect)
 
 int main()
 {
-    BYTE_STATE bs = { .channel = config.channel };
+    BYTE_STATE bs = { .channel = config.audio.channel };
 
     DAC0.DATA = 0x7f; // half-scale output
     DAC0.CTRLA |= DAC_ENABLE_bm | DAC_OUTEN_bm;
@@ -87,11 +87,11 @@ int main()
             DECODE_DATA_TYPE audio_in = (DECODE_DATA_TYPE)ADC0.RES;
             pump_decoder(
                     &config.serial,
-                    config.channel,
-                    config.window_size,
-                    config.threshold,
-                    config.hysteresis,
-                    config.offset,
+                    config.audio.channel,
+                    config.audio.window_size,
+                    config.audio.threshold,
+                    config.audio.hysteresis,
+                    config.audio.offset,
                     audio_in,
                     &d);
             serial_out = d;
@@ -101,7 +101,7 @@ int main()
             encoder_ready = false;
 
             ENCODE_DATA_TYPE e = 0;
-            encode_bytes(&config.serial, &bs, true, config.channel, serial_in, &e);
+            encode_bytes(&config.serial, &bs, true, config.audio.channel, serial_in, &e);
             DAC0.DATA = (uint8_t)(e >> 8); // 16-bit data, 8-bit DAC
         }
 
