@@ -37,7 +37,7 @@
 #define MINOR_PER_CYCLE (MAJOR_PER_CYCLE * (1u << (PHASE_FRACTION_BITS)))
 
 typedef struct {
-    const ENCODE_DATA_TYPE (*quadrant)[WAVE_TABLE_SIZE];
+    const SINE_TABLE_TYPE (*quadrant)[WAVE_TABLE_SIZE];
     PHASE_TYPE phase;
 } SAMPLE_STATE;
 typedef PHASE_TYPE PHASE_STEP;

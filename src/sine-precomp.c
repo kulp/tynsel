@@ -28,10 +28,10 @@
 #define STR(X) STR_(X)
 #define STR_(X) # X
 
-static ENCODE_DATA_TYPE generated_sines[WAVE_TABLE_SIZE] =
+static SINE_TABLE_TYPE generated_sines[WAVE_TABLE_SIZE] =
     #include STR(CAT(CAT(sinetable_,WAVE_TABLE_SIZE),_.h))
 ;
-void init_sines(ENCODE_DATA_TYPE (**sines)[WAVE_TABLE_SIZE], float gain)
+void init_sines(SINE_TABLE_TYPE (**sines)[WAVE_TABLE_SIZE], float gain)
 {
     (void)gain; // unused -- it is too late now
     *sines = &generated_sines;

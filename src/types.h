@@ -41,6 +41,8 @@
 #define ENCODE_DATA_TYPE TYPE(int, ENCODE_BITS, _t)
 #define DECODE_DATA_TYPE TYPE(int, DECODE_BITS, _t)
 
+#define SINE_TABLE_TYPE ENCODE_DATA_TYPE
+
 enum channel { CHAN_ZERO, CHAN_ONE, CHAN_max };
 enum bit { BIT_ZERO, BIT_ONE, BIT_max };
 enum parity { PARITY_SPACE, PARITY_MARK, PARITY_EVEN, PARITY_ODD };

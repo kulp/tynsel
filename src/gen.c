@@ -117,7 +117,7 @@ int main(int argc, char* argv[])
         return -1;
     }
 
-    DATA_TYPE (*sines)[WAVE_TABLE_SIZE];
+    SINE_TABLE_TYPE (*sines)[WAVE_TABLE_SIZE];
     init_sines(&sines, s->gain);
     s->byte_state.bit_state.sample_state.quadrant = sines;
 
