@@ -22,32 +22,41 @@
 
 #include "decode.h"
 
+#include <getopt.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
 
-int main(int argc, char *argv[])
+static int parse_opts(AUDIO_CONFIG *c, int argc, char *argv[])
 {
-    if (argc != 6) {
-        fputs("Supply channel, summation window size, power threshold, hysteresis, and sample offset\n", stderr);
-        exit(EXIT_FAILURE);
+    int ch;
+    while ((ch = getopt(argc, argv, "C:W:T:H:O:")) != -1) {
+        switch (ch) {
+            case 'C': c->channel     = strtol(optarg, NULL, 0); break;
+            case 'W': c->window_size = strtol(optarg, NULL, 0); break;
+            case 'T': c->threshold   = strtol(optarg, NULL, 0); break;
+            case 'H': c->hysteresis  = strtol(optarg, NULL, 0); break;
+            case 'O': c->offset      = strtol(optarg, NULL, 0); break;
+
+            default: fprintf(stderr, "args error before argument index %d\n", optind); return -1;
+        }
     }
 
-    char **arg = &argv[1];
+    return 0;
+}
 
-    int channel     = strtol(*arg++, NULL, 0);
-    int window_size = strtol(*arg++, NULL, 0);
-    int threshold   = strtol(*arg++, NULL, 0);
-    int hysteresis  = strtol(*arg++, NULL, 0);
-    int offset      = strtol(*arg++, NULL, 0);
-
-    const AUDIO_CONFIG audio = {
-        .channel     = channel,
-        .window_size = window_size,
-        .threshold   = threshold,
-        .hysteresis  = hysteresis,
-        .offset      = offset,
+int main(int argc, char *argv[])
+{
+    AUDIO_CONFIG audio = {
+        .channel     = CHAN_ZERO,
+        .window_size = 7,
+        .threshold   = 10,
+        .hysteresis  = 10,
+        .offset      = 12,
     };
+
+    if (parse_opts(&audio, argc, argv))
+        exit(EXIT_FAILURE);
 
     FILE *stream = stdin;
 

@@ -70,7 +70,7 @@ do
                             mkdir -p $(dirname $out)
                             if [[ ! -e $out ]] # assume existence implies previous completion
                             then
-                                $here/../listen $channel $rms_samples $threshold $hysteresis $offset < $rand.audio.noised 2> /dev/null > $out
+                                $here/../listen -C $channel -W $rms_samples -T $threshold -H $hysteresis -O $offset < $rand.audio.noised 2> /dev/null > $out
                             fi
                         ) &
                     done
