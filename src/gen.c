@@ -102,8 +102,8 @@ int main(int argc, char* argv[])
     if (!output_file && s->verbosity)
         fprintf(stderr, "No file specified to generate -- using stdout\n");
 
-    FILE *stream = output_file ? fopen(output_file, "w") : stdout;
-    if (! stream) {
+    FILE *output_stream = output_file ? fopen(output_file, "w") : stdout;
+    if (! output_stream) {
         fprintf(stderr, "Failed to open `%s' : %s\n", output_file, strerror(errno));
         exit(EXIT_FAILURE);
     }
@@ -139,7 +139,7 @@ int main(int argc, char* argv[])
 
         DATA_TYPE out = 0;
         while (true) { // detecting EOF is impossible, so Ctrl-C or Ctrl-\ is expected
-            fwrite(&out, sizeof out, 1, stream);
+            fwrite(&out, sizeof out, 1, output_stream);
 
             char ch = 0;
             sigsuspend(&set);
@@ -162,7 +162,7 @@ int main(int argc, char* argv[])
             DATA_TYPE out = 0;
             if (encode_carrier(&s->serial, &s->byte_state, true, s->byte_state.channel, &out))
                 i++;
-            fwrite(&out, sizeof out, 1, stream);
+            fwrite(&out, sizeof out, 1, output_stream);
         }
 
         char ch = 0;
@@ -171,14 +171,14 @@ int main(int argc, char* argv[])
             DATA_TYPE out = 0;
             if (encode_bytes(&s->serial, &s->byte_state, true, s->byte_state.channel, ch, &out))
                 rc = fread(&ch, 1, 1, stdin);
-            fwrite(&out, sizeof out, 1, stream);
+            fwrite(&out, sizeof out, 1, output_stream);
         }
 
         for (size_t i = 0; i < SAMPLES_PER_BIT; /* incremented inside loop */) {
             DATA_TYPE out = 0;
             if (encode_carrier(&s->serial, &s->byte_state, true, s->byte_state.channel, &out))
                 i++;
-            fwrite(&out, sizeof out, 1, stream);
+            fwrite(&out, sizeof out, 1, output_stream);
         }
     }
 
@@ -186,7 +186,7 @@ int main(int argc, char* argv[])
     {
         DATA_TYPE out = 0;
         while (! encode_carrier(&s->serial, &s->byte_state, true, s->byte_state.channel, &out))
-            fwrite(&out, sizeof out, 1, stream);
+            fwrite(&out, sizeof out, 1, output_stream);
     }
 
     return 0;
