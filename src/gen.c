@@ -90,6 +90,7 @@ int main(int argc, char* argv[])
         .gain      = 0.5,
     }, *s = &_s;
 
+    FILE *input_stream = stdin;
     int rc = parse_opts(s, argc, argv, &output_file);
     if (rc)
         return rc;
@@ -113,6 +114,7 @@ int main(int argc, char* argv[])
     s->byte_state.bit_state.sample_state.quadrant = sines;
 
     if (s->realtime) {
+        int input_fd = fileno(input_stream);
         struct timeval tv = { .tv_usec = 1.0 / SAMPLE_RATE * 1000000 };
         struct itimerval it = { .it_interval = tv, .it_value = tv };
 
@@ -126,13 +128,13 @@ int main(int argc, char* argv[])
         setitimer(ITIMER_REAL, &it, NULL);
 
         static struct termios tio;
-        tcgetattr(STDIN_FILENO, &tio);
+        tcgetattr(input_fd, &tio);
         // Enable extreme non-blocking (return from read() as quickly as possible,
         // possibly with no data)
         tio.c_lflag &= ~ICANON;
         tio.c_cc[VMIN] = 0;
         tio.c_cc[VTIME] = 0;
-        tcsetattr(STDIN_FILENO, TCSANOW, &tio);
+        tcsetattr(input_fd, TCSANOW, &tio);
 
         sigset_t set;
         sigemptyset(&set);
@@ -143,7 +145,7 @@ int main(int argc, char* argv[])
 
             char ch = 0;
             sigsuspend(&set);
-            int result = read(STDIN_FILENO, &ch, 1);
+            int result = read(input_fd, &ch, 1);
 
             // The ignoring of the return value of encode_bytes implies that we
             // do not expect the input to arrive at a higher rate than we can
@@ -166,11 +168,11 @@ int main(int argc, char* argv[])
         }
 
         char ch = 0;
-        rc = fread(&ch, 1, 1, stdin);
-        while (!feof(stdin)) {
+        rc = fread(&ch, 1, 1, input_stream);
+        while (!feof(input_stream)) {
             DATA_TYPE out = 0;
             if (encode_bytes(&s->serial, &s->byte_state, true, s->byte_state.channel, ch, &out))
-                rc = fread(&ch, 1, 1, stdin);
+                rc = fread(&ch, 1, 1, input_stream);
             fwrite(&out, sizeof out, 1, output_stream);
         }
 
