@@ -23,6 +23,7 @@
 #include "decode.h"
 
 #include <assert.h>
+#include <limits.h>
 
 #define BITWIDTH 27 /* 8000 / 300 */
 #define THRESHOLD 0
@@ -36,6 +37,9 @@
 #define WARN(Fmt,...) fprintf(stderr, Fmt "\n", ##__VA_ARGS__)
 #define PROGMEM
 #endif
+
+#define EXPAND(X,Y) (assert(sizeof(Y) >= sizeof(X)), (X) << (CHAR_BIT * (sizeof(Y) - sizeof(X))))
+#define SHRINK(X,Y) (assert(sizeof(X) >= sizeof(Y)), (X) >> (CHAR_BIT * (sizeof(X) - sizeof(Y))))
 
 struct bits_state {
     int8_t off;
@@ -162,14 +166,14 @@ struct filter_config {
 };
 
 struct filter_state {
-    FILTER_IN_DATA in[3];
+    FILTER_STATE_DATA in[3];
     FILTER_STATE_DATA out[3];
     uint8_t ptr;
 };
 
 static bool filter(const struct filter_config * PROGMEM c, struct filter_state *s, FILTER_IN_DATA datum, FILTER_OUT_DATA *out)
 {
-    s->in[s->ptr] = datum;
+    s->in[s->ptr] = EXPAND(datum, FILTER_STATE_DATA);
 
     // Avoid expensive modulo
     #define MOD(x,n) ((x) >= (n) ? (x) - (n) : (x))
@@ -191,7 +195,7 @@ static bool filter(const struct filter_config * PROGMEM c, struct filter_state *
         - FILTER_MULT(COEFF(a, 2), INDEX(s->out, -2))
         ;
 
-    *out = (FILTER_OUT_DATA)s->out[s->ptr];
+    *out = (FILTER_OUT_DATA)SHRINK(s->out[s->ptr], FILTER_OUT_DATA);
 
     ++s->ptr;
     s->ptr = (uint8_t)MOD(s->ptr, 3);
@@ -246,8 +250,8 @@ bool pump_decoder(
 
     static RMS_OUT_DATA ra = 0, rb = 0;
     if (
-            ! rms(window_size, &rms_states[0], (int8_t)((f[0] - in) >> 8), &ra)
-        ||  ! rms(window_size, &rms_states[1], (int8_t)((f[1] - in) >> 8), &rb)
+            ! rms(window_size, &rms_states[0], (int8_t)SHRINK((FILTER_OUT_DATA)(f[0] - in), int8_t), &ra)
+        ||  ! rms(window_size, &rms_states[1], (int8_t)SHRINK((FILTER_OUT_DATA)(f[1] - in), int8_t), &rb)
         )
         return false;
 
