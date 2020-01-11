@@ -46,20 +46,28 @@ struct encode_state {
     bool realtime;
 };
 
-static int parse_opts(struct encode_state *s, int argc, char *argv[], const char **infile, const char **outfile)
+static FILE *open_file(const char *filename, const char *mode, FILE *dflt)
+{
+    if (strcmp(filename, "-") == 0)
+        return dflt;
+
+    return fopen(filename, mode);
+}
+
+static int parse_opts(struct encode_state *s, int argc, char *argv[], FILE **input_stream, FILE **output_stream)
 {
     int ch;
     while ((ch = getopt(argc, argv, "C:G:S:T:P:D:p:F:o:r:" "v")) != -1) {
         switch (ch) {
-            case 'C': s->byte_state.channel  = strtol(optarg, NULL, 0); break;
-            case 'G': s->gain                = strtof(optarg, NULL);    break;
-            case 'T': s->serial.stop_bits    = strtol(optarg, NULL, 0); break;
-            case 'P': s->serial.parity_bits  = strtol(optarg, NULL, 0); break;
-            case 'D': s->serial.data_bits    = strtol(optarg, NULL, 0); break;
-            case 'p': s->serial.parity       = strtol(optarg, NULL, 0); break;
-            case 'F': *infile                = optarg;                  break;
-            case 'o': *outfile               = optarg;                  break;
-            case 'r': s->realtime            = strtol(optarg, NULL, 0); break;
+            case 'C': s->byte_state.channel  = strtol(optarg, NULL, 0);         break;
+            case 'G': s->gain                = strtof(optarg, NULL);            break;
+            case 'T': s->serial.stop_bits    = strtol(optarg, NULL, 0);         break;
+            case 'P': s->serial.parity_bits  = strtol(optarg, NULL, 0);         break;
+            case 'D': s->serial.data_bits    = strtol(optarg, NULL, 0);         break;
+            case 'p': s->serial.parity       = strtol(optarg, NULL, 0);         break;
+            case 'F': *input_stream          = open_file(optarg, "r", stdin );  break;
+            case 'o': *output_stream         = open_file(optarg, "w", stdout);  break;
+            case 'r': s->realtime            = strtol(optarg, NULL, 0);         break;
 
             case 'v': s->verbosity++;                                   break;
             default: fprintf(stderr, "args error before argument index %d\n", optind); return -1;
@@ -77,9 +85,6 @@ static void null_handler(int ignored)
 // returns zero on failure
 int main(int argc, char* argv[])
 {
-    const char *input_file = NULL;
-    const char *output_file = NULL;
-
     struct encode_state _s = {
         .serial = {
             .data_bits   = 8,
@@ -94,29 +99,24 @@ int main(int argc, char* argv[])
     }, *s = &_s;
 
     FILE *input_stream = stdin;
-    int rc = parse_opts(s, argc, argv, &input_file, &output_file);
+    FILE *output_stream = stdout;
+    int rc = parse_opts(s, argc, argv, &input_stream, &output_stream);
     if (rc)
         return rc;
 
-    if (input_file && strcmp(input_file, "-") != 0) // treat "-" as stdin
-        input_stream = fopen(input_file, "r");
     if (! input_stream) {
-        fprintf(stderr, "Failed to open `%s' : %s\n", input_file, strerror(errno));
+        fprintf(stderr, "Failed to open input stream : %s\n", strerror(errno));
+        exit(EXIT_FAILURE);
+    }
+
+    if (! output_stream) {
+        fprintf(stderr, "Failed to open output stream : %s\n", strerror(errno));
         exit(EXIT_FAILURE);
     }
 
     if (s->byte_state.channel > 1) {
         fprintf(stderr, "Invalid channel %d\n", s->byte_state.channel);
         return -1;
-    }
-
-    if (!output_file && s->verbosity)
-        fprintf(stderr, "No file specified to generate -- using stdout\n");
-
-    FILE *output_stream = output_file ? fopen(output_file, "w") : stdout;
-    if (! output_stream) {
-        fprintf(stderr, "Failed to open `%s' : %s\n", output_file, strerror(errno));
-        exit(EXIT_FAILURE);
     }
 
     DATA_TYPE (*sines)[WAVE_TABLE_SIZE];
