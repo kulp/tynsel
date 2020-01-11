@@ -20,27 +20,38 @@
  * IN THE SOFTWARE.
  */
 
-#ifndef ENCODE_H_
-#define ENCODE_H_
+#ifndef STATE_H_
+#define STATE_H_
 
-#include "types.h"
+#include "encode.h"
+#include "sine.h"
 
-#include <stdbool.h>
+#include <stdint.h>
 
-#define MINOR_PER_CYCLE (MAJOR_PER_CYCLE * (1u << (PHASE_FRACTION_BITS)))
+#define PHASE_FRACTION_BITS 8
+#define PHASE_TYPE uint16_t
+typedef PHASE_TYPE PHASE_STEP;
 
-typedef struct sample_state SAMPLE_STATE;
-typedef struct bit_state    BIT_STATE;
-typedef struct byte_state   BYTE_STATE;
+struct sample_state {
+    const SINE_TABLE_TYPE (*quadrant)[WAVE_TABLE_SIZE];
+    PHASE_TYPE phase;
+};
 
-static const unsigned int SAMPLE_RATE = 8000;
-static const unsigned int BAUD_RATE = 300;
-static const unsigned int SAMPLES_PER_BIT = (SAMPLE_RATE + BAUD_RATE - 1) / BAUD_RATE; // round up (err on the slow side)
+struct bit_state {
+    SAMPLE_STATE sample_state;
+    PHASE_STEP step;
+    enum channel channel;
+    uint8_t samples_remaining;
+};
 
-// returns whether a new byte was accepted (if `restart` was true)
-typedef bool encode_pusher(const SERIAL_CONFIG *c, BYTE_STATE *s, bool restart, enum channel channel, uint8_t byte, void *out);
-
-encode_pusher encode_bytes, encode_carrier;
+struct byte_state {
+    BIT_STATE bit_state;
+    enum channel channel;
+    uint16_t current_word;
+    uint16_t next_word;
+    uint8_t bits_remaining;
+    bool buffer_full;
+};
 
 #endif
 

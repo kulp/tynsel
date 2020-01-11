@@ -22,6 +22,7 @@
 
 #include "decode.h"
 #include "encode.h"
+#include "state.h"
 
 // Work around in-progress support for atxmega3
 #define SLEEP_CTRL SLPCTRL_CTRLA

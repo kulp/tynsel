@@ -21,6 +21,7 @@
  */
 
 #include "encode.h"
+#include "state.h"
 
 #include <errno.h>
 #include <fcntl.h>

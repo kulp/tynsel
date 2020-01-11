@@ -21,6 +21,7 @@
  */
 
 #include "encode.h"
+#include "state.h"
 
 #include <math.h>
 #include <stdbool.h>
