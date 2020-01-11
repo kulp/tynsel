@@ -29,7 +29,7 @@ function noise ()
 function generate_audio ()
 {
     local input_file=$1
-    $here/../gen -C $channel -s $sample_rate -G $gain < $input_file
+    $here/../gen -C $channel -s $sample_rate -G $gain -F $input_file
 }
 
 function mix ()
