@@ -27,6 +27,8 @@
 #include <stdbool.h>
 #include <stdio.h>
 
+#define MINOR_PER_CYCLE ((WAVE_TABLE_SIZE * 4) * (1u << (PHASE_FRACTION_BITS)))
+
 typedef ENCODE_DATA_TYPE DATA_TYPE;
 
 #define TEST_BIT(Word,Index) (((Word) & (1 << (Index))) ? -1 : 0)
