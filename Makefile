@@ -31,6 +31,17 @@ sine-gen: AVR_LDFLAGS =# ensure we do not get flags meant for embedded
 sine-gen: CC = cc#       ensure we do not get compiler meant for embedded
 sine-gen: sine.o
 
+avr-encode-%bit.o encode-%bit.o: CPPFLAGS += -DENCODE_BITS=BITWIDTH
+avr-decode-%bit.o decode-%bit.o: CPPFLAGS += -DDECODE_BITS=BITWIDTH
+
+%-8bit.o:  CPPFLAGS += -DBITWIDTH=8
+%-16bit.o: CPPFLAGS += -DBITWIDTH=16
+
+%-8bit.o:  %.c ; $(COMPILE.c) -o $@ $<
+%-16bit.o: %.c ; $(COMPILE.c) -o $@ $<
+avr-%-8bit.o:  %.c ; $(COMPILE.c) -o $@ $<
+avr-%-16bit.o: %.c ; $(COMPILE.c) -o $@ $<
+
 SINETABLE_GAIN = 1.0
 sinetable_%_.h: sine-gen
 	$(realpath $<) $* $(SINETABLE_GAIN) > $@
