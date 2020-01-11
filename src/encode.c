@@ -158,8 +158,8 @@ static inline bool compute_parity(enum parity parity, uint8_t byte)
     switch (parity) {
         case PARITY_SPACE: return false;
         case PARITY_MARK : return true;
-        case PARITY_EVEN : return  oddness; // make the number of bits even
-        case PARITY_ODD  : return !oddness; // keep the number of bits odd
+        case PARITY_EVEN : return   oddness; // make the number of bits even
+        case PARITY_ODD  : return ! oddness; // keep the number of bits odd
     }
 
     return false; // this is meant to be unreachable

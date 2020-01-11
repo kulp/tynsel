@@ -177,7 +177,7 @@ int main(int argc, char* argv[])
 
         char ch = 0;
         rc = fread(&ch, 1, 1, input_stream);
-        while (!feof(input_stream)) {
+        while (! feof(input_stream)) {
             DATA_TYPE out = 0;
             if (encode_bytes(&s->serial, &s->byte_state, true, s->byte_state.channel, ch, &out))
                 rc = fread(&ch, 1, 1, input_stream);
