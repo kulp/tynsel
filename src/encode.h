@@ -27,7 +27,7 @@
 
 #include <stdbool.h>
 
-#define MINOR_PER_CYCLE (MAJOR_PER_CYCLE * (1u << (PHASE_FRACTION_BITS)))
+#define MINOR_PER_CYCLE ((WAVE_TABLE_SIZE * 4) * (1u << (PHASE_FRACTION_BITS)))
 
 typedef struct sample_state SAMPLE_STATE;
 typedef struct bit_state    BIT_STATE;
