@@ -32,14 +32,6 @@
 #include <avr/io.h>
 #include <avr/sleep.h>
 
-typedef struct {
-    enum channel channel;
-    uint8_t      window_size;
-    RMS_OUT_DATA threshold;
-    int8_t       hysteresis;
-    int8_t       offset;
-} AUDIO_CONFIG;
-
 static struct CONFIG {
     SERIAL_CONFIG serial;
     AUDIO_CONFIG audio;

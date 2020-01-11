@@ -53,6 +53,14 @@ typedef uint8_t DECODE_OUT_DATA;
 typedef RMS_OUT_DATA RUNS_IN_DATA;
 typedef RUNS_OUT_DATA DECODE_IN_DATA;
 
+typedef struct {
+    enum channel channel;
+    uint8_t      window_size;
+    RMS_OUT_DATA threshold;
+    int8_t       hysteresis;
+    int8_t       offset;
+} AUDIO_CONFIG;
+
 bool pump_decoder(
         const SERIAL_CONFIG *config,
         enum channel channel,
