@@ -61,7 +61,7 @@ static const unsigned int BAUD_RATE = 300;
 static const unsigned int SAMPLES_PER_BIT = (SAMPLE_RATE + BAUD_RATE - 1) / BAUD_RATE; // round up (err on the slow side)
 
 // returns whether a new byte was accepted (if `restart` was true)
-typedef bool encode_pusher(const SERIAL_CONFIG *c, BYTE_STATE *s, bool restart, enum channel channel, uint8_t byte, ENCODE_DATA_TYPE *out);
+typedef bool encode_pusher(const SERIAL_CONFIG *c, BYTE_STATE *s, bool restart, enum channel channel, uint8_t byte, void *out);
 
 encode_pusher encode_bytes, encode_carrier;
 
