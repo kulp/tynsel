@@ -170,7 +170,7 @@ int main(int argc, char* argv[])
     } else {
         for (size_t i = 0; i < SAMPLES_PER_BIT; /* incremented inside loop */) {
             DATA_TYPE out = 0;
-            if (encode_carrier(&s->serial, &s->byte_state, true, s->byte_state.channel, &out))
+            if (encode_carrier(&s->serial, &s->byte_state, true, s->byte_state.channel, 0, &out))
                 i++;
             fwrite(&out, sizeof out, 1, output_stream);
         }
@@ -186,7 +186,7 @@ int main(int argc, char* argv[])
 
         for (size_t i = 0; i < SAMPLES_PER_BIT; /* incremented inside loop */) {
             DATA_TYPE out = 0;
-            if (encode_carrier(&s->serial, &s->byte_state, true, s->byte_state.channel, &out))
+            if (encode_carrier(&s->serial, &s->byte_state, true, s->byte_state.channel, 0, &out))
                 i++;
             fwrite(&out, sizeof out, 1, output_stream);
         }
@@ -195,7 +195,7 @@ int main(int argc, char* argv[])
     // drain the encoder
     {
         DATA_TYPE out = 0;
-        while (! encode_carrier(&s->serial, &s->byte_state, true, s->byte_state.channel, &out))
+        while (! encode_carrier(&s->serial, &s->byte_state, true, s->byte_state.channel, 0, &out))
             fwrite(&out, sizeof out, 1, output_stream);
     }
 

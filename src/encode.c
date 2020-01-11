@@ -135,8 +135,9 @@ static inline uint8_t count_bits(const SERIAL_CONFIG *s)
     return (uint8_t)(NUM_START_BITS + s->data_bits + s->parity_bits + s->stop_bits);
 }
 
-bool encode_carrier(const SERIAL_CONFIG *c, BYTE_STATE *s, bool restart, enum channel channel, DATA_TYPE *out)
+bool encode_carrier(const SERIAL_CONFIG *c, BYTE_STATE *s, bool restart, enum channel channel, uint8_t byte, DATA_TYPE *out)
 {
+    (void)byte; // unused
     return push_raw_word(s, restart, channel, count_bits(c), (uint16_t)-1u, out);
 }
 
