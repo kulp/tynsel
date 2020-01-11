@@ -46,10 +46,10 @@ struct encode_state {
     bool realtime;
 };
 
-static int parse_opts(struct encode_state *s, int argc, char *argv[], const char **filename)
+static int parse_opts(struct encode_state *s, int argc, char *argv[], const char **outfile)
 {
     int ch;
-    while ((ch = getopt(argc, argv, "C:G:S:T:P:D:p:s:o:r:" "v")) != -1) {
+    while ((ch = getopt(argc, argv, "C:G:S:T:P:D:p:o:r:" "v")) != -1) {
         switch (ch) {
             case 'C': s->byte_state.channel  = strtol(optarg, NULL, 0); break;
             case 'G': s->gain                = strtof(optarg, NULL);    break;
@@ -57,7 +57,7 @@ static int parse_opts(struct encode_state *s, int argc, char *argv[], const char
             case 'P': s->serial.parity_bits  = strtol(optarg, NULL, 0); break;
             case 'D': s->serial.data_bits    = strtol(optarg, NULL, 0); break;
             case 'p': s->serial.parity       = strtol(optarg, NULL, 0); break;
-            case 'o': *filename              = optarg;                  break;
+            case 'o': *outfile               = optarg;                  break;
             case 'r': s->realtime            = strtol(optarg, NULL, 0); break;
 
             case 'v': s->verbosity++;                                   break;
