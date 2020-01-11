@@ -22,6 +22,8 @@
 
 #include "decode.h"
 
+#include <assert.h>
+
 #define BITWIDTH 27 /* 8000 / 300 */
 #define THRESHOLD 0
 #define MAX_RMS_SAMPLES 8
