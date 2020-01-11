@@ -56,7 +56,7 @@ static FILE *open_file(const char *filename, const char *mode, FILE *dflt)
 static int parse_opts(struct encode_state *s, int argc, char *argv[], FILE **input_stream, FILE **output_stream)
 {
     int ch;
-    while ((ch = getopt(argc, argv, "C:G:S:T:P:D:p:m:F:o:r:")) != -1) {
+    while ((ch = getopt(argc, argv, "C:G:T:P:D:p:m:F:o:r:")) != -1) {
         switch (ch) {
             case 'C': s->byte_state.channel = strtol(optarg, NULL, 0);                 break;
             case 'G': s->gain               = strtof(optarg, NULL);                    break;
