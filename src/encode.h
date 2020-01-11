@@ -32,8 +32,6 @@
 #define PHASE_TYPE uint16_t
 #define PHASE_FRACTION_BITS 8
 
-#define FREQ_TYPE uint16_t
-
 #define MINOR_PER_CYCLE (MAJOR_PER_CYCLE * (1u << (PHASE_FRACTION_BITS)))
 
 typedef struct {

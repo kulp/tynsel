@@ -42,14 +42,14 @@ static void encode_sample(SAMPLE_STATE *s, PHASE_STEP step, DATA_TYPE *out)
     *out = (*s->quadrant)[lookup] ^ half;
 }
 
-static inline PHASE_STEP get_phase_step(FREQ_TYPE freq)
+static inline PHASE_STEP get_phase_step(uint16_t freq)
 {
     return (PHASE_STEP)(MINOR_PER_CYCLE * freq / SAMPLE_RATE);
 }
 
-static inline FREQ_TYPE get_frequency(enum channel channel, enum bit bit)
+static inline uint16_t get_frequency(enum channel channel, enum bit bit)
 {
-    static const FREQ_TYPE freqs[CHAN_max][BIT_max] = {
+    static const uint16_t freqs[CHAN_max][BIT_max] = {
         [CHAN_ZERO][BIT_ZERO] = 1070,
         [CHAN_ZERO][BIT_ONE ] = 1270,
         [CHAN_ONE ][BIT_ZERO] = 2025,
