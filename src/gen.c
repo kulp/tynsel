@@ -149,8 +149,6 @@ int main(int argc, char* argv[])
 
         DATA_TYPE out = 0;
         while (true) { // detecting EOF is impossible, so Ctrl-C or Ctrl-\ is expected
-            fwrite(&out, sizeof out, 1, output_stream);
-
             char ch = 0;
             sigsuspend(&set);
             int result = read(input_fd, &ch, 1);
@@ -166,6 +164,8 @@ int main(int argc, char* argv[])
 
             if (result < 0)
                 break;
+
+            fwrite(&out, sizeof out, 1, output_stream);
         }
     } else {
         for (size_t i = 0; i < SAMPLES_PER_BIT; /* incremented inside loop */) {
