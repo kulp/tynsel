@@ -39,7 +39,7 @@
 
 typedef ENCODE_DATA_TYPE DATA_TYPE;
 
-struct encode_state {
+struct gen_state {
     SERIAL_CONFIG serial;
     BYTE_STATE byte_state;
     float gain;
@@ -54,7 +54,7 @@ static FILE *open_file(const char *filename, const char *mode, FILE *dflt)
     return fopen(filename, mode);
 }
 
-static int parse_opts(struct encode_state *s, int argc, char *argv[], FILE **input_stream, FILE **output_stream)
+static int parse_opts(struct gen_state *s, int argc, char *argv[], FILE **input_stream, FILE **output_stream)
 {
     int ch;
     while ((ch = getopt(argc, argv, "C:G:T:P:D:p:m:F:o:r:")) != -1) {
@@ -85,7 +85,7 @@ static void null_handler(int ignored)
 // returns zero on failure
 int main(int argc, char* argv[])
 {
-    struct encode_state _s = {
+    struct gen_state _s = {
         .serial = {
             .data_bits   = 8,
             .parity_bits = 0,
