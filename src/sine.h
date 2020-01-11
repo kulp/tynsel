@@ -25,6 +25,8 @@
 
 #include "types.h"
 
+#define SINE_TABLE_TYPE SIZED(ENCODE_BITS)
+
 #define WAVE_TABLE_SIZE 64u
 
 #define MAJOR_PER_CYCLE (WAVE_TABLE_SIZE * 4)
