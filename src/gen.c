@@ -46,10 +46,10 @@ struct encode_state {
     bool realtime;
 };
 
-static int parse_opts(struct encode_state *s, int argc, char *argv[], const char **outfile)
+static int parse_opts(struct encode_state *s, int argc, char *argv[], const char **infile, const char **outfile)
 {
     int ch;
-    while ((ch = getopt(argc, argv, "C:G:S:T:P:D:p:o:r:" "v")) != -1) {
+    while ((ch = getopt(argc, argv, "C:G:S:T:P:D:p:F:o:r:" "v")) != -1) {
         switch (ch) {
             case 'C': s->byte_state.channel  = strtol(optarg, NULL, 0); break;
             case 'G': s->gain                = strtof(optarg, NULL);    break;
@@ -57,6 +57,7 @@ static int parse_opts(struct encode_state *s, int argc, char *argv[], const char
             case 'P': s->serial.parity_bits  = strtol(optarg, NULL, 0); break;
             case 'D': s->serial.data_bits    = strtol(optarg, NULL, 0); break;
             case 'p': s->serial.parity       = strtol(optarg, NULL, 0); break;
+            case 'F': *infile                = optarg;                  break;
             case 'o': *outfile               = optarg;                  break;
             case 'r': s->realtime            = strtol(optarg, NULL, 0); break;
 
@@ -76,7 +77,9 @@ static void null_handler(int ignored)
 // returns zero on failure
 int main(int argc, char* argv[])
 {
+    const char *input_file = NULL;
     const char *output_file = NULL;
+
     struct encode_state _s = {
         .serial = {
             .data_bits   = 8,
@@ -91,9 +94,16 @@ int main(int argc, char* argv[])
     }, *s = &_s;
 
     FILE *input_stream = stdin;
-    int rc = parse_opts(s, argc, argv, &output_file);
+    int rc = parse_opts(s, argc, argv, &input_file, &output_file);
     if (rc)
         return rc;
+
+    if (input_file && strcmp(input_file, "-") != 0) // treat "-" as stdin
+        input_stream = fopen(input_file, "r");
+    if (! input_stream) {
+        fprintf(stderr, "Failed to open `%s' : %s\n", input_file, strerror(errno));
+        exit(EXIT_FAILURE);
+    }
 
     if (s->byte_state.channel > 1) {
         fprintf(stderr, "Invalid channel %d\n", s->byte_state.channel);
