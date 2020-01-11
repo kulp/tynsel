@@ -21,6 +21,7 @@
  */
 
 #include "encode.h"
+#include "sine.h"
 #include "state.h"
 
 #include <math.h>
@@ -42,7 +43,7 @@ static void encode_sample(SAMPLE_STATE *s, PHASE_STEP step, DATA_TYPE *out)
 
     s->phase += step;
 
-    *out = (*s->quadrant)[lookup] ^ half;
+    *out = ((ENCODE_DATA_TYPE*)s->quadrant)[lookup] ^ half;
 }
 
 static inline PHASE_STEP get_phase_step(uint16_t freq)

@@ -24,7 +24,6 @@
 #define STATE_H_
 
 #include "encode.h"
-#include "sine.h"
 
 #include <stdint.h>
 
@@ -33,7 +32,7 @@
 typedef PHASE_TYPE PHASE_STEP;
 
 struct sample_state {
-    const SINE_TABLE_TYPE (*quadrant)[WAVE_TABLE_SIZE];
+    const void *quadrant;
     PHASE_TYPE phase;
 };
 

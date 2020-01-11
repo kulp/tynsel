@@ -21,6 +21,7 @@
  */
 
 #include "encode.h"
+#include "sine.h"
 #include "state.h"
 
 #include <errno.h>
@@ -120,7 +121,7 @@ int main(int argc, char* argv[])
 
     SINE_TABLE_TYPE (*sines)[WAVE_TABLE_SIZE];
     init_sines(&sines, s->gain);
-    s->byte_state.bit_state.sample_state.quadrant = sines;
+    s->byte_state.bit_state.sample_state.quadrant = *sines;
 
     if (s->realtime) {
         int input_fd = fileno(input_stream);
