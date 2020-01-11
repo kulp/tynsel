@@ -41,7 +41,6 @@ typedef ENCODE_DATA_TYPE DATA_TYPE;
 struct encode_state {
     SERIAL_CONFIG serial;
     BYTE_STATE byte_state;
-    int verbosity;
     float gain;
     bool realtime;
 };
@@ -57,7 +56,7 @@ static FILE *open_file(const char *filename, const char *mode, FILE *dflt)
 static int parse_opts(struct encode_state *s, int argc, char *argv[], FILE **input_stream, FILE **output_stream)
 {
     int ch;
-    while ((ch = getopt(argc, argv, "C:G:S:T:P:D:p:F:o:r:" "v")) != -1) {
+    while ((ch = getopt(argc, argv, "C:G:S:T:P:D:p:F:o:r:")) != -1) {
         switch (ch) {
             case 'C': s->byte_state.channel  = strtol(optarg, NULL, 0);         break;
             case 'G': s->gain                = strtof(optarg, NULL);            break;
@@ -69,7 +68,6 @@ static int parse_opts(struct encode_state *s, int argc, char *argv[], FILE **inp
             case 'o': *output_stream         = open_file(optarg, "w", stdout);  break;
             case 'r': s->realtime            = strtol(optarg, NULL, 0);         break;
 
-            case 'v': s->verbosity++;                                   break;
             default: fprintf(stderr, "args error before argument index %d\n", optind); return -1;
         }
     }
@@ -94,7 +92,6 @@ int main(int argc, char* argv[])
         .byte_state = {
             .channel = 0,
         },
-        .verbosity = 0,
         .gain      = 0.5,
     }, *s = &_s;
 
