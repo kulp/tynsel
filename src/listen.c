@@ -25,18 +25,29 @@
 #include <getopt.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 #include <math.h>
 
-static int parse_opts(AUDIO_CONFIG *c, int argc, char *argv[])
+static FILE *open_file(const char *filename, const char *mode, FILE *dflt)
+{
+    if (strcmp(filename, "-") == 0)
+        return dflt;
+
+    return fopen(filename, mode);
+}
+
+static int parse_opts(AUDIO_CONFIG *c, int argc, char *argv[], FILE **input_stream, FILE **output_stream)
 {
     int ch;
-    while ((ch = getopt(argc, argv, "C:W:T:H:O:")) != -1) {
+    while ((ch = getopt(argc, argv, "C:W:T:H:O:F:o:")) != -1) {
         switch (ch) {
-            case 'C': c->channel     = strtol(optarg, NULL, 0); break;
-            case 'W': c->window_size = strtol(optarg, NULL, 0); break;
-            case 'T': c->threshold   = strtol(optarg, NULL, 0); break;
-            case 'H': c->hysteresis  = strtol(optarg, NULL, 0); break;
-            case 'O': c->offset      = strtol(optarg, NULL, 0); break;
+            case 'C': c->channel     = strtol(optarg, NULL, 0);         break;
+            case 'W': c->window_size = strtol(optarg, NULL, 0);         break;
+            case 'T': c->threshold   = strtol(optarg, NULL, 0);         break;
+            case 'H': c->hysteresis  = strtol(optarg, NULL, 0);         break;
+            case 'O': c->offset      = strtol(optarg, NULL, 0);         break;
+            case 'F': *input_stream  = open_file(optarg, "r", stdin );  break;
+            case 'o': *output_stream = open_file(optarg, "w", stdout);  break;
 
             default: fprintf(stderr, "args error before argument index %d\n", optind); return -1;
         }
@@ -48,6 +59,7 @@ static int parse_opts(AUDIO_CONFIG *c, int argc, char *argv[])
 int main(int argc, char *argv[])
 {
     FILE *input_stream = stdin;
+    FILE *output_stream = stdout;
 
     AUDIO_CONFIG audio = {
         .channel     = CHAN_ZERO,
@@ -57,11 +69,11 @@ int main(int argc, char *argv[])
         .offset      = 12,
     };
 
-    if (parse_opts(&audio, argc, argv))
+    if (parse_opts(&audio, argc, argv, &input_stream, &output_stream))
         exit(EXIT_FAILURE);
 
     // Do not buffer output at all
-    setvbuf(stdout, NULL, _IONBF, 0);
+    setvbuf(output_stream, NULL, _IONBF, 0);
 
     const SERIAL_CONFIG config = {
         .data_bits   = 7,
@@ -83,7 +95,7 @@ int main(int argc, char *argv[])
 
         DECODE_OUT_DATA out = 0;
         if (pump_decoder(&config, &audio, in, &out))
-            putchar(out);
+            fputc(out, output_stream);
     }
 
     return 0;
