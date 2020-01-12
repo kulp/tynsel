@@ -77,8 +77,8 @@ avr-%.o: %.c
 	$(COMPILE.c) -o $@ $<
 
 avr-top: avr-sine-precomp.o
-avr-top: avr-encode.o
-avr-top: avr-decode.o
+avr-top: avr-encode-16bit.o
+avr-top: avr-decode-16bit.o
 
 FLASH_SECTIONS = text data vectors
 %.hex: avr-%
@@ -88,9 +88,9 @@ gen listen: CFLAGS += -O3
 
 vpath %.c src
 
-gen: encode.o
+gen: encode-16bit.o
 gen: sine.o
-listen: decode.o
+listen: decode-16bit.o
 
 coeffs_%.h: scripts/gen_notch.m
 	$(realpath $<) $$(echo $* | (IFS=_; read a b c ; echo $$a $$b $$c)) > $@
