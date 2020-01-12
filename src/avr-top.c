@@ -28,6 +28,8 @@
 #define SLEEP_CTRL SLPCTRL_CTRLA
 #define SLEEP_SEN_bm SLPCTRL_SEN_bm
 
+#define pump_decoder CAT(pump_decoder,DECODE_BITS)
+
 #include <avr/eeprom.h>
 #include <avr/interrupt.h>
 #include <avr/io.h>

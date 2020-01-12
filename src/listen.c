@@ -94,7 +94,7 @@ int main(int argc, char *argv[])
         }
 
         char out = 0;
-        if (pump_decoder(&config, &audio, &in, &out))
+        if (CAT(pump_decoder,DECODE_BITS)(&config, &audio, &in, &out))
             fputc(out, output_stream);
     }
 

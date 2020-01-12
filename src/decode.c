@@ -240,7 +240,7 @@ static const struct filter_config coeffs[CHAN_max][BIT_max] PROGMEM = {
         ,
 };
 
-bool pump_decoder(
+bool CAT(pump_decoder,DECODE_BITS)(
         const SERIAL_CONFIG *c,
         const AUDIO_CONFIG *audio,
         void *p,

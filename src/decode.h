@@ -38,7 +38,7 @@ typedef struct {
     int8_t       offset;
 } AUDIO_CONFIG;
 
-bool pump_decoder(
+bool CAT(pump_decoder,DECODE_BITS)(
         const SERIAL_CONFIG *config,
         const AUDIO_CONFIG *audio,
         void *in,
