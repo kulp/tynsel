@@ -39,7 +39,7 @@
 #include <termios.h>
 #include <unistd.h>
 
-typedef ENCODE_DATA_TYPE DATA_TYPE;
+typedef int DATA_TYPE;
 
 struct gen_state {
     SERIAL_CONFIG serial;
