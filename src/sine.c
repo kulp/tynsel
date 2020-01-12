@@ -50,7 +50,7 @@ void make_sine_table(size_t size, SINE_TABLE_TYPE sines[size], float gain)
     }
 }
 
-void init_sines(SINE_TABLE_TYPE (**sines)[WAVE_TABLE_SIZE], float gain)
+void init_sines(void **sines, float gain)
 {
     static SINE_TABLE_TYPE private_sines[WAVE_TABLE_SIZE];
     make_sine_table(WAVE_TABLE_SIZE, private_sines, gain);

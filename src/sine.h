@@ -31,7 +31,7 @@
 
 // init_sines fills the sines parameter, causing it to point to a static table
 // owned by sine.c
-void init_sines(SINE_TABLE_TYPE (**sines)[WAVE_TABLE_SIZE], float gain);
+void init_sines(void **sines, float gain);
 
 #endif
 
