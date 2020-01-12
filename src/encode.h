@@ -31,10 +31,6 @@ typedef struct sample_state SAMPLE_STATE;
 typedef struct bit_state    BIT_STATE;
 typedef struct byte_state   BYTE_STATE;
 
-static const unsigned int SAMPLE_RATE = 8000;
-static const unsigned int BAUD_RATE = 300;
-static const unsigned int SAMPLES_PER_BIT = (SAMPLE_RATE + BAUD_RATE - 1) / BAUD_RATE; // round up (err on the slow side)
-
 // returns whether a new byte was accepted (if `restart` was true)
 typedef bool encode_pusher(const SERIAL_CONFIG *c, BYTE_STATE *s, bool restart, enum channel channel, uint8_t byte, void *out);
 

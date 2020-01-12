@@ -25,7 +25,6 @@
 #include <assert.h>
 #include <limits.h>
 
-#define BITWIDTH 27 /* 8000 / 300 */
 #define THRESHOLD 0
 #define MAX_RMS_SAMPLES 8
 
@@ -97,7 +96,7 @@ static bool decode(const SERIAL_CONFIG *c, struct bits_state *s, int8_t offset, 
                 s->bit++;
             }
 
-            s->off = BITWIDTH;
+            s->off = SAMPLES_PER_BIT;
         }
     } while (0);
 
