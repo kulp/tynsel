@@ -58,7 +58,8 @@ static int parse_opts(AUDIO_CONFIG *c, int argc, char *argv[], uint8_t *bits, FI
     return 0;
 }
 
-decode_pumper CAT(pump_decoder,DECODE_BITS);
+decode_pumper pump_decoder8;
+decode_pumper pump_decoder16;
 
 int main(int argc, char *argv[])
 {
@@ -78,6 +79,7 @@ int main(int argc, char *argv[])
         exit(EXIT_FAILURE);
 
     decode_pumper *decoders[] = {
+        [8]  = pump_decoder8,
         [16] = pump_decoder16,
     };
 

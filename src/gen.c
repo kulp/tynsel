@@ -85,8 +85,10 @@ static void null_handler(int ignored)
     (void)ignored;
 }
 
+sines_init init_sines8;
 sines_init init_sines16;
 
+encode_pusher encode_bytes8, encode_carrier8;
 encode_pusher encode_bytes16, encode_carrier16;
 
 // returns zero on failure
@@ -115,6 +117,7 @@ int main(int argc, char* argv[])
         encode_pusher *bytes, *carrier;
         sines_init *sines;
     } encoders[] = {
+        [8]  = { encode_bytes8 , encode_carrier8 , init_sines8  },
         [16] = { encode_bytes16, encode_carrier16, init_sines16 },
     };
 

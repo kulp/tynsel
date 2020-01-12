@@ -95,8 +95,11 @@ gen listen: CFLAGS += -O3
 vpath %.c src
 
 gen: encode-16bit.o
+gen: encode-8bit.o
 gen: sine-16bit.o
+gen: sine-8bit.o
 listen: decode-16bit.o
+listen: decode-8bit.o
 
 coeffs_%.h: scripts/gen_notch.m
 	$(realpath $<) $$(echo $* | (IFS=_; read a b c ; echo $$a $$b $$c)) > $@
