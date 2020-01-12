@@ -67,10 +67,10 @@ struct bits_state {
     int8_t off;
     int8_t last;
     uint8_t bit;
-    DECODE_OUT_DATA byte;
+    char byte;
 };
 
-static bool decode(const SERIAL_CONFIG *c, struct bits_state *s, int8_t offset, DECODE_IN_DATA datum, DECODE_OUT_DATA *out)
+static bool decode(const SERIAL_CONFIG *c, struct bits_state *s, int8_t offset, DECODE_IN_DATA datum, char *out)
 {
     const uint8_t before_parity = (uint8_t)(NUM_START_BITS + c->data_bits);
     const uint8_t before_stop   = (uint8_t)(before_parity + c->parity_bits);
@@ -106,7 +106,7 @@ static bool decode(const SERIAL_CONFIG *c, struct bits_state *s, int8_t offset, 
                     break;
                 }
             } else {
-                s->byte |= (DECODE_OUT_DATA)(this_bit << (s->bit - 1));
+                s->byte |= (char)(this_bit << (s->bit - 1));
             }
 
             if (s->bit >= before_stop + 1) { // accept a minimum number of stop bits
@@ -244,7 +244,7 @@ bool pump_decoder(
         const SERIAL_CONFIG *c,
         const AUDIO_CONFIG *audio,
         DECODE_DATA_TYPE in,
-        DECODE_OUT_DATA *out
+        char *out
     )
 {
     static struct rms_state rms_states[2] = { { .ptr = 0 } };

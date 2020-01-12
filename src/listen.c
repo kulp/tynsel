@@ -93,7 +93,7 @@ int main(int argc, char *argv[])
             exit(EXIT_FAILURE);
         }
 
-        DECODE_OUT_DATA out = 0;
+        char out = 0;
         if (pump_decoder(&config, &audio, in, &out))
             fputc(out, output_stream);
     }

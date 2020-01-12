@@ -32,7 +32,7 @@ typedef struct bit_state    BIT_STATE;
 typedef struct byte_state   BYTE_STATE;
 
 // returns whether a new byte was accepted (if `restart` was true)
-typedef bool encode_pusher(const SERIAL_CONFIG *c, BYTE_STATE *s, bool restart, enum channel channel, uint8_t byte, void *out);
+typedef bool encode_pusher(const SERIAL_CONFIG *c, BYTE_STATE *s, bool restart, enum channel channel, char byte, void *out);
 
 encode_pusher encode_bytes, encode_carrier;
 

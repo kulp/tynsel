@@ -29,7 +29,6 @@
 #include <stdint.h>
 
 typedef uint16_t RMS_OUT_DATA;
-typedef uint8_t DECODE_OUT_DATA;
 
 typedef struct {
     enum channel channel;
@@ -43,7 +42,7 @@ bool pump_decoder(
         const SERIAL_CONFIG *config,
         const AUDIO_CONFIG *audio,
         DECODE_DATA_TYPE in,
-        DECODE_OUT_DATA *out
+        char *out
     );
 
 #endif

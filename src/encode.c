@@ -139,16 +139,16 @@ static inline uint8_t count_bits(const SERIAL_CONFIG *s)
     return (uint8_t)(NUM_START_BITS + s->data_bits + s->parity_bits + s->stop_bits);
 }
 
-bool encode_carrier(const SERIAL_CONFIG *c, BYTE_STATE *s, bool restart, enum channel channel, uint8_t byte, void *out)
+bool encode_carrier(const SERIAL_CONFIG *c, BYTE_STATE *s, bool restart, enum channel channel, char byte, void *out)
 {
     (void)byte; // unused
     return push_raw_word(s, restart, channel, count_bits(c), (uint16_t)-1u, out);
 }
 
-static inline uint8_t popcnt(uint8_t x)
+static inline uint8_t popcnt(char x)
 {
 #if defined(__GNUC__)
-    return (uint8_t)__builtin_popcount(x);
+    return (uint8_t)__builtin_popcount((unsigned int)x);
 #else
     uint8_t out = 0;
     while (x >>= 1)
@@ -157,7 +157,7 @@ static inline uint8_t popcnt(uint8_t x)
 #endif
 }
 
-static inline bool compute_parity(enum parity parity, uint8_t byte)
+static inline bool compute_parity(enum parity parity, char byte)
 {
     bool oddness = popcnt(byte) & 1;
     switch (parity) {
@@ -170,7 +170,7 @@ static inline bool compute_parity(enum parity parity, uint8_t byte)
     return false; // this is meant to be unreachable
 }
 
-static inline uint16_t make_word(const SERIAL_CONFIG *s, uint8_t byte)
+static inline uint16_t make_word(const SERIAL_CONFIG *s, char byte)
 {
     #define MASK(Width) ((1u << (Width)) - 1)
     uint16_t word = 0;
@@ -181,7 +181,7 @@ static inline uint16_t make_word(const SERIAL_CONFIG *s, uint8_t byte)
     word |= MASK(s->parity_bits) & compute_parity(s->parity, byte);
 
     word <<= s->data_bits;
-    word |= MASK(s->data_bits) & byte;
+    word |= MASK(s->data_bits) & (uint8_t)byte;
 
     word <<= NUM_START_BITS;
     word |= MASK(NUM_START_BITS) & 0;
@@ -189,7 +189,7 @@ static inline uint16_t make_word(const SERIAL_CONFIG *s, uint8_t byte)
     return word;
 }
 
-bool encode_bytes(const SERIAL_CONFIG *c, BYTE_STATE *s, bool restart, enum channel channel, uint8_t byte, void *out)
+bool encode_bytes(const SERIAL_CONFIG *c, BYTE_STATE *s, bool restart, enum channel channel, char byte, void *out)
 {
     uint8_t bit_count = count_bits(c);
     uint16_t word = make_word(c, byte);
