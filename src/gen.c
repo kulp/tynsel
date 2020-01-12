@@ -121,9 +121,7 @@ int main(int argc, char* argv[])
         return -1;
     }
 
-    SINE_TABLE_TYPE (*sines)[WAVE_TABLE_SIZE];
-    init_sines(&sines, s->gain);
-    s->byte_state.bit_state.sample_state.quadrant = *sines;
+    init_sines(&s->byte_state.bit_state.sample_state.quadrant, s->gain);
 
     if (s->realtime) {
         int input_fd = fileno(input_stream);
