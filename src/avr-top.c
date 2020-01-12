@@ -29,6 +29,8 @@
 #define SLEEP_SEN_bm SLPCTRL_SEN_bm
 
 #define pump_decoder CAT(pump_decoder,DECODE_BITS)
+#define encode_bytes CAT(encode_bytes,ENCODE_BITS)
+#define encode_carrier CAT(encode_carrier,ENCODE_BITS)
 
 #include <avr/eeprom.h>
 #include <avr/interrupt.h>

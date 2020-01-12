@@ -139,7 +139,7 @@ static inline uint8_t count_bits(const SERIAL_CONFIG *s)
     return (uint8_t)(NUM_START_BITS + s->data_bits + s->parity_bits + s->stop_bits);
 }
 
-bool encode_carrier(const SERIAL_CONFIG *c, BYTE_STATE *s, bool restart, enum channel channel, char byte, void *out)
+bool CAT(encode_carrier,ENCODE_BITS)(const SERIAL_CONFIG *c, BYTE_STATE *s, bool restart, enum channel channel, char byte, void *out)
 {
     (void)byte; // unused
     return push_raw_word(s, restart, channel, count_bits(c), (uint16_t)-1u, out);
@@ -189,7 +189,7 @@ static inline uint16_t make_word(const SERIAL_CONFIG *s, char byte)
     return word;
 }
 
-bool encode_bytes(const SERIAL_CONFIG *c, BYTE_STATE *s, bool restart, enum channel channel, char byte, void *out)
+bool CAT(encode_bytes,ENCODE_BITS)(const SERIAL_CONFIG *c, BYTE_STATE *s, bool restart, enum channel channel, char byte, void *out)
 {
     uint8_t bit_count = count_bits(c);
     uint16_t word = make_word(c, byte);

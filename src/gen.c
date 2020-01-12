@@ -162,7 +162,7 @@ int main(int argc, char* argv[])
             // accepted by encode_bytes will be dropped (because they will be
             // replaced with a new byte by the next time encode_bytes is
             // called). This is a reasonable behavior for "realtime" mode.
-            (void)encode_bytes(&s->serial, &s->byte_state, result > 0, s->byte_state.channel, ch, &out);
+            (void)CAT(encode_bytes,ENCODE_BITS)(&s->serial, &s->byte_state, result > 0, s->byte_state.channel, ch, &out);
 
             if (result < 0)
                 break;
@@ -172,7 +172,7 @@ int main(int argc, char* argv[])
     } else {
         for (size_t i = 0; i < SAMPLES_PER_BIT; /* incremented inside loop */) {
             DATA_TYPE out = 0;
-            if (encode_carrier(&s->serial, &s->byte_state, true, s->byte_state.channel, 0, &out))
+            if (CAT(encode_carrier,ENCODE_BITS)(&s->serial, &s->byte_state, true, s->byte_state.channel, 0, &out))
                 i++;
             fwrite(&out, sizeof out, 1, output_stream);
         }
@@ -181,14 +181,14 @@ int main(int argc, char* argv[])
         rc = fread(&ch, 1, 1, input_stream);
         while (! feof(input_stream)) {
             DATA_TYPE out = 0;
-            if (encode_bytes(&s->serial, &s->byte_state, true, s->byte_state.channel, ch, &out))
+            if (CAT(encode_bytes,ENCODE_BITS)(&s->serial, &s->byte_state, true, s->byte_state.channel, ch, &out))
                 rc = fread(&ch, 1, 1, input_stream);
             fwrite(&out, sizeof out, 1, output_stream);
         }
 
         for (size_t i = 0; i < SAMPLES_PER_BIT; /* incremented inside loop */) {
             DATA_TYPE out = 0;
-            if (encode_carrier(&s->serial, &s->byte_state, true, s->byte_state.channel, 0, &out))
+            if (CAT(encode_carrier,ENCODE_BITS)(&s->serial, &s->byte_state, true, s->byte_state.channel, 0, &out))
                 i++;
             fwrite(&out, sizeof out, 1, output_stream);
         }
@@ -197,7 +197,7 @@ int main(int argc, char* argv[])
     // drain the encoder
     {
         DATA_TYPE out = 0;
-        while (! encode_carrier(&s->serial, &s->byte_state, true, s->byte_state.channel, 0, &out))
+        while (! CAT(encode_carrier,ENCODE_BITS)(&s->serial, &s->byte_state, true, s->byte_state.channel, 0, &out))
             fwrite(&out, sizeof out, 1, output_stream);
     }
 
