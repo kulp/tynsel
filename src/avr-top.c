@@ -78,7 +78,7 @@ int main()
 
             char d = 0;
             DECODE_DATA_TYPE audio_in = (DECODE_DATA_TYPE)ADC0.RES;
-            pump_decoder(&config.serial, &config.audio, audio_in, &d);
+            pump_decoder(&config.serial, &config.audio, &audio_in, &d);
             serial_out = d;
         }
 

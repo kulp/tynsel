@@ -41,7 +41,7 @@ typedef struct {
 bool pump_decoder(
         const SERIAL_CONFIG *config,
         const AUDIO_CONFIG *audio,
-        DECODE_DATA_TYPE in,
+        void *in,
         char *out
     );
 
