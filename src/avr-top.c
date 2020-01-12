@@ -28,10 +28,6 @@
 #define SLEEP_CTRL SLPCTRL_CTRLA
 #define SLEEP_SEN_bm SLPCTRL_SEN_bm
 
-#define pump_decoder CAT(pump_decoder,DECODE_BITS)
-#define encode_bytes CAT(encode_bytes,ENCODE_BITS)
-#define encode_carrier CAT(encode_carrier,ENCODE_BITS)
-
 #include <avr/eeprom.h>
 #include <avr/interrupt.h>
 #include <avr/io.h>
@@ -69,8 +65,8 @@ ISR(ADC0_RESRDY_vect)
     decoder_ready = true;
 }
 
-decode_pumper pump_decoder;
-encode_pusher encode_bytes, encode_carrier;
+decode_pumper pump_decoder16;
+encode_pusher encode_bytes16;
 
 int main()
 {
@@ -78,6 +74,9 @@ int main()
 
     DAC0.DATA = 0x7f; // half-scale output
     DAC0.CTRLA |= DAC_ENABLE_bm | DAC_OUTEN_bm;
+
+    decode_pumper *pump_decoder = pump_decoder16;
+    encode_pusher *encode_bytes = encode_bytes16;
 
     while (true) {
         if (decoder_ready) {
