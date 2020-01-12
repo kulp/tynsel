@@ -69,6 +69,9 @@ ISR(ADC0_RESRDY_vect)
     decoder_ready = true;
 }
 
+decode_pumper pump_decoder;
+encode_pusher encode_bytes, encode_carrier;
+
 int main()
 {
     BYTE_STATE bs = { .channel = config.audio.channel };

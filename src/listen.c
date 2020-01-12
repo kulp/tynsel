@@ -56,6 +56,8 @@ static int parse_opts(AUDIO_CONFIG *c, int argc, char *argv[], FILE **input_stre
     return 0;
 }
 
+decode_pumper CAT(pump_decoder,DECODE_BITS);
+
 int main(int argc, char *argv[])
 {
     FILE *input_stream = stdin;

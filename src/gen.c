@@ -83,6 +83,8 @@ static void null_handler(int ignored)
     (void)ignored;
 }
 
+encode_pusher encode_bytes16, encode_carrier16;
+
 // returns zero on failure
 int main(int argc, char* argv[])
 {

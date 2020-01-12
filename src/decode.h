@@ -45,7 +45,5 @@ typedef bool decode_pumper(
         char *out
     );
 
-decode_pumper CAT(pump_decoder,DECODE_BITS);
-
 #endif
 
