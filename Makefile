@@ -31,11 +31,13 @@ sine-gen: AVR_LDFLAGS =# ensure we do not get flags meant for embedded
 sine-gen: CC = cc#       ensure we do not get compiler meant for embedded
 sine-gen: sine.o
 
-avr-encode-%bit.o encode-%bit.o: CPPFLAGS += -DENCODE_BITS=BITWIDTH
-avr-decode-%bit.o decode-%bit.o: CPPFLAGS += -DDECODE_BITS=BITWIDTH
+avr-encode-% encode-%: CPPFLAGS += -DENCODE_BITS=BITWIDTH
+avr-decode-% decode-%: CPPFLAGS += -DDECODE_BITS=BITWIDTH
 
-%-8bit.o:  CPPFLAGS += -DBITWIDTH=8
-%-16bit.o: CPPFLAGS += -DBITWIDTH=16
+avr-sine-% sine-%: CPPFLAGS += -DENCODE_BITS=BITWIDTH
+
+%-8bit.d  %-8bit.o:  CPPFLAGS += -DBITWIDTH=8
+%-16bit.d %-16bit.o: CPPFLAGS += -DBITWIDTH=16
 
 %-8bit.o:  %.c ; $(COMPILE.c) -o $@ $<
 %-16bit.o: %.c ; $(COMPILE.c) -o $@ $<
@@ -76,7 +78,7 @@ avr-%: LDFLAGS += $(AVR_LDFLAGS)
 avr-%.o: %.c
 	$(COMPILE.c) -o $@ $<
 
-avr-top: avr-sine-precomp.o
+avr-top: avr-sine-precomp-16bit.o
 avr-top: avr-encode-16bit.o
 avr-top: avr-decode-16bit.o
 
@@ -89,7 +91,7 @@ gen listen: CFLAGS += -O3
 vpath %.c src
 
 gen: encode-16bit.o
-gen: sine.o
+gen: sine-16bit.o
 listen: decode-16bit.o
 
 coeffs_%.h: scripts/gen_notch.m

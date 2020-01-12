@@ -27,6 +27,7 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <getopt.h>
+#include <limits.h>
 #include <math.h>
 #include <signal.h>
 #include <stdbool.h>
@@ -55,10 +56,10 @@ static FILE *open_file(const char *filename, const char *mode, FILE *dflt)
     return fopen(filename, mode);
 }
 
-static int parse_opts(struct gen_state *s, int argc, char *argv[], FILE **input_stream, FILE **output_stream)
+static int parse_opts(struct gen_state *s, int argc, char *argv[], uint8_t *bits, FILE **input_stream, FILE **output_stream)
 {
     int ch;
-    while ((ch = getopt(argc, argv, "C:G:T:P:D:p:m:F:o:r:")) != -1) {
+    while ((ch = getopt(argc, argv, "C:G:T:P:D:p:b:m:F:o:r:")) != -1) {
         switch (ch) {
             case 'C': s->byte_state.channel = strtol(optarg, NULL, 0);                 break;
             case 'G': s->gain               = strtof(optarg, NULL);                    break;
@@ -66,6 +67,7 @@ static int parse_opts(struct gen_state *s, int argc, char *argv[], FILE **input_
             case 'P': s->serial.parity_bits = strtol(optarg, NULL, 0);                 break;
             case 'D': s->serial.data_bits   = strtol(optarg, NULL, 0);                 break;
             case 'p': s->serial.parity      = strtol(optarg, NULL, 0);                 break;
+            case 'b': *bits                 = strtol(optarg, NULL, 0);                 break;
             case 'm': *input_stream         = fmemopen(optarg, strlen(optarg), "r");   break;
             case 'F': *input_stream         = open_file(optarg, "r", stdin );          break;
             case 'o': *output_stream        = open_file(optarg, "w", stdout);          break;
@@ -82,6 +84,8 @@ static void null_handler(int ignored)
 {
     (void)ignored;
 }
+
+sines_init init_sines16;
 
 encode_pusher encode_bytes16, encode_carrier16;
 
@@ -102,9 +106,26 @@ int main(int argc, char* argv[])
 
     FILE *input_stream = stdin;
     FILE *output_stream = stdout;
-    int rc = parse_opts(s, argc, argv, &input_stream, &output_stream);
+    uint8_t bits = 16;
+    int rc = parse_opts(s, argc, argv, &bits, &input_stream, &output_stream);
     if (rc)
         return rc;
+
+    struct {
+        encode_pusher *bytes, *carrier;
+        sines_init *sines;
+    } encoders[] = {
+        [16] = { encode_bytes16, encode_carrier16, init_sines16 },
+    };
+
+    if (bits >= sizeof(encoders) / sizeof(encoders[0]) || ! encoders[bits].bytes) {
+        fprintf(stderr, "No encoder found for bits=%d\n", bits);
+        exit(EXIT_FAILURE);
+    }
+
+    encode_pusher *encode_bytes = encoders[bits].bytes;
+    encode_pusher *encode_carrier = encoders[bits].carrier;
+    sines_init *init_sines = encoders[bits].sines;
 
     if (! input_stream) {
         fprintf(stderr, "Failed to open input stream : %s\n", strerror(errno));
@@ -162,43 +183,43 @@ int main(int argc, char* argv[])
             // accepted by encode_bytes will be dropped (because they will be
             // replaced with a new byte by the next time encode_bytes is
             // called). This is a reasonable behavior for "realtime" mode.
-            (void)CAT(encode_bytes,ENCODE_BITS)(&s->serial, &s->byte_state, result > 0, s->byte_state.channel, ch, &out);
+            (void)encode_bytes(&s->serial, &s->byte_state, result > 0, s->byte_state.channel, ch, &out);
 
             if (result < 0)
                 break;
 
-            fwrite(&out, sizeof out, 1, output_stream);
+            fwrite(&out, bits / CHAR_BIT, 1, output_stream);
         }
     } else {
         for (size_t i = 0; i < SAMPLES_PER_BIT; /* incremented inside loop */) {
             DATA_TYPE out = 0;
-            if (CAT(encode_carrier,ENCODE_BITS)(&s->serial, &s->byte_state, true, s->byte_state.channel, 0, &out))
+            if (encode_carrier(&s->serial, &s->byte_state, true, s->byte_state.channel, 0, &out))
                 i++;
-            fwrite(&out, sizeof out, 1, output_stream);
+            fwrite(&out, bits / CHAR_BIT, 1, output_stream);
         }
 
         char ch = 0;
         rc = fread(&ch, 1, 1, input_stream);
         while (! feof(input_stream)) {
             DATA_TYPE out = 0;
-            if (CAT(encode_bytes,ENCODE_BITS)(&s->serial, &s->byte_state, true, s->byte_state.channel, ch, &out))
+            if (encode_bytes(&s->serial, &s->byte_state, true, s->byte_state.channel, ch, &out))
                 rc = fread(&ch, 1, 1, input_stream);
-            fwrite(&out, sizeof out, 1, output_stream);
+            fwrite(&out, bits / CHAR_BIT, 1, output_stream);
         }
 
         for (size_t i = 0; i < SAMPLES_PER_BIT; /* incremented inside loop */) {
             DATA_TYPE out = 0;
-            if (CAT(encode_carrier,ENCODE_BITS)(&s->serial, &s->byte_state, true, s->byte_state.channel, 0, &out))
+            if (encode_carrier(&s->serial, &s->byte_state, true, s->byte_state.channel, 0, &out))
                 i++;
-            fwrite(&out, sizeof out, 1, output_stream);
+            fwrite(&out, bits / CHAR_BIT, 1, output_stream);
         }
     }
 
     // drain the encoder
     {
         DATA_TYPE out = 0;
-        while (! CAT(encode_carrier,ENCODE_BITS)(&s->serial, &s->byte_state, true, s->byte_state.channel, 0, &out))
-            fwrite(&out, sizeof out, 1, output_stream);
+        while (! encode_carrier(&s->serial, &s->byte_state, true, s->byte_state.channel, 0, &out))
+            fwrite(&out, bits / CHAR_BIT, 1, output_stream);
     }
 
     return 0;

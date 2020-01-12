@@ -27,7 +27,7 @@
 
 int main(int argc, char *argv[])
 {
-    extern void make_sine_table(size_t size, SINE_TABLE_TYPE sines[size], float gain);
+    extern void CAT(make_sine_table,ENCODE_BITS)(size_t size, SINE_TABLE_TYPE sines[size], float gain);
 
     if (argc != 3)
         exit(EXIT_FAILURE);
@@ -36,7 +36,7 @@ int main(int argc, char *argv[])
     float gain = strtof(argv[2], NULL);
 
     SINE_TABLE_TYPE sines[size];
-    make_sine_table(size, sines, gain);
+    CAT(make_sine_table,ENCODE_BITS)(size, sines, gain);
 
     puts("{");
     for (size_t i = 0; i < size; i++)

@@ -32,7 +32,7 @@
 typedef PHASE_TYPE PHASE_STEP;
 
 struct sample_state {
-    void *quadrant; // logically constant
+    const void *quadrant;
     PHASE_TYPE phase;
 };
 

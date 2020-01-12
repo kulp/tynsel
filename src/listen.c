@@ -23,10 +23,11 @@
 #include "decode.h"
 
 #include <getopt.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
+#include <limits.h>
 #include <math.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 static FILE *open_file(const char *filename, const char *mode, FILE *dflt)
 {
@@ -36,16 +37,17 @@ static FILE *open_file(const char *filename, const char *mode, FILE *dflt)
     return fopen(filename, mode);
 }
 
-static int parse_opts(AUDIO_CONFIG *c, int argc, char *argv[], FILE **input_stream, FILE **output_stream)
+static int parse_opts(AUDIO_CONFIG *c, int argc, char *argv[], uint8_t *bits, FILE **input_stream, FILE **output_stream)
 {
     int ch;
-    while ((ch = getopt(argc, argv, "C:W:T:H:O:F:o:")) != -1) {
+    while ((ch = getopt(argc, argv, "C:W:T:H:O:b:F:o:")) != -1) {
         switch (ch) {
             case 'C': c->channel     = strtol(optarg, NULL, 0);         break;
             case 'W': c->window_size = strtol(optarg, NULL, 0);         break;
             case 'T': c->threshold   = strtol(optarg, NULL, 0);         break;
             case 'H': c->hysteresis  = strtol(optarg, NULL, 0);         break;
             case 'O': c->offset      = strtol(optarg, NULL, 0);         break;
+            case 'b': *bits          = strtol(optarg, NULL, 0);         break;
             case 'F': *input_stream  = open_file(optarg, "r", stdin );  break;
             case 'o': *output_stream = open_file(optarg, "w", stdout);  break;
 
@@ -71,8 +73,20 @@ int main(int argc, char *argv[])
         .offset      = 12,
     };
 
-    if (parse_opts(&audio, argc, argv, &input_stream, &output_stream))
+    uint8_t bits = 16;
+    if (parse_opts(&audio, argc, argv, &bits, &input_stream, &output_stream))
         exit(EXIT_FAILURE);
+
+    decode_pumper *decoders[] = {
+        [16] = pump_decoder16,
+    };
+
+    if (bits >= sizeof(decoders) / sizeof(decoders[0]) || ! decoders[bits]) {
+        fprintf(stderr, "No decoder found for bits=%d\n", bits);
+        exit(EXIT_FAILURE);
+    }
+
+    decode_pumper *pump_decoder = decoders[bits];
 
     // Do not buffer output at all
     setvbuf(output_stream, NULL, _IONBF, 0);
@@ -84,8 +98,8 @@ int main(int argc, char *argv[])
     };
 
     while (true) {
-        DECODE_DATA_TYPE in = 0;
-        int result = fread(&in, sizeof in, 1, input_stream);
+        int in = 0;
+        int result = fread(&in, bits / CHAR_BIT, 1, input_stream);
 
         if (result != 1) {
             if (feof(input_stream))
@@ -96,7 +110,7 @@ int main(int argc, char *argv[])
         }
 
         char out = 0;
-        if (CAT(pump_decoder,DECODE_BITS)(&config, &audio, &in, &out))
+        if (pump_decoder(&config, &audio, &in, &out))
             fputc(out, output_stream);
     }
 
