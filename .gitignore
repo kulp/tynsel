@@ -8,7 +8,8 @@ wrap
 *.d
 coeffs_*.h
 listen
-sine-gen
-sinetable_64u_.h
+sinetable_*u_*b.h
+sine-gen-16bit
+sine-gen-8bit
 avr-top
 site.mk

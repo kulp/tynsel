@@ -29,13 +29,14 @@ BIT_VARYING += sine-gen.c
 BIT_VARYING += sine-precomp.c
 BIT_VARYING += sine.c
 
-all: gen listen sine-gen avr-top
+all: gen listen avr-top
 
-sine-gen: AVR_CPPFLAGS =#ensure we do not get flags meant for embedded
-sine-gen: AVR_CFLAGS =#  ensure we do not get flags meant for embedded
-sine-gen: AVR_LDFLAGS =# ensure we do not get flags meant for embedded
-sine-gen: CC = cc#       ensure we do not get compiler meant for embedded
-sine-gen: sine.o
+sine-gen%: AVR_CPPFLAGS =#ensure we do not get flags meant for embedded
+sine-gen%: AVR_CFLAGS =#  ensure we do not get flags meant for embedded
+sine-gen%: AVR_LDFLAGS =# ensure we do not get flags meant for embedded
+sine-gen%: CC = cc#       ensure we do not get compiler meant for embedded
+sine-gen-%: sine-gen-%.o sine-%.o
+	$(LINK.c) -o $@ $^ $(LDLIBS)
 
 avr-encode-% encode-%: CPPFLAGS += -DENCODE_BITS=BITWIDTH
 avr-decode-% decode-%: CPPFLAGS += -DDECODE_BITS=BITWIDTH
@@ -51,8 +52,10 @@ avr-%-8bit.o:  %.c ; $(COMPILE.c) -o $@ $<
 avr-%-16bit.o: %.c ; $(COMPILE.c) -o $@ $<
 
 SINETABLE_GAIN = 1.0
-sinetable_%_.h: sine-gen
-	$(realpath $<) $* $(SINETABLE_GAIN) > $@
+sinetable_%_16b.h: sine-gen-16bit
+	$(realpath $^) $$(echo $* | (IFS=_; read a b ; echo $$a)) $(SINETABLE_GAIN) > $@
+sinetable_%_8b.h: sine-gen-8bit
+	$(realpath $^) $$(echo $* | (IFS=_; read a b ; echo $$a)) $(SINETABLE_GAIN) > $@
 
 -include avr-site.mk
 
@@ -128,5 +131,5 @@ avr-%-8bit.d: %.c
 -include $(patsubst %.c,avr-%-8bit.d,$(BIT_VARYING))
 
 clean:
-	rm -f *.d *.o gen listen sine-gen coeffs_*.h sinetable_*.h
+	rm -f *.d *.o gen listen sine-gen-*bit coeffs_*.h sinetable_*.h
 
