@@ -23,6 +23,12 @@ ifneq ($(DECODE_BITS),)
 CPPFLAGS += -DDECODE_BITS=$(DECODE_BITS)
 endif
 
+BIT_VARYING += decode.c
+BIT_VARYING += encode.c
+BIT_VARYING += sine-gen.c
+BIT_VARYING += sine-precomp.c
+BIT_VARYING += sine.c
+
 all: gen listen sine-gen avr-top
 
 sine-gen: AVR_CPPFLAGS =#ensure we do not get flags meant for embedded
@@ -47,8 +53,6 @@ avr-%-16bit.o: %.c ; $(COMPILE.c) -o $@ $<
 SINETABLE_GAIN = 1.0
 sinetable_%_.h: sine-gen
 	$(realpath $<) $* $(SINETABLE_GAIN) > $@
-
-sine-precomp.o: CPPFLAGS += -I.
 
 -include avr-site.mk
 
@@ -101,8 +105,24 @@ coeffs_%.h: scripts/gen_notch.m
 	@$(COMPILE.c) -MM -MG -MF $*.d $<
 	@$(COMPILE.c) -MM -MG -MT avr-$*.o -MF avr-$*.d $<
 
+%-16bit.d: %.c
+	@$(COMPILE.c) -MM -MG -MT $(@:.d=.o) -MF $@ $<
+
+avr-%-16bit.d: %.c
+	@$(COMPILE.c) -MM -MG -MT $(@:.d=.o) -MF $@ $<
+
+%-8bit.d: %.c
+	@$(COMPILE.c) -MM -MG -MT $(@:.d=.o) -MF $@ $<
+
+avr-%-8bit.d: %.c
+	@$(COMPILE.c) -MM -MG -MT $(@:.d=.o) -MF $@ $<
+
 -include $(patsubst %.c,%.d,$(notdir $(wildcard src/*.c)))
 -include $(patsubst %.c,avr-%.d,$(notdir $(wildcard src/*.c)))
+-include $(patsubst %.c,%-16bit.d,$(BIT_VARYING))
+-include $(patsubst %.c,%-8bit.d,$(BIT_VARYING))
+-include $(patsubst %.c,avr-%-16bit.d,$(BIT_VARYING))
+-include $(patsubst %.c,avr-%-8bit.d,$(BIT_VARYING))
 
 clean:
 	rm -f *.d *.o gen listen sine-gen coeffs_*.h sinetable_*.h
