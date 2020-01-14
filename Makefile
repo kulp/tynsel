@@ -116,12 +116,7 @@ PATS = $(subst NULL,,$(foreach p,$(OBJ_PREFIXES),$(foreach s,$(OBJ_SUFFIXES),$p%
 $(PATS): %.c
 	@$(COMPILE.c) -MM -MG -MT $(@:.d=.o) -MF $@ $<
 
--include $(patsubst %.c,%.d,$(SOURCES))
--include $(patsubst %.c,avr-%.d,$(SOURCES))
--include $(patsubst %.c,%-16bit.d,$(BIT_VARYING))
--include $(patsubst %.c,%-8bit.d,$(BIT_VARYING))
--include $(patsubst %.c,avr-%-16bit.d,$(BIT_VARYING))
--include $(patsubst %.c,avr-%-8bit.d,$(BIT_VARYING))
+$(foreach p,$(PATS),$(eval -include $(patsubst %.c,$p,$(SOURCES))))
 
 clean:
 	rm -f *.d *.o gen listen sine-gen-*bit coeffs_*.h sinetable_*.h
