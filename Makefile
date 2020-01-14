@@ -109,22 +109,11 @@ listen: decode-8bit.o
 coeffs_%.h: scripts/gen_notch.m
 	$(realpath $<) $$(echo $* | (IFS=_; read a b c ; echo $$a $$b $$c)) > $@
 
-%.d: %.c
-	@$(COMPILE.c) -MM -MG -MT $(@:.d=.o) -MF $@ $<
+OBJ_PREFIXES = NULL avr-
+OBJ_SUFFIXES = NULL -8bit -16bit
 
-avr-%.d: %.c
-	@$(COMPILE.c) -MM -MG -MT $(@:.d=.o) -MF $@ $<
-
-%-16bit.d: %.c
-	@$(COMPILE.c) -MM -MG -MT $(@:.d=.o) -MF $@ $<
-
-avr-%-16bit.d: %.c
-	@$(COMPILE.c) -MM -MG -MT $(@:.d=.o) -MF $@ $<
-
-%-8bit.d: %.c
-	@$(COMPILE.c) -MM -MG -MT $(@:.d=.o) -MF $@ $<
-
-avr-%-8bit.d: %.c
+PATS = $(subst NULL,,$(foreach p,$(OBJ_PREFIXES),$(foreach s,$(OBJ_SUFFIXES),$p%$s.d)))
+$(PATS): %.c
 	@$(COMPILE.c) -MM -MG -MT $(@:.d=.o) -MF $@ $<
 
 -include $(patsubst %.c,%.d,$(SOURCES))
