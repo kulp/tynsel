@@ -23,6 +23,8 @@ ifneq ($(DECODE_BITS),)
 CPPFLAGS += -DDECODE_BITS=$(DECODE_BITS)
 endif
 
+SOURCES = $(notdir $(wildcard src/*.c))
+
 BIT_VARYING += decode.c
 BIT_VARYING += encode.c
 BIT_VARYING += sine-gen.c
@@ -107,9 +109,11 @@ listen: decode-8bit.o
 coeffs_%.h: scripts/gen_notch.m
 	$(realpath $<) $$(echo $* | (IFS=_; read a b c ; echo $$a $$b $$c)) > $@
 
-%.d avr-%.d: %.c
-	@$(COMPILE.c) -MM -MG -MF $*.d $<
-	@$(COMPILE.c) -MM -MG -MT avr-$*.o -MF avr-$*.d $<
+%.d: %.c
+	@$(COMPILE.c) -MM -MG -MT $(@:.d=.o) -MF $@ $<
+
+avr-%.d: %.c
+	@$(COMPILE.c) -MM -MG -MT $(@:.d=.o) -MF $@ $<
 
 %-16bit.d: %.c
 	@$(COMPILE.c) -MM -MG -MT $(@:.d=.o) -MF $@ $<
@@ -123,8 +127,8 @@ avr-%-16bit.d: %.c
 avr-%-8bit.d: %.c
 	@$(COMPILE.c) -MM -MG -MT $(@:.d=.o) -MF $@ $<
 
--include $(patsubst %.c,%.d,$(notdir $(wildcard src/*.c)))
--include $(patsubst %.c,avr-%.d,$(notdir $(wildcard src/*.c)))
+-include $(patsubst %.c,%.d,$(SOURCES))
+-include $(patsubst %.c,avr-%.d,$(SOURCES))
 -include $(patsubst %.c,%-16bit.d,$(BIT_VARYING))
 -include $(patsubst %.c,%-8bit.d,$(BIT_VARYING))
 -include $(patsubst %.c,avr-%-16bit.d,$(BIT_VARYING))
