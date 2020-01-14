@@ -25,12 +25,6 @@ endif
 
 SOURCES = $(notdir $(wildcard src/*.c))
 
-BIT_VARYING += decode.c
-BIT_VARYING += encode.c
-BIT_VARYING += sine-gen.c
-BIT_VARYING += sine-precomp.c
-BIT_VARYING += sine.c
-
 all: gen listen avr-top
 
 sine-gen%: AVR_CPPFLAGS =#ensure we do not get flags meant for embedded
