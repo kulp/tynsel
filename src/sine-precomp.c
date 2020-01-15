@@ -28,7 +28,13 @@
 #define STR(X) STR_(X)
 #define STR_(X) # X
 
-static SINE_TABLE_TYPE generated_sines[WAVE_TABLE_SIZE] =
+#if defined(__AVR__)
+#include <avr/pgmspace.h>
+#else
+#define PROGMEM
+#endif
+
+static const SINE_TABLE_TYPE PROGMEM generated_sines[WAVE_TABLE_SIZE] =
     #include STR(CAT(CAT(sinetable_,WAVE_TABLE_SIZE),CAT(CAT(_,ENCODE_BITS),b.h)))
 ;
 void CAT(init_sines,ENCODE_BITS)(const void **sines, float gain)
