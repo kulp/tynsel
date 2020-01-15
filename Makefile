@@ -108,7 +108,7 @@ OBJ_SUFFIXES = NULL -8bit -16bit
 
 PATS = $(subst NULL,,$(foreach p,$(OBJ_PREFIXES),$(foreach s,$(OBJ_SUFFIXES),$p%$s.d)))
 $(PATS): %.c
-	@$(COMPILE.c) -MM -MG -MT $(@:.d=.o) -MF $@ $<
+	@$(COMPILE.c) -MM -MG -MT "$@ $(@:.d=.o)" -MF $@ $<
 
 $(foreach p,$(PATS),$(eval -include $(patsubst %.c,$p,$(SOURCES))))
 
