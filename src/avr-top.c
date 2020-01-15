@@ -22,6 +22,7 @@
 
 #include "decode.h"
 #include "encode.h"
+#include "sine.h"
 #include "state.h"
 
 // Work around in-progress support for atxmega3
@@ -67,6 +68,7 @@ ISR(ADC0_RESRDY_vect)
 
 decode_pumper pump_decoder16;
 encode_pusher encode_bytes16;
+sines_init init_sines16;
 
 int main()
 {
@@ -77,6 +79,9 @@ int main()
 
     decode_pumper *pump_decoder = pump_decoder16;
     encode_pusher *encode_bytes = encode_bytes16;
+    sines_init *init_sines = init_sines16;
+
+    init_sines(&bs.bit_state.sample_state.quadrant, 1.0 /* ignored */);
 
     while (true) {
         if (decoder_ready) {
