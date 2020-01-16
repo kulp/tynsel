@@ -70,18 +70,20 @@ decode_pumper pump_decoder16;
 encode_pusher encode_bytes16;
 sines_init init_sines16;
 
-int main()
+static void init(BYTE_STATE *bs)
 {
-    BYTE_STATE bs = { .channel = config.audio.channel };
-
     DAC0.DATA = 0x7f; // half-scale output
     DAC0.CTRLA |= DAC_ENABLE_bm | DAC_OUTEN_bm;
 
-    decode_pumper *pump_decoder = pump_decoder16;
-    encode_pusher *encode_bytes = encode_bytes16;
     sines_init *init_sines = init_sines16;
 
-    init_sines(&bs.bit_state.sample_state.quadrant, 1.0 /* ignored */);
+    init_sines(&bs->bit_state.sample_state.quadrant, 1.0 /* ignored */);
+}
+
+static void run(BYTE_STATE *bs)
+{
+    decode_pumper *pump_decoder = pump_decoder16;
+    encode_pusher *encode_bytes = encode_bytes16;
 
     while (true) {
         if (decoder_ready) {
@@ -97,7 +99,7 @@ int main()
             encoder_ready = false;
 
             ENCODE_DATA_TYPE e = 0;
-            encode_bytes(&config.serial, &bs, true, config.audio.channel, serial_in, &e);
+            encode_bytes(&config.serial, bs, true, config.audio.channel, serial_in, &e);
             DAC0.DATA = (uint8_t)(e >> 8); // 16-bit data, 8-bit DAC
         }
 
@@ -105,3 +107,10 @@ int main()
     }
 }
 
+int main()
+{
+    BYTE_STATE bs = { .channel = config.audio.channel };
+
+    init(&bs);
+    run(&bs);
+}
