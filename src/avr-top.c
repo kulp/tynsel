@@ -80,7 +80,7 @@ static void init(BYTE_STATE *bs)
     init_sines(&bs->bit_state.sample_state.quadrant, 1.0 /* ignored */);
 }
 
-static void run(BYTE_STATE *bs)
+_Noreturn static void run(BYTE_STATE *bs)
 {
     decode_pumper *pump_decoder = pump_decoder16;
     encode_pusher *encode_bytes = encode_bytes16;
