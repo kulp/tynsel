@@ -247,7 +247,7 @@ bool CAT(pump_decoder,DECODE_BITS)(
         char *out
     )
 {
-    DECODE_DATA_TYPE *in = p;
+    DECODE_DATA_TYPE *in = (DECODE_DATA_TYPE*)p;
     static struct rms_state rms_states[2] = { { .ptr = 0 } };
 
     static struct filter_state filt_states[2] = { { .ptr = 0 } };

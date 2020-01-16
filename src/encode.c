@@ -73,7 +73,7 @@ static bool encode_bit(BIT_STATE *s, bool newbit, enum channel channel, enum bit
             s->channel = channel;
         } else {
             // if no new bit, switch back to the idle bit in the most-recent channel
-            bit = 1;
+            bit = BIT_ONE;
         }
         s->step = get_phase_step(get_frequency(s->channel, bit));
     }
@@ -91,7 +91,7 @@ static bool push_raw_word(BYTE_STATE *s, bool restart, enum channel channel, uin
     bool busy = s->bits_remaining > 0;
     bool full = s->buffer_full;
 
-    enum bit bit = s->current_word & 1;
+    enum bit bit = (enum bit)(s->current_word & 1);
 
     #define BOOL_TRIAD(A,B,C) (((A) << 2) | ((B) << 1) | ((C) << 0))
     switch (BOOL_TRIAD(restart, full, busy)) {
@@ -142,7 +142,7 @@ static inline uint8_t count_bits(const SERIAL_CONFIG *s)
 bool CAT(encode_carrier,ENCODE_BITS)(const SERIAL_CONFIG *c, BYTE_STATE *s, bool restart, enum channel channel, char byte, void *out)
 {
     (void)byte; // unused
-    return push_raw_word(s, restart, channel, count_bits(c), (uint16_t)-1u, out);
+    return push_raw_word(s, restart, channel, count_bits(c), (uint16_t)-1u, (DATA_TYPE*)out);
 }
 
 static inline uint8_t popcnt(char x)
@@ -193,6 +193,6 @@ bool CAT(encode_bytes,ENCODE_BITS)(const SERIAL_CONFIG *c, BYTE_STATE *s, bool r
 {
     uint8_t bit_count = count_bits(c);
     uint16_t word = make_word(c, byte);
-    return push_raw_word(s, restart, channel, bit_count, word, out);
+    return push_raw_word(s, restart, channel, bit_count, word, (DATA_TYPE*)out);
 }
 

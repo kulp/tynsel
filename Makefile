@@ -6,6 +6,7 @@ CPPFLAGS += -DDEBUG
 endif
 
 CFLAGS += -Wall -Wextra -Wunused
+CFLAGS += -Wc++-compat
 
 CPPFLAGS += -std=c99
 
