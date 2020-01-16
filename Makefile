@@ -8,7 +8,7 @@ endif
 CFLAGS += -Wall -Wextra -Wunused
 CFLAGS += -Wc++-compat
 
-CPPFLAGS += -std=c99
+CPPFLAGS += -std=c11
 
 # Look for generated files in the base directory
 CPPFLAGS += -I.
