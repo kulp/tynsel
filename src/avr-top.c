@@ -34,23 +34,19 @@
 #include <avr/io.h>
 #include <avr/sleep.h>
 
-static struct CONFIG {
-    SERIAL_CONFIG serial;
-    AUDIO_CONFIG audio;
-} config EEMEM = {
-    .serial = {
-        .data_bits   = 7,
-        .parity_bits = 1,
-        .stop_bits   = 2,
-        .parity      = PARITY_SPACE,
-    },
-    .audio = {
-        .channel     = CHAN_ZERO,
-        .window_size = 6,
-        .threshold   = 256,
-        .hysteresis  = 10,
-        .offset      = 12,
-    },
+static SERIAL_CONFIG serial EEMEM = {
+    .data_bits   = 7,
+    .parity_bits = 1,
+    .stop_bits   = 2,
+    .parity      = PARITY_SPACE,
+};
+
+static AUDIO_CONFIG audio EEMEM = {
+    .channel     = CHAN_ZERO,
+    .window_size = 6,
+    .threshold   = 256,
+    .hysteresis  = 10,
+    .offset      = 12,
 };
 
 // These flags will be tripped by interrupt handlers
@@ -91,7 +87,7 @@ _Noreturn static void run(BYTE_STATE *bs)
 
             char d = 0;
             DECODE_DATA_TYPE audio_in = (DECODE_DATA_TYPE)ADC0.RES;
-            pump_decoder(&config.serial, &config.audio, &audio_in, &d);
+            pump_decoder(&serial, &audio, &audio_in, &d);
             serial_out = d;
         }
 
@@ -99,7 +95,7 @@ _Noreturn static void run(BYTE_STATE *bs)
             encoder_ready = false;
 
             ENCODE_DATA_TYPE e = 0;
-            encode_bytes(&config.serial, bs, true, config.audio.channel, serial_in, &e);
+            encode_bytes(&serial, bs, true, audio.channel, serial_in, &e);
             DAC0.DATA = (uint8_t)(e >> 8); // 16-bit data, 8-bit DAC
         }
 
@@ -109,7 +105,7 @@ _Noreturn static void run(BYTE_STATE *bs)
 
 int main()
 {
-    BYTE_STATE bs = { .channel = config.audio.channel };
+    BYTE_STATE bs = { .channel = audio.channel };
 
     init(&bs);
     run(&bs);
