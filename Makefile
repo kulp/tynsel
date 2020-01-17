@@ -7,6 +7,7 @@ endif
 
 CFLAGS += -Wall -Wextra -Wunused
 CFLAGS += -Wc++-compat
+CFLAGS += -Werror
 
 CPPFLAGS += -std=c11
 
@@ -69,7 +70,6 @@ avr-%: CPPFLAGS += $(AVR_CPPFLAGS)
 
 AVR_CFLAGS += $(AVR_OPTFLAGS)
 AVR_CFLAGS += -ffunction-sections
-AVR_CFLAGS += -Werror=conversion
 AVR_CFLAGS += -fstack-usage
 AVR_CFLAGS += -fshort-enums
 AVR_CFLAGS += -Wpadded
