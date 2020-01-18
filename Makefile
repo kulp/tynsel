@@ -18,12 +18,8 @@ ifneq ($(LTO),0)
 LTO_FLAGS += -flto=jobserver -fuse-linker-plugin
 endif
 
-ifneq ($(ENCODE_BITS),)
-CPPFLAGS += -DENCODE_BITS=$(ENCODE_BITS)
-endif
-ifneq ($(DECODE_BITS),)
-CPPFLAGS += -DDECODE_BITS=$(DECODE_BITS)
-endif
+CPPFLAGS += $(if $(ENCODE_BITS),-DENCODE_BITS=$(ENCODE_BITS))
+CPPFLAGS += $(if $(DECODE_BITS),-DDECODE_BITS=$(DECODE_BITS))
 
 SOURCES = $(notdir $(wildcard src/*.c))
 
