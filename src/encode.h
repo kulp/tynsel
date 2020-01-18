@@ -27,6 +27,8 @@
 
 #include <stdbool.h>
 
+#define ENCODE_DATA_TYPE SIZED(ENCODE_BITS)
+
 typedef struct sample_state SAMPLE_STATE;
 typedef struct bit_state    BIT_STATE;
 typedef struct byte_state   BYTE_STATE;

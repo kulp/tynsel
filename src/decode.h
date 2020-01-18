@@ -28,6 +28,8 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+#define DECODE_DATA_TYPE SIZED(DECODE_BITS)
+
 typedef uint16_t RMS_OUT_DATA;
 
 typedef struct {
