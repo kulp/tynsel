@@ -34,11 +34,17 @@
 #include <avr/io.h>
 #include <avr/sleep.h>
 
-static SERIAL_CONFIG serial EEMEM = {
+static SERIAL_CONFIG tt_serial EEMEM = {
     .data_bits   = 7,
     .parity_bits = 1,
     .stop_bits   = 2,
     .parity      = PARITY_SPACE,
+};
+
+static SERIAL_CONFIG host_serial EEMEM __attribute__((used)) = {
+    .data_bits   = 8,
+    .parity_bits = 0,
+    .stop_bits   = 1,
 };
 
 static AUDIO_CONFIG audio EEMEM = {
@@ -87,7 +93,7 @@ _Noreturn static void run(BYTE_STATE *bs)
 
             char d = 0;
             DECODE_DATA_TYPE audio_in = (DECODE_DATA_TYPE)ADC0.RES;
-            pump_decoder(&serial, &audio, &audio_in, &d);
+            pump_decoder(&tt_serial, &audio, &audio_in, &d);
             serial_out = d;
         }
 
@@ -95,7 +101,7 @@ _Noreturn static void run(BYTE_STATE *bs)
             encoder_ready = false;
 
             ENCODE_DATA_TYPE e = 0;
-            encode_bytes(&serial, bs, true, audio.channel, serial_in, &e);
+            encode_bytes(&tt_serial, bs, true, audio.channel, serial_in, &e);
             DAC0.DATA = (register8_t)e;
         }
 
