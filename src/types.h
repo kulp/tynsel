@@ -25,13 +25,6 @@
 
 #include <stdint.h>
 
-#ifndef ENCODE_BITS
-#define ENCODE_BITS 16
-#endif
-#ifndef DECODE_BITS
-#define DECODE_BITS ENCODE_BITS
-#endif
-
 #define CAT(X,Y) CAT_(X,Y)
 #define CAT_(X,Y) X ## Y
 

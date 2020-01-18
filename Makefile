@@ -78,6 +78,8 @@ avr-%: LDFLAGS += $(AVR_LDFLAGS)
 avr-%.o: %.c
 	$(COMPILE.c) -o $@ $<
 
+avr-top.o: ENCODE_BITS = 16
+avr-top.o: DECODE_BITS = 16
 avr-top: avr-sine-precomp-16bit.o
 avr-top: avr-encode-16bit.o
 avr-top: avr-decode-16bit.o
