@@ -64,14 +64,14 @@ ISR(ADC0_RESRDY_vect)
 
 decode_pumper pump_decoder16;
 encode_pusher encode_bytes16;
-sines_init init_sines16;
+sines_init init_sines8;
 
 static void init(BYTE_STATE *bs)
 {
     DAC0.DATA = 0x7f; // half-scale output
     DAC0.CTRLA |= DAC_ENABLE_bm | DAC_OUTEN_bm;
 
-    sines_init *init_sines = init_sines16;
+    sines_init *init_sines = init_sines8;
 
     init_sines(&bs->bit_state.sample_state.quadrant, 1.0 /* ignored */);
 }
@@ -96,7 +96,7 @@ _Noreturn static void run(BYTE_STATE *bs)
 
             ENCODE_DATA_TYPE e = 0;
             encode_bytes(&serial, bs, true, audio.channel, serial_in, &e);
-            DAC0.DATA = (uint8_t)(e >> 8); // 16-bit data, 8-bit DAC
+            DAC0.DATA = (register8_t)e;
         }
 
         sleep_mode();
