@@ -161,7 +161,7 @@ int main(int argc, char* argv[])
         // Set up periodic SIGALRM
         setitimer(ITIMER_REAL, &it, NULL);
 
-        static struct termios tio;
+        struct termios tio;
         tcgetattr(input_fd, &tio);
         // Enable extreme non-blocking (return from read() as quickly as possible,
         // possibly with no data)
