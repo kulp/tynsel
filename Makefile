@@ -32,13 +32,13 @@ sine-gen%: CC = cc#       ensure we do not get compiler meant for embedded
 sine-gen-%: sine-gen-%.o sine-%.o
 	$(LINK.c) -o $@ $^ $(LDLIBS)
 
-avr-encode-% encode-%: CPPFLAGS += -DENCODE_BITS=BITWIDTH
-avr-decode-% decode-%: CPPFLAGS += -DDECODE_BITS=BITWIDTH
+avr-encode-% encode-%: ENCODE_BITS = $(BITWIDTH)
+avr-decode-% decode-%: DECODE_BITS = $(BITWIDTH)
 
-avr-sine-% sine-%: CPPFLAGS += -DENCODE_BITS=BITWIDTH
+avr-sine-% sine-%: ENCODE_BITS = $(BITWIDTH)
 
-%-8bit.d  %-8bit.o:  CPPFLAGS += -DBITWIDTH=8
-%-16bit.d %-16bit.o: CPPFLAGS += -DBITWIDTH=16
+%-8bit.d  %-8bit.o:  BITWIDTH = 8
+%-16bit.d %-16bit.o: BITWIDTH = 16
 
 %-8bit.o:  %.c ; $(COMPILE.c) -o $@ $<
 %-16bit.o: %.c ; $(COMPILE.c) -o $@ $<
