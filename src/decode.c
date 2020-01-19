@@ -256,14 +256,14 @@ bool CAT(pump_decoder,DECODE_BITS)(
 
     static struct bits_state dec_state = { .off = -1, .last = THRESHOLD };
 
-    static FILTER_OUT_DATA f[2] = { 0 };
+    FILTER_OUT_DATA f[2] = { 0 };
     if (
             ! filter(&coeffs[audio->channel][BIT_ZERO], &filt_states[0], *in, &f[0])
         ||  ! filter(&coeffs[audio->channel][BIT_ONE ], &filt_states[1], *in, &f[1])
         )
         return false;
 
-    static RMS_OUT_DATA ra = 0, rb = 0;
+    RMS_OUT_DATA ra = 0, rb = 0;
     if (
             ! rms(audio->window_size, &rms_states[0], (int8_t)SHRINK((FILTER_OUT_DATA)(f[0] - *in), int8_t), &ra)
         ||  ! rms(audio->window_size, &rms_states[1], (int8_t)SHRINK((FILTER_OUT_DATA)(f[1] - *in), int8_t), &rb)
@@ -273,7 +273,7 @@ bool CAT(pump_decoder,DECODE_BITS)(
     if (ra < audio->threshold && rb < audio->threshold)
         return false;
 
-    static RUNS_OUT_DATA ro = 0;
+    RUNS_OUT_DATA ro = 0;
     if (! runs(audio->hysteresis, &run_state, ra, rb, &ro))
         return false;
 
