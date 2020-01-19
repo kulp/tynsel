@@ -109,7 +109,9 @@ PATS = $(subst NULL,,$(foreach p,$(OBJ_PREFIXES),$(foreach s,$(OBJ_SUFFIXES),$p%
 $(PATS): %.c
 	@$(COMPILE.c) -MM -MG -MT "$@ $(@:.d=.o)" -MF $@ $<
 
+ifneq ($(findstring clean,$(MAKECMDGOALS)),clean)
 $(foreach p,$(PATS),$(eval -include $(patsubst %.c,$p,$(SOURCES))))
+endif
 
 clean:
 	rm -f *.d *.o gen listen sine-gen-*bit coeffs_*.h sinetable_*.h
