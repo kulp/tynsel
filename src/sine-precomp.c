@@ -22,9 +22,6 @@
 
 #include "sine.h"
 
-#define CAT(X,Y) CAT_(X,Y)
-#define CAT_(X,Y) X ## Y
-
 #define STR(X) STR_(X)
 #define STR_(X) # X
 

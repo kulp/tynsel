@@ -22,12 +22,6 @@
 
 #include "sine.h"
 
-#define CAT(X,Y) CAT_(X,Y)
-#define CAT_(X,Y) X ## Y
-
-#define STR(X) STR_(X)
-#define STR_(X) # X
-
 #define int16_tMAX INT16_MAX
 #define  int8_tMAX  INT8_MAX
 
