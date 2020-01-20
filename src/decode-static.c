@@ -22,7 +22,7 @@
 
 #include "decode-impl.h"
 
-DECODE_STATE *CAT(make_decode_state,DECODE_BITS)()
+DECODE_STATE *CAT(decode_state_init,DECODE_BITS)()
 {
     static DECODE_STATE state = {
         .dec = { .off = -1, .last = THRESHOLD },

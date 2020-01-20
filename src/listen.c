@@ -59,8 +59,8 @@ static int parse_opts(AUDIO_CONFIG *c, int argc, char *argv[], uint8_t *bits, FI
     return 0;
 }
 
-decode_init make_decode_state8;
-decode_init make_decode_state16;
+decode_init decode_state_init8;
+decode_init decode_state_init16;
 
 decode_pumper pump_decoder8;
 decode_pumper pump_decoder16;
@@ -86,8 +86,8 @@ int main(int argc, char *argv[])
         decode_init *init;
         decode_pumper *pump;
     } decoders[] = {
-        [8]  = { make_decode_state8,  pump_decoder8  },
-        [16] = { make_decode_state16, pump_decoder16 },
+        [8]  = { decode_state_init8,  pump_decoder8  },
+        [16] = { decode_state_init16, pump_decoder16 },
     };
 
     if (bits >= sizeof(decoders) / sizeof(decoders[0]) || ! decoders[bits].init) {

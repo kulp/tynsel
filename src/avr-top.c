@@ -69,7 +69,7 @@ ISR(ADC0_RESRDY_vect)
     decoder_ready = true;
 }
 
-decode_init make_decode_state16;
+decode_init decode_state_init16;
 decode_pumper pump_decoder16;
 encode_pusher encode_bytes16;
 sines_init init_sines8;
@@ -83,7 +83,7 @@ static void init(BYTE_STATE *bs, DECODE_STATE **ds)
 
     init_sines(&bs->bit_state.sample_state.quadrant, 1.0 /* ignored */);
 
-    decode_init *init_decoder = make_decode_state16;
+    decode_init *init_decoder = decode_state_init16;
     *ds = init_decoder();
 }
 
