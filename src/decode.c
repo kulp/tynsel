@@ -22,12 +22,10 @@
 
 #include "decode.h"
 
+#include "coeff.h"
+
 #include <assert.h>
 #include <limits.h>
-
-#ifndef NOTCH_WIDTH
-#error "#define NOTCH_WIDTH in Hz"
-#endif
 
 #define THRESHOLD 0
 #define MAX_RMS_SAMPLES 8
@@ -52,20 +50,6 @@ typedef int8_t RUNS_OUT_DATA;
 
 typedef RMS_OUT_DATA RUNS_IN_DATA;
 typedef RUNS_OUT_DATA DECODE_IN_DATA;
-
-#define COEFF_FRACTIONAL_BITS 14
-
-#if 0
-typedef float FILTER_COEFF;
-typedef float FILTER_STATE_DATA;
-#define DEFINE_COEFF(x) (x)
-#define FILTER_MULT(a, b) ((a) * (b))
-#else
-typedef int16_t FILTER_COEFF;
-typedef int16_t FILTER_STATE_DATA;
-#define DEFINE_COEFF(x) ((FILTER_COEFF)((x) * (1 << COEFF_FRACTIONAL_BITS)))
-#define FILTER_MULT(a, b) (((a) * (b)) >> COEFF_FRACTIONAL_BITS)
-#endif
 
 struct bits_state {
     int8_t off;
@@ -185,12 +169,6 @@ static bool runs(int8_t hysteresis, struct runs_state *s, RUNS_IN_DATA da, RUNS_
     return true;
 }
 
-struct filter_config {
-    FILTER_COEFF coeff_b0, coeff_b1, coeff_a2;
-#define coeff_b2 coeff_b0
-#define coeff_a1 coeff_b1
-};
-
 struct filter_state {
     FILTER_STATE_DATA in[3];
     FILTER_STATE_DATA out[3];
@@ -229,10 +207,6 @@ static bool filter(const struct filter_config * PROGMEM c, struct filter_state *
     return true;
 }
 
-static const struct filter_config coeffs[] PROGMEM = {
-    #include STR(CAT(CAT(coeffs_,SAMPLE_RATE),CAT(CAT(_,NOTCH_WIDTH),_.h)))
-};
-
 struct decode_state {
     struct rms_state rms[2];
     struct filter_state filt[2];
@@ -252,6 +226,7 @@ DECODE_STATE *CAT(make_decode_state,DECODE_BITS)()
 bool CAT(pump_decoder,DECODE_BITS)(
         const SERIAL_CONFIG *c,
         const AUDIO_CONFIG *audio,
+        const struct filter_config *coeffs,
         DECODE_STATE *s,
         void *p,
         char *out
@@ -261,8 +236,8 @@ bool CAT(pump_decoder,DECODE_BITS)(
 
     FILTER_OUT_DATA f[2] = { 0 };
     if (
-            ! filter(&coeffs[audio->channel * BIT_max + BIT_ZERO], &s->filt[0], *in, &f[0])
-        ||  ! filter(&coeffs[audio->channel * BIT_max + BIT_ONE ], &s->filt[1], *in, &f[1])
+            ! filter(&coeffs[BIT_ZERO], &s->filt[0], *in, &f[0])
+        ||  ! filter(&coeffs[BIT_ONE ], &s->filt[1], *in, &f[1])
         )
         return false;
 

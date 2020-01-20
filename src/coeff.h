@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2020 Darren Kulp
+ * Copyright (c) 2020 Darren Kulp
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -20,40 +20,32 @@
  * IN THE SOFTWARE.
  */
 
-#ifndef DECODE_H_
-#define DECODE_H_
+#ifndef COEFF_H_
+#define COEFF_H_
 
 #include "types.h"
 
-#include <stdbool.h>
-#include <stdint.h>
+#define COEFF_FRACTIONAL_BITS 14
 
-#define DECODE_DATA_TYPE SIZED(DECODE_BITS)
+#if 0
+typedef float FILTER_COEFF;
+typedef float FILTER_STATE_DATA;
+#define DEFINE_COEFF(x) (x)
+#define FILTER_MULT(a, b) ((a) * (b))
+#else
+typedef int16_t FILTER_COEFF;
+typedef int16_t FILTER_STATE_DATA;
+#define DEFINE_COEFF(x) ((FILTER_COEFF)((x) * (1 << COEFF_FRACTIONAL_BITS)))
+#define FILTER_MULT(a, b) (((a) * (b)) >> COEFF_FRACTIONAL_BITS)
+#endif
 
-typedef uint16_t RMS_OUT_DATA;
+struct filter_config {
+    FILTER_COEFF coeff_b0, coeff_b1, coeff_a2;
+#define coeff_b2 coeff_b0
+#define coeff_a1 coeff_b1
+};
 
-struct filter_config;
-
-typedef struct {
-    enum channel channel;
-    uint8_t      window_size;
-    RMS_OUT_DATA threshold;
-    int8_t       hysteresis;
-    int8_t       offset;
-} AUDIO_CONFIG;
-
-typedef struct decode_state DECODE_STATE;
-
-typedef DECODE_STATE *decode_init();
-
-typedef bool decode_pumper(
-        const SERIAL_CONFIG *config,
-        const AUDIO_CONFIG *audio,
-        const struct filter_config *coeffs,
-        DECODE_STATE *s,
-        void *in,
-        char *out
-    );
+extern const struct filter_config coeff_table[];
 
 #endif
 

@@ -20,6 +20,7 @@
  * IN THE SOFTWARE.
  */
 
+#include "coeff.h"
 #include "decode.h"
 
 #include <getopt.h>
@@ -121,7 +122,7 @@ int main(int argc, char *argv[])
         }
 
         char out = 0;
-        if (pump_decoder(&config, &audio, state, &in, &out))
+        if (pump_decoder(&config, &audio, &coeff_table[audio.channel], state, &in, &out))
             fputc(out, output_stream);
     }
 

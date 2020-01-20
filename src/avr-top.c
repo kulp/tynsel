@@ -20,6 +20,7 @@
  * IN THE SOFTWARE.
  */
 
+#include "coeff.h"
 #include "decode.h"
 #include "encode.h"
 #include "sine.h"
@@ -97,7 +98,7 @@ _Noreturn static void run(BYTE_STATE *bs, DECODE_STATE *ds)
 
             char d = 0;
             DECODE_DATA_TYPE audio_in = (DECODE_DATA_TYPE)ADC0.RES;
-            pump_decoder(&tt_serial, &audio, ds, &audio_in, &d);
+            pump_decoder(&tt_serial, &audio, &coeff_table[audio.channel], ds, &audio_in, &d);
             serial_out = d;
         }
 

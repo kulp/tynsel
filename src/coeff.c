@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2020 Darren Kulp
+ * Copyright (c) 2020 Darren Kulp
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -20,40 +20,19 @@
  * IN THE SOFTWARE.
  */
 
-#ifndef DECODE_H_
-#define DECODE_H_
+#include "coeff.h"
 
-#include "types.h"
-
-#include <stdbool.h>
-#include <stdint.h>
-
-#define DECODE_DATA_TYPE SIZED(DECODE_BITS)
-
-typedef uint16_t RMS_OUT_DATA;
-
-struct filter_config;
-
-typedef struct {
-    enum channel channel;
-    uint8_t      window_size;
-    RMS_OUT_DATA threshold;
-    int8_t       hysteresis;
-    int8_t       offset;
-} AUDIO_CONFIG;
-
-typedef struct decode_state DECODE_STATE;
-
-typedef DECODE_STATE *decode_init();
-
-typedef bool decode_pumper(
-        const SERIAL_CONFIG *config,
-        const AUDIO_CONFIG *audio,
-        const struct filter_config *coeffs,
-        DECODE_STATE *s,
-        void *in,
-        char *out
-    );
-
+#ifndef NOTCH_WIDTH
+#error "#define NOTCH_WIDTH in Hz"
 #endif
+
+#if defined(__AVR__)
+#include <avr/pgmspace.h>
+#else
+#define PROGMEM
+#endif
+
+const struct filter_config coeff_table[] PROGMEM = {
+    #include STR(CAT(CAT(coeffs_,SAMPLE_RATE),CAT(CAT(_,NOTCH_WIDTH),_.h)))
+};
 
