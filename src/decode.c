@@ -228,16 +228,12 @@ static bool filter(const struct filter_config * PROGMEM c, struct filter_state *
 static const struct filter_config coeffs[CHAN_max][BIT_max] PROGMEM = {
     [CHAN_ZERO][BIT_ZERO] =
             #include "coeffs_1070_8000_150.h"
-        ,
     [CHAN_ZERO][BIT_ONE] =
             #include "coeffs_1270_8000_150.h"
-        ,
     [CHAN_ONE][BIT_ZERO] =
             #include "coeffs_2025_8000_150.h"
-        ,
     [CHAN_ONE][BIT_ONE] =
             #include "coeffs_2225_8000_150.h"
-        ,
 };
 
 bool CAT(pump_decoder,DECODE_BITS)(

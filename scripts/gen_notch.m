@@ -22,5 +22,5 @@ format = '    .coeff_%s = DEFINE_COEFF(%+6.6f),\n';
 printf(format, 'b0', b(1))
 printf(format, 'b1', b(2))
 printf(format, 'a2', a(3))
-printf('}\n')
+printf('},\n')
 
