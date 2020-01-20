@@ -25,6 +25,10 @@
 #include <assert.h>
 #include <limits.h>
 
+#ifndef NOTCH_WIDTH
+#error "#define NOTCH_WIDTH in Hz"
+#endif
+
 #define THRESHOLD 0
 #define MAX_RMS_SAMPLES 8
 

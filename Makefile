@@ -1,5 +1,7 @@
 .DELETE_ON_ERROR:
 
+SAMPLE_RATE = 8000
+
 ifneq ($(DEBUG),)
 CFLAGS += -g -O0
 CPPFLAGS += -DDEBUG
@@ -20,6 +22,8 @@ endif
 
 CPPFLAGS += $(if $(ENCODE_BITS),-DENCODE_BITS=$(ENCODE_BITS))
 CPPFLAGS += $(if $(DECODE_BITS),-DDECODE_BITS=$(DECODE_BITS))
+
+CPPFLAGS += -DSAMPLE_RATE=$(SAMPLE_RATE)
 
 SOURCES = $(notdir $(wildcard src/*.c))
 
@@ -44,6 +48,8 @@ avr-sine-% sine-%: ENCODE_BITS = $(BITWIDTH)
 %-16bit.o: %.c ; $(COMPILE.c) -o $@ $<
 avr-%-8bit.o:  %.c ; $(COMPILE.c) -o $@ $<
 avr-%-16bit.o: %.c ; $(COMPILE.c) -o $@ $<
+
+avr-decode% decode%: CPPFLAGS += -DNOTCH_WIDTH=150
 
 SINETABLE_GAIN = 1.0
 sinetable_%_16b.h: sine-gen-16bit
@@ -99,7 +105,7 @@ gen: sine-8bit.o
 listen: decode-16bit.o
 listen: decode-8bit.o
 
-FREQUENCIES = $(shell echo 'FREQUENCY_LIST(FLATTEN3)' | avr-cpp -P -imacros src/types.h -D'FLATTEN3(X,Y,Z)=Z')
+FREQUENCIES = $(shell echo 'FREQUENCY_LIST(FLATTEN3)' | avr-cpp -P $(CPPFLAGS) -imacros src/types.h -D'FLATTEN3(X,Y,Z)=Z')
 coeffs_%.h: scripts/gen_notch.m
 	$(realpath $<) $$(echo $* | (IFS=_; read sample_rate notch_width rest ; echo $$sample_rate $$notch_width)) $(FREQUENCIES) > $@
 

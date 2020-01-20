@@ -50,8 +50,10 @@ typedef struct {
 
 enum { NUM_START_BITS = 1 };
 
-#define NOTCH_WIDTH 150
-#define SAMPLE_RATE 8000
+#ifndef SAMPLE_RATE
+#error "#define SAMPLE_RATE in Hz"
+#endif
+
 static const unsigned int BAUD_RATE = 300;
 static const unsigned int SAMPLES_PER_BIT = (SAMPLE_RATE + BAUD_RATE - 1) / BAUD_RATE; // round up (err on the slow side)
 
