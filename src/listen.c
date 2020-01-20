@@ -65,6 +65,9 @@ decode_init decode_state_init16;
 decode_pumper pump_decoder8;
 decode_pumper pump_decoder16;
 
+decode_fini decode_state_fini8;
+decode_fini decode_state_fini16;
+
 int main(int argc, char *argv[])
 {
     FILE *input_stream = stdin;
@@ -85,9 +88,10 @@ int main(int argc, char *argv[])
     struct {
         decode_init *init;
         decode_pumper *pump;
+        decode_fini *fini;
     } decoders[] = {
-        [8]  = { decode_state_init8,  pump_decoder8  },
-        [16] = { decode_state_init16, pump_decoder16 },
+        [8]  = { decode_state_init8,  pump_decoder8,  decode_state_fini8  },
+        [16] = { decode_state_init16, pump_decoder16, decode_state_fini16 },
     };
 
     if (bits >= sizeof(decoders) / sizeof(decoders[0]) || ! decoders[bits].init) {
@@ -97,6 +101,7 @@ int main(int argc, char *argv[])
 
     decode_init   *init_decoder = decoders[bits].init;
     decode_pumper *pump_decoder = decoders[bits].pump;
+    decode_fini   *fini_decoder = decoders[bits].fini;
 
     DECODE_STATE *state = init_decoder();
 
@@ -125,6 +130,8 @@ int main(int argc, char *argv[])
         if (pump_decoder(&config, &audio, &coeff_table[audio.channel], state, &in, &out))
             fputc(out, output_stream);
     }
+
+    fini_decoder(state);
 
     return 0;
 }

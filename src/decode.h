@@ -45,6 +45,7 @@ typedef struct {
 typedef struct decode_state DECODE_STATE;
 
 typedef DECODE_STATE *decode_init();
+typedef void decode_fini(DECODE_STATE *s);
 
 typedef bool decode_pumper(
         const SERIAL_CONFIG *config,

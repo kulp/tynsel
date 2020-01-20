@@ -71,6 +71,8 @@ ISR(ADC0_RESRDY_vect)
 
 decode_init decode_state_init16;
 decode_pumper pump_decoder16;
+decode_fini decode_state_fini16;
+
 encode_pusher encode_bytes16;
 sines_init init_sines8;
 
@@ -114,6 +116,14 @@ _Noreturn static void run(BYTE_STATE *bs, DECODE_STATE *ds)
     }
 }
 
+static void fini(BYTE_STATE *bs, DECODE_STATE **ds)
+{
+    (void)bs;
+    decode_fini *fini_decoder = decode_state_fini16;
+    fini_decoder(*ds);
+    *ds = NULL;
+}
+
 int main()
 {
     BYTE_STATE bs = { .channel = audio.channel };
@@ -121,4 +131,5 @@ int main()
 
     init(&bs, &ds);
     run(&bs, ds);
+    fini(&bs, &ds);
 }

@@ -31,3 +31,8 @@ DECODE_STATE *CAT(decode_state_init,DECODE_BITS)()
     return &state;
 }
 
+void CAT(decode_state_fini,DECODE_BITS)(DECODE_STATE *s)
+{
+    (void)s;
+}
+
