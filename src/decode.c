@@ -21,14 +21,10 @@
  */
 
 #include "decode.h"
-
-#include "coeff.h"
+#include "decode-impl.h"
 
 #include <assert.h>
 #include <limits.h>
-
-#define THRESHOLD 0
-#define MAX_RMS_SAMPLES 8
 
 #if defined(__AVR__)
 #define WARN(...) (void)(__VA_ARGS__)
@@ -38,25 +34,6 @@
 #define WARN(Fmt,...) fprintf(stderr, Fmt "\n", ##__VA_ARGS__)
 #define PROGMEM
 #endif
-
-#define EXPAND(X,Y) (assert(sizeof(Y) >= sizeof(X)), (X) << (CHAR_BIT * (sizeof(Y) - sizeof(X))))
-#define SHRINK(X,Y) (assert(sizeof(X) >= sizeof(Y)), (X) >> (CHAR_BIT * (sizeof(X) - sizeof(Y))))
-
-typedef DECODE_DATA_TYPE FILTER_IN_DATA;
-typedef FILTER_IN_DATA FILTER_OUT_DATA;
-
-typedef int8_t RMS_IN_DATA;
-typedef int8_t RUNS_OUT_DATA;
-
-typedef RMS_OUT_DATA RUNS_IN_DATA;
-typedef RUNS_OUT_DATA DECODE_IN_DATA;
-
-struct bits_state {
-    int8_t off;
-    int8_t last;
-    uint8_t bit;
-    char byte;
-};
 
 static bool decode(const SERIAL_CONFIG *c, struct bits_state *s, int8_t offset, DECODE_IN_DATA datum, char *out)
 {
@@ -116,13 +93,6 @@ static bool decode(const SERIAL_CONFIG *c, struct bits_state *s, int8_t offset, 
     return false;
 }
 
-struct rms_state {
-    RMS_OUT_DATA window[MAX_RMS_SAMPLES];
-    RMS_OUT_DATA sum;
-    uint8_t ptr;
-    bool primed;
-};
-
 // TODO rename -- we do not actually do the "root" part of RMS since it is
 // expensive and for our purposes unnecessary.
 static bool rms(const uint8_t window_size, struct rms_state *s, RMS_IN_DATA datum, RMS_OUT_DATA *out)
@@ -144,10 +114,6 @@ static bool rms(const uint8_t window_size, struct rms_state *s, RMS_IN_DATA datu
     return s->primed;
 }
 
-struct runs_state {
-    RUNS_OUT_DATA current;
-};
-
 static bool runs(int8_t hysteresis, struct runs_state *s, RUNS_IN_DATA da, RUNS_IN_DATA db, RUNS_OUT_DATA *out)
 {
     int8_t inc = (da > db) ?  1 :
@@ -168,12 +134,6 @@ static bool runs(int8_t hysteresis, struct runs_state *s, RUNS_IN_DATA da, RUNS_
 
     return true;
 }
-
-struct filter_state {
-    FILTER_STATE_DATA in[3];
-    FILTER_STATE_DATA out[3];
-    uint8_t ptr;
-};
 
 static bool filter(const struct filter_config * PROGMEM c, struct filter_state *s, FILTER_IN_DATA datum, FILTER_OUT_DATA *out)
 {
@@ -206,13 +166,6 @@ static bool filter(const struct filter_config * PROGMEM c, struct filter_state *
 
     return true;
 }
-
-struct decode_state {
-    struct rms_state rms[2];
-    struct filter_state filt[2];
-    struct runs_state run;
-    struct bits_state dec;
-};
 
 DECODE_STATE *CAT(make_decode_state,DECODE_BITS)()
 {
