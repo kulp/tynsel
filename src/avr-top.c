@@ -57,8 +57,12 @@ static AUDIO_CONFIG audio EEMEM = {
 };
 
 // These flags will be tripped by interrupt handlers
-volatile bool encoder_ready = false;
-volatile bool decoder_ready = false;
+typedef struct {
+    bool encoder_ready:1;
+    bool decoder_ready:1;
+    unsigned :6;
+} INTERRUPT_FLAGS;
+static volatile INTERRUPT_FLAGS *flags = (volatile INTERRUPT_FLAGS *)&GPIOR0;
 
 // Serial in and out
 volatile char serial_in  = 0;
@@ -66,7 +70,7 @@ volatile char serial_out = 0;
 
 ISR(ADC0_RESRDY_vect)
 {
-    decoder_ready = true;
+    flags->decoder_ready = true;
 }
 
 decode_init decode_state_init16;
@@ -95,8 +99,8 @@ _Noreturn static void run(BYTE_STATE *bs, DECODE_STATE *ds)
     encode_pusher *encode_bytes = encode_bytes16;
 
     while (true) {
-        if (decoder_ready) {
-            decoder_ready = false;
+        if (flags->decoder_ready) {
+            flags->decoder_ready = false;
 
             char d = 0;
             DECODE_DATA_TYPE audio_in = (DECODE_DATA_TYPE)ADC0.RES;
@@ -104,8 +108,8 @@ _Noreturn static void run(BYTE_STATE *bs, DECODE_STATE *ds)
             serial_out = d;
         }
 
-        if (encoder_ready) {
-            encoder_ready = false;
+        if (flags->encoder_ready) {
+            flags->encoder_ready = false;
 
             ENCODE_DATA_TYPE e = 0;
             encode_bytes(&tt_serial, bs, true, audio.channel, serial_in, &e);
