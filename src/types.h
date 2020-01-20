@@ -51,4 +51,11 @@ static const unsigned int SAMPLE_RATE = 8000;
 static const unsigned int BAUD_RATE = 300;
 static const unsigned int SAMPLES_PER_BIT = (SAMPLE_RATE + BAUD_RATE - 1) / BAUD_RATE; // round up (err on the slow side)
 
+#define FREQUENCY_LIST(_) \
+    _(CHAN_ZERO, BIT_ZERO, 1070) \
+    _(CHAN_ZERO, BIT_ONE , 1270) \
+    _(CHAN_ONE , BIT_ZERO, 2025) \
+    _(CHAN_ONE , BIT_ONE , 2225) \
+    // end macro
+
 #endif

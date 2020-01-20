@@ -53,12 +53,9 @@ static inline PHASE_STEP get_phase_step(uint16_t freq)
 
 static inline uint16_t get_frequency(enum channel channel, enum bit bit)
 {
-    static const uint16_t freqs[CHAN_max][BIT_max] = {
-        [CHAN_ZERO][BIT_ZERO] = 1070,
-        [CHAN_ZERO][BIT_ONE ] = 1270,
-        [CHAN_ONE ][BIT_ZERO] = 2025,
-        [CHAN_ONE ][BIT_ONE ] = 2225,
-    };
+    #define INIT_2D_ARRAY(X,Y,Z) [X][Y] = Z,
+
+    static const uint16_t freqs[CHAN_max][BIT_max] = { FREQUENCY_LIST(INIT_2D_ARRAY) };
 
     return freqs[channel][bit];
 }
