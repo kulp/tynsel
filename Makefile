@@ -100,7 +100,7 @@ listen: decode-16bit.o
 listen: decode-8bit.o
 
 coeffs_%.h: scripts/gen_notch.m
-	$(realpath $<) $$(echo $* | (IFS=_; read a b c ; echo $$a $$b $$c)) > $@
+	$(realpath $<) $$(echo $* | (IFS=_; read a b c ; echo $$b $$c $$a)) > $@
 
 OBJ_PREFIXES = NULL avr-
 OBJ_SUFFIXES = NULL -8bit -16bit

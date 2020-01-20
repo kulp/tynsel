@@ -5,10 +5,10 @@ if nargin != 3
     exit(1)
 endif
 
-notch_freq = str2num(arg_list{1});
-sample_rate = str2num(arg_list{2});
+sample_rate = str2num(arg_list{1});
 nyquist = sample_rate / 2;
-notch_width = str2num(arg_list{3});
+notch_width = str2num(arg_list{2});
+notch_freq = str2num(arg_list{3});
 
 pkg load signal;
 [b, a] = pei_tseng_notch(notch_freq / nyquist, notch_width / nyquist);
