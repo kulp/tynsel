@@ -225,15 +225,8 @@ static bool filter(const struct filter_config * PROGMEM c, struct filter_state *
     return true;
 }
 
-static const struct filter_config coeffs[CHAN_max][BIT_max] PROGMEM = {
-    [CHAN_ZERO][BIT_ZERO] =
-            #include "coeffs_1070_8000_150.h"
-    [CHAN_ZERO][BIT_ONE] =
-            #include "coeffs_1270_8000_150.h"
-    [CHAN_ONE][BIT_ZERO] =
-            #include "coeffs_2025_8000_150.h"
-    [CHAN_ONE][BIT_ONE] =
-            #include "coeffs_2225_8000_150.h"
+static const struct filter_config coeffs[] PROGMEM = {
+    #include "coeffs_8000_150.h"
 };
 
 bool CAT(pump_decoder,DECODE_BITS)(
@@ -254,8 +247,8 @@ bool CAT(pump_decoder,DECODE_BITS)(
 
     FILTER_OUT_DATA f[2] = { 0 };
     if (
-            ! filter(&coeffs[audio->channel][BIT_ZERO], &filt_states[0], *in, &f[0])
-        ||  ! filter(&coeffs[audio->channel][BIT_ONE ], &filt_states[1], *in, &f[1])
+            ! filter(&coeffs[audio->channel * BIT_max + BIT_ZERO], &filt_states[0], *in, &f[0])
+        ||  ! filter(&coeffs[audio->channel * BIT_max + BIT_ONE ], &filt_states[1], *in, &f[1])
         )
         return false;
 

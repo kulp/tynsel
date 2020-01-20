@@ -99,8 +99,9 @@ gen: sine-8bit.o
 listen: decode-16bit.o
 listen: decode-8bit.o
 
+FREQUENCIES = $(shell echo 'FREQUENCY_LIST(FLATTEN3)' | avr-cpp -P -imacros src/types.h -D'FLATTEN3(X,Y,Z)=Z')
 coeffs_%.h: scripts/gen_notch.m
-	$(realpath $<) $$(echo $* | (IFS=_; read a b c ; echo $$b $$c $$a)) > $@
+	$(realpath $<) $$(echo $* | (IFS=_; read sample_rate notch_width rest ; echo $$sample_rate $$notch_width)) $(FREQUENCIES) > $@
 
 OBJ_PREFIXES = NULL avr-
 OBJ_SUFFIXES = NULL -8bit -16bit
