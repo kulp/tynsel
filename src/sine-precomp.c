@@ -22,9 +22,6 @@
 
 #include "sine.h"
 
-#define STR(X) STR_(X)
-#define STR_(X) # X
-
 #if defined(__AVR__)
 #include <avr/pgmspace.h>
 #else

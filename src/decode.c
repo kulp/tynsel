@@ -226,7 +226,7 @@ static bool filter(const struct filter_config * PROGMEM c, struct filter_state *
 }
 
 static const struct filter_config coeffs[] PROGMEM = {
-    #include "coeffs_8000_150.h"
+    #include STR(CAT(CAT(coeffs_,SAMPLE_RATE),CAT(CAT(_,NOTCH_WIDTH),_.h)))
 };
 
 bool CAT(pump_decoder,DECODE_BITS)(
