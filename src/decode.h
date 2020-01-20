@@ -40,9 +40,14 @@ typedef struct {
     int8_t       offset;
 } AUDIO_CONFIG;
 
+typedef struct decode_state DECODE_STATE;
+
+typedef DECODE_STATE *decode_init();
+
 typedef bool decode_pumper(
         const SERIAL_CONFIG *config,
         const AUDIO_CONFIG *audio,
+        DECODE_STATE *s,
         void *in,
         char *out
     );

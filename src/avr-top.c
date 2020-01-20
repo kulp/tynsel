@@ -68,11 +68,12 @@ ISR(ADC0_RESRDY_vect)
     decoder_ready = true;
 }
 
+decode_init make_decode_state16;
 decode_pumper pump_decoder16;
 encode_pusher encode_bytes16;
 sines_init init_sines8;
 
-static void init(BYTE_STATE *bs)
+static void init(BYTE_STATE *bs, DECODE_STATE **ds)
 {
     DAC0.DATA = 0x7f; // half-scale output
     DAC0.CTRLA |= DAC_ENABLE_bm | DAC_OUTEN_bm;
@@ -80,9 +81,12 @@ static void init(BYTE_STATE *bs)
     sines_init *init_sines = init_sines8;
 
     init_sines(&bs->bit_state.sample_state.quadrant, 1.0 /* ignored */);
+
+    decode_init *init_decoder = make_decode_state16;
+    *ds = init_decoder();
 }
 
-_Noreturn static void run(BYTE_STATE *bs)
+_Noreturn static void run(BYTE_STATE *bs, DECODE_STATE *ds)
 {
     decode_pumper *pump_decoder = pump_decoder16;
     encode_pusher *encode_bytes = encode_bytes16;
@@ -93,7 +97,7 @@ _Noreturn static void run(BYTE_STATE *bs)
 
             char d = 0;
             DECODE_DATA_TYPE audio_in = (DECODE_DATA_TYPE)ADC0.RES;
-            pump_decoder(&tt_serial, &audio, &audio_in, &d);
+            pump_decoder(&tt_serial, &audio, ds, &audio_in, &d);
             serial_out = d;
         }
 
@@ -112,7 +116,8 @@ _Noreturn static void run(BYTE_STATE *bs)
 int main()
 {
     BYTE_STATE bs = { .channel = audio.channel };
+    DECODE_STATE *ds = NULL;
 
-    init(&bs);
-    run(&bs);
+    init(&bs, &ds);
+    run(&bs, ds);
 }

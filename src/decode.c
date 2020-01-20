@@ -233,33 +233,43 @@ static const struct filter_config coeffs[] PROGMEM = {
     #include STR(CAT(CAT(coeffs_,SAMPLE_RATE),CAT(CAT(_,NOTCH_WIDTH),_.h)))
 };
 
+struct decode_state {
+    struct rms_state rms[2];
+    struct filter_state filt[2];
+    struct runs_state run;
+    struct bits_state dec;
+};
+
+DECODE_STATE *CAT(make_decode_state,DECODE_BITS)()
+{
+    static DECODE_STATE state = {
+        .dec = { .off = -1, .last = THRESHOLD },
+    };
+
+    return &state;
+}
+
 bool CAT(pump_decoder,DECODE_BITS)(
         const SERIAL_CONFIG *c,
         const AUDIO_CONFIG *audio,
+        DECODE_STATE *s,
         void *p,
         char *out
     )
 {
     DECODE_DATA_TYPE *in = (DECODE_DATA_TYPE*)p;
-    static struct rms_state rms_states[2] = { { .ptr = 0 } };
-
-    static struct filter_state filt_states[2] = { { .ptr = 0 } };
-
-    static struct runs_state run_state = { .current = 0 };
-
-    static struct bits_state dec_state = { .off = -1, .last = THRESHOLD };
 
     FILTER_OUT_DATA f[2] = { 0 };
     if (
-            ! filter(&coeffs[audio->channel * BIT_max + BIT_ZERO], &filt_states[0], *in, &f[0])
-        ||  ! filter(&coeffs[audio->channel * BIT_max + BIT_ONE ], &filt_states[1], *in, &f[1])
+            ! filter(&coeffs[audio->channel * BIT_max + BIT_ZERO], &s->filt[0], *in, &f[0])
+        ||  ! filter(&coeffs[audio->channel * BIT_max + BIT_ONE ], &s->filt[1], *in, &f[1])
         )
         return false;
 
     RMS_OUT_DATA ra = 0, rb = 0;
     if (
-            ! rms(audio->window_size, &rms_states[0], (int8_t)SHRINK((FILTER_OUT_DATA)(f[0] - *in), int8_t), &ra)
-        ||  ! rms(audio->window_size, &rms_states[1], (int8_t)SHRINK((FILTER_OUT_DATA)(f[1] - *in), int8_t), &rb)
+            ! rms(audio->window_size, &s->rms[0], (int8_t)SHRINK((FILTER_OUT_DATA)(f[0] - *in), int8_t), &ra)
+        ||  ! rms(audio->window_size, &s->rms[1], (int8_t)SHRINK((FILTER_OUT_DATA)(f[1] - *in), int8_t), &rb)
         )
         return false;
 
@@ -267,9 +277,9 @@ bool CAT(pump_decoder,DECODE_BITS)(
         return false;
 
     RUNS_OUT_DATA ro = 0;
-    if (! runs(audio->hysteresis, &run_state, ra, rb, &ro))
+    if (! runs(audio->hysteresis, &s->run, ra, rb, &ro))
         return false;
 
-    return decode(c, &dec_state, audio->offset, ro, out);
+    return decode(c, &s->dec, audio->offset, ro, out);
 }
 

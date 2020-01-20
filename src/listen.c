@@ -58,6 +58,9 @@ static int parse_opts(AUDIO_CONFIG *c, int argc, char *argv[], uint8_t *bits, FI
     return 0;
 }
 
+decode_init make_decode_state8;
+decode_init make_decode_state16;
+
 decode_pumper pump_decoder8;
 decode_pumper pump_decoder16;
 
@@ -78,17 +81,23 @@ int main(int argc, char *argv[])
     if (parse_opts(&audio, argc, argv, &bits, &input_stream, &output_stream))
         exit(EXIT_FAILURE);
 
-    decode_pumper *decoders[] = {
-        [8]  = pump_decoder8,
-        [16] = pump_decoder16,
+    struct {
+        decode_init *init;
+        decode_pumper *pump;
+    } decoders[] = {
+        [8]  = { make_decode_state8,  pump_decoder8  },
+        [16] = { make_decode_state16, pump_decoder16 },
     };
 
-    if (bits >= sizeof(decoders) / sizeof(decoders[0]) || ! decoders[bits]) {
+    if (bits >= sizeof(decoders) / sizeof(decoders[0]) || ! decoders[bits].init) {
         fprintf(stderr, "No decoder found for bits=%d\n", bits);
         exit(EXIT_FAILURE);
     }
 
-    decode_pumper *pump_decoder = decoders[bits];
+    decode_init   *init_decoder = decoders[bits].init;
+    decode_pumper *pump_decoder = decoders[bits].pump;
+
+    DECODE_STATE *state = init_decoder();
 
     // Do not buffer output at all
     setvbuf(output_stream, NULL, _IONBF, 0);
@@ -112,7 +121,7 @@ int main(int argc, char *argv[])
         }
 
         char out = 0;
-        if (pump_decoder(&config, &audio, &in, &out))
+        if (pump_decoder(&config, &audio, state, &in, &out))
             fputc(out, output_stream);
     }
 
