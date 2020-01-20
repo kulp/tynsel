@@ -167,15 +167,6 @@ static bool filter(const struct filter_config * PROGMEM c, struct filter_state *
     return true;
 }
 
-DECODE_STATE *CAT(make_decode_state,DECODE_BITS)()
-{
-    static DECODE_STATE state = {
-        .dec = { .off = -1, .last = THRESHOLD },
-    };
-
-    return &state;
-}
-
 bool CAT(pump_decoder,DECODE_BITS)(
         const SERIAL_CONFIG *c,
         const AUDIO_CONFIG *audio,

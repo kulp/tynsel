@@ -89,6 +89,7 @@ avr-top.o: DECODE_BITS = 16
 avr-top: avr-sine-precomp-8bit.o
 avr-top: avr-encode-16bit.o
 avr-top: avr-decode-16bit.o
+avr-top: avr-decode-static-16bit.o
 avr-top: avr-coeff.o
 
 FLASH_SECTIONS = text data vectors
@@ -105,6 +106,8 @@ gen: sine-16bit.o
 gen: sine-8bit.o
 listen: decode-16bit.o
 listen: decode-8bit.o
+listen: decode-static-8bit.o
+listen: decode-static-16bit.o
 listen: coeff.o
 
 FREQUENCIES = $(shell echo 'FREQUENCY_LIST(FLATTEN3)' | avr-cpp -P $(CPPFLAGS) -imacros src/types.h -D'FLATTEN3(X,Y,Z)=Z')
