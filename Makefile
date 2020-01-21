@@ -16,7 +16,7 @@ CFLAGS += -Werror
 CPPFLAGS += -std=c11
 
 # Look for generated files in the base directory
-CPPFLAGS += -I.
+coeff.o sine-precomp%.o avr-coeff.o avr-sine-precomp%.o: CPPFLAGS += -I.
 
 ifneq ($(LTO),0)
 LTO_FLAGS += -flto=jobserver -fuse-linker-plugin
