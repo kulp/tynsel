@@ -5,6 +5,8 @@ SAMPLE_RATE = 8000
 ifneq ($(DEBUG),)
 CFLAGS += -g -O0
 CPPFLAGS += -DDEBUG
+else
+CPPFLAGS += -DNDEBUG
 endif
 
 CFLAGS += -Wall -Wextra -Wunused
@@ -67,7 +69,6 @@ avr-%: LD = avr-gcc
 AVR_OPTFLAGS ?= -Os $(LTO_FLAGS)
 
 AVR_CPPFLAGS += $(ARCH_FLAGS)
-AVR_CPPFLAGS += -DNDEBUG
 avr-%: CPPFLAGS += $(AVR_CPPFLAGS)
 
 AVR_CFLAGS += $(AVR_OPTFLAGS)
