@@ -137,7 +137,7 @@ static bool runs(int8_t hysteresis, struct runs_state *s, RUNS_IN_DATA da, RUNS_
 
 static bool filter(const struct filter_config * PROGMEM c, struct filter_state *s, FILTER_IN_DATA datum, FILTER_OUT_DATA *out)
 {
-    s->in[s->ptr] = EXPAND(datum, FILTER_STATE_DATA);
+    s->in[s->ptr] = datum;
 
     // Avoid expensive modulo
     #define MOD(x,n) ((x) >= (n) ? (x) - (n) : (x))
@@ -150,9 +150,9 @@ static bool filter(const struct filter_config * PROGMEM c, struct filter_state *
 #endif
 
     s->out[s->ptr] = 0
-        + FILTER_MULT(COEFF(b, 0), INDEX(s->in ,  0))
-        + FILTER_MULT(COEFF(b, 1), INDEX(s->in , -1))
-        + FILTER_MULT(COEFF(b, 2), INDEX(s->in , -2))
+        + FILTER_MULT(COEFF(b, 0), EXPAND(INDEX(s->in,  0), FILTER_STATE_DATA))
+        + FILTER_MULT(COEFF(b, 1), EXPAND(INDEX(s->in, -1), FILTER_STATE_DATA))
+        + FILTER_MULT(COEFF(b, 2), EXPAND(INDEX(s->in, -2), FILTER_STATE_DATA))
 
         // coefficient a0 is special, and does not appear here
         - FILTER_MULT(COEFF(a, 1), INDEX(s->out, -1))

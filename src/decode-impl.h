@@ -60,7 +60,7 @@ struct runs_state {
 };
 
 struct filter_state {
-    FILTER_STATE_DATA in[3];
+    FILTER_IN_DATA in[3];
     FILTER_STATE_DATA out[3];
     uint8_t ptr;
 };
