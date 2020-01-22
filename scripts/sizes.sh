@@ -18,13 +18,13 @@ function section_size ()
 out=$(mktemp -d)
 echo >&2 "Output: $out"
 
-make --directory=$here/.. --jobs --always-make LTO=1 avr-top &> /dev/null
-cp -p avr-top $out/avr-top.lto
+make --directory=$here/.. --jobs --always-make avr-top &> /dev/null
+cp -p avr-top $out/avr-top
 
-text=$(section_size $out/avr-top.lto .text)
-data=$(section_size $out/avr-top.lto .data)
-bss=$(section_size $out/avr-top.lto .bss)
-eeprom=$(section_size $out/avr-top.lto .eeprom)
+text=$(section_size $out/avr-top .text)
+data=$(section_size $out/avr-top .data)
+bss=$(section_size $out/avr-top .bss)
+eeprom=$(section_size $out/avr-top .eeprom)
 
 printf ".text:   %6d\n" $text
 printf ".data:   %6d\n" $data
