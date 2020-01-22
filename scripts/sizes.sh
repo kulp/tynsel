@@ -35,12 +35,9 @@ data=$(section_size $out/avr-top.lto .data)
 bss=$(section_size $out/avr-top.lto .bss)
 eeprom=$(section_size $out/avr-top.lto .eeprom)
 
-printf ".text:  %6d\n" $text
-printf ".data:  %6d\n" $data
-printf ".bss:   %6d\n" $bss
-printf "stack:  %6d\n" $stack
-echo   "--------------"
-printf "RAM:    %6d\n" $(( data + bss + stack ))
-printf "Flash:  %6d\n" $text
-printf "EEPROM: %6d\n" $eeprom
+printf ".text:   %6d\n" $text
+printf ".data:   %6d\n" $data
+printf ".bss:    %6d\n" $bss
+printf ".eeprom: %6d\n" $eeprom
+printf "stack:   %6d\n" $stack
 
