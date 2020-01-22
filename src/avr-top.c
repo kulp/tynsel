@@ -73,30 +73,30 @@ ISR(ADC0_RESRDY_vect)
     flags->decoder_ready = true;
 }
 
-decode_init decode_state_init16;
-decode_pumper pump_decoder16;
-decode_fini decode_state_fini16;
+decode_init CAT(decode_state_init,DECODE_BITS);
+decode_pumper CAT(pump_decoder,DECODE_BITS);
+decode_fini CAT(decode_state_fini,DECODE_BITS);
 
-encode_pusher encode_bytes16;
-sines_init init_sines8;
+encode_pusher CAT(encode_bytes,ENCODE_BITS);
+sines_init CAT(init_sines,ENCODE_BITS);
 
 static void init(BYTE_STATE *bs, DECODE_STATE **ds)
 {
     DAC0.DATA = 0x7f; // half-scale output
     DAC0.CTRLA |= DAC_ENABLE_bm | DAC_OUTEN_bm;
 
-    sines_init *init_sines = init_sines8;
+    sines_init *init_sines = CAT(init_sines,ENCODE_BITS);
 
     init_sines(&bs->bit_state.sample_state.quadrant, 1.0 /* ignored */);
 
-    decode_init *init_decoder = decode_state_init16;
+    decode_init *init_decoder = CAT(decode_state_init,DECODE_BITS);
     *ds = init_decoder();
 }
 
 _Noreturn static void run(BYTE_STATE *bs, DECODE_STATE *ds)
 {
-    decode_pumper *pump_decoder = pump_decoder16;
-    encode_pusher *encode_bytes = encode_bytes16;
+    decode_pumper *pump_decoder = CAT(pump_decoder,DECODE_BITS);
+    encode_pusher *encode_bytes = CAT(encode_bytes,ENCODE_BITS);
 
     while (true) {
         if (flags->decoder_ready) {
@@ -123,7 +123,7 @@ _Noreturn static void run(BYTE_STATE *bs, DECODE_STATE *ds)
 static void fini(BYTE_STATE *bs, DECODE_STATE **ds)
 {
     (void)bs;
-    decode_fini *fini_decoder = decode_state_fini16;
+    decode_fini *fini_decoder = CAT(decode_state_fini,DECODE_BITS);
     fini_decoder(*ds);
     *ds = NULL;
 }

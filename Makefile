@@ -83,12 +83,13 @@ avr-%: LDFLAGS += $(AVR_LDFLAGS)
 avr-%.o: %.c
 	$(COMPILE.c) -o $@ $<
 
-avr-top.o: ENCODE_BITS = 8
-avr-top.o: DECODE_BITS = 16
-avr-top: avr-sine-precomp-8bit.o
-avr-top: avr-encode-16bit.o
-avr-top: avr-decode-16bit.o
-avr-top: avr-decode-static-16bit.o
+.SECONDEXPANSION:
+avr-top: ENCODE_BITS = 8
+avr-top: DECODE_BITS = 16
+avr-top: avr-sine-precomp-$$(ENCODE_BITS)bit.o
+avr-top: avr-encode-$$(ENCODE_BITS)bit.o
+avr-top: avr-decode-$$(DECODE_BITS)bit.o
+avr-top: avr-decode-static-$$(DECODE_BITS)bit.o
 avr-top: avr-coeff.o
 
 FLASH_SECTIONS = text data vectors
