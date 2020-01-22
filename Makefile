@@ -15,7 +15,8 @@ CFLAGS += -Wall -Wextra -Wunused
 CFLAGS += -Wc++-compat
 CFLAGS += -Werror
 
-CPPFLAGS += -std=c11
+LANG_STD = -std=c11
+CPPFLAGS += $(LANG_STD)
 
 # Look for generated files in the base directory
 coeff.o sine-precomp%.o avr-coeff.o avr-sine-precomp%.o: CPPFLAGS += -I.
@@ -83,9 +84,37 @@ avr-%: LDFLAGS += $(AVR_LDFLAGS)
 avr-%.o: %.c
 	$(COMPILE.c) -o $@ $<
 
+sim-%: CXXFLAGS += $(AVR_CFLAGS)
+sim-%: LDFLAGS += $(AVR_LDFLAGS)
+
+sim-%: CPPFLAGS += $(AVR_CPPFLAGS)
+sim-%: CPPFLAGS += -DNULL=0
+sim-%: CPPFLAGS += -Wno-error=unused-command-line-argument
+sim-%: CPPFLAGS += -Wno-error=\#warnings
+sim-%: CPPFLAGS += -Wno-error=unknown-attributes
+sim-%: CPPFLAGS += -Wno-error=macro-redefined
+sim-%: CPPFLAGS += -Wno-error=padded
+
+sim-%: CPPFLAGS += -D__AVR_ATtiny412__
+# Prevent the use of inline AVR assembly in avr/sleep.h
+sim-%: CPPFLAGS += -D_AVR_SLEEP_H_
+#sim-%: CPPFLAGS += -D__externally_visible__='visibility("default")'
+# Work around incompatible section attributes across object formats
+sim-%: CPPFLAGS += -D'section(...)='
+
+#sim-%: CPPFLAGS += -include signal.h
+sim-%: CPPFLAGS += -D'sleep_mode()=(void)0' # TODO
+
+# Simulation objects get compiled as C++ files, enabling some dirty tricks to
+# replacement assignments
+sim-top.o: LANG_STD = -std=c++11
+
+sim-%.o: avr-%.c
+	$(COMPILE.cc) -x c++ $(CFLAGS) -o $@ $<
+
 .SECONDEXPANSION:
-avr-top: ENCODE_BITS = 8
-avr-top: DECODE_BITS = 16
+%-top: ENCODE_BITS = 8
+%-top: DECODE_BITS = 16
 avr-top: avr-sine-precomp-$$(ENCODE_BITS)bit.o
 avr-top: avr-encode-$$(ENCODE_BITS)bit.o
 avr-top: avr-decode-$$(DECODE_BITS)bit.o
