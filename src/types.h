@@ -55,7 +55,7 @@ enum { NUM_START_BITS = 1 };
 #endif
 
 static const unsigned int BAUD_RATE = 300;
-static const unsigned int SAMPLES_PER_BIT = (SAMPLE_RATE + BAUD_RATE - 1) / BAUD_RATE; // round up (err on the slow side)
+static const unsigned int SAMPLES_PER_BIT = (SAMPLE_RATE + BAUD_RATE / 2) / BAUD_RATE; // round to nearest
 
 #define FREQUENCY_LIST(_) \
     _(CHAN_ZERO, BIT_ZERO, 1070) \
