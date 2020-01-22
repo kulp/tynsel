@@ -70,7 +70,6 @@ AVR_CPPFLAGS += $(ARCH_FLAGS)
 avr-%: CPPFLAGS += $(AVR_CPPFLAGS)
 
 AVR_CFLAGS += $(AVR_OPTFLAGS)
-AVR_CFLAGS += -ffunction-sections
 AVR_CFLAGS += -fshort-enums
 AVR_CFLAGS += -Wpadded
 avr-%.o: CFLAGS += $(AVR_CFLAGS)
