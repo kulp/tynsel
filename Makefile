@@ -96,7 +96,9 @@ FLASH_SECTIONS = text data vectors
 %.hex: avr-%
 	avr-objcopy $(FLASH_SECTIONS:%=-j .%) -O ihex $< $@
 
+ifneq ($(DEBUG),)
 gen listen: CFLAGS += -O3
+endif
 
 vpath %.c src
 
