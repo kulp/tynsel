@@ -61,8 +61,6 @@ sinetable_%_8b.h: sine-gen-8bit
 
 -include avr-site.mk
 
-avr-%: ARCH_FLAGS += -mmcu=attiny412
-
 avr-%: CC = avr-gcc
 avr-%: LD = avr-gcc
 
