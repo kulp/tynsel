@@ -19,7 +19,7 @@ CPPFLAGS += -std=c11
 coeff.o sine-precomp%.o avr-coeff.o avr-sine-precomp%.o: CPPFLAGS += -I.
 
 ifneq ($(LTO),0)
-LTO_FLAGS += -flto=jobserver -fuse-linker-plugin
+LTO_FLAGS += -flto
 endif
 
 CPPFLAGS += $(if $(ENCODE_BITS),-DENCODE_BITS=$(ENCODE_BITS))
