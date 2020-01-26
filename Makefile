@@ -88,30 +88,34 @@ avr-%: LDFLAGS += $(AVR_LDFLAGS)
 avr-%.o: %.c
 	$(COMPILE.c) -o $@ $<
 
+sim-%: CPPFLAGS += $(SIM_CPPFLAGS)
+sim-%.o: CFLAGS += $(SIM_CFLAGS)
+sim-%: LDFLAGS += $(SIM_LDFLAGS)
+
 sim-%.o: %.c
 	$(COMPILE.c) -o $@ $<
 
-sim-%: CXXFLAGS += $(AVR_CFLAGS)
-sim-%: LDFLAGS += $(AVR_LDFLAGS)
+sim-%: SIM_CXXFLAGS += $(AVR_CFLAGS)
+sim-%: SIM_LDFLAGS += $(AVR_LDFLAGS)
 
-sim-%: CPPFLAGS += $(AVR_CPPFLAGS)
-sim-%: CPPFLAGS += -DNULL=0
-sim-%: CPPFLAGS += -Wno-error=unused-command-line-argument
-sim-%: CPPFLAGS += -Wno-error=\#warnings
-sim-%: CPPFLAGS += -Wno-error=unknown-attributes
-sim-%: CPPFLAGS += -Wno-error=macro-redefined
-sim-%: CPPFLAGS += -Wno-error=padded
+sim-%: SIM_CPPFLAGS += $(AVR_CPPFLAGS)
+sim-%: SIM_CPPFLAGS += -DNULL=0
+sim-%: SIM_CPPFLAGS += -Wno-error=unused-command-line-argument
+sim-%: SIM_CPPFLAGS += -Wno-error=\#warnings
+sim-%: SIM_CPPFLAGS += -Wno-error=unknown-attributes
+sim-%: SIM_CPPFLAGS += -Wno-error=macro-redefined
+sim-%: SIM_CPPFLAGS += -Wno-error=padded
 
-sim-%: CPPFLAGS += -D__AVR_ATtiny412__
+sim-%: SIM_CPPFLAGS += -D__AVR_ATtiny412__
 # Prevent the use of inline AVR assembly in avr/sleep.h
-sim-%: CPPFLAGS += -D_AVR_SLEEP_H_
-#sim-%: CPPFLAGS += -D__externally_visible__='visibility("default")'
+sim-%: SIM_CPPFLAGS += -D_AVR_SLEEP_H_
+#sim-%: SIM_CPPFLAGS += -D__externally_visible__='visibility("default")'
 # Work around incompatible section attributes across object formats
-sim-%: CPPFLAGS += -D'section(...)='
-sim-%: CPPFLAGS += -D'EXTERN=extern "C"'
+sim-%: SIM_CPPFLAGS += -D'section(...)='
+sim-%: SIM_CPPFLAGS += -D'EXTERN=extern "C"'
 
-#sim-%: CPPFLAGS += -include signal.h
-sim-%: CPPFLAGS += -D'sleep_mode()=(void)0' # TODO
+#sim-%: SIM_CPPFLAGS += -include signal.h
+sim-%: SIM_CPPFLAGS += -D'sleep_mode()=(void)0' # TODO
 
 # Simulation objects get compiled as C++ files, enabling some dirty tricks to
 # replacement assignments
