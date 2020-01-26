@@ -73,12 +73,12 @@ ISR(ADC0_RESRDY_vect)
     flags->decoder_ready = true;
 }
 
-decode_init CAT(decode_state_init,DECODE_BITS);
-decode_pumper CAT(pump_decoder,DECODE_BITS);
-decode_fini CAT(decode_state_fini,DECODE_BITS);
+EXTERN decode_init CAT(decode_state_init,DECODE_BITS);
+EXTERN decode_pumper CAT(pump_decoder,DECODE_BITS);
+EXTERN decode_fini CAT(decode_state_fini,DECODE_BITS);
 
-encode_pusher CAT(encode_bytes,ENCODE_BITS);
-sines_init CAT(init_sines,ENCODE_BITS);
+EXTERN encode_pusher CAT(encode_bytes,ENCODE_BITS);
+EXTERN sines_init CAT(init_sines,ENCODE_BITS);
 
 static void init(BYTE_STATE *bs, DECODE_STATE **ds)
 {

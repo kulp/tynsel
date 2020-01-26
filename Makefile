@@ -71,6 +71,7 @@ AVR_OPTFLAGS ?= -Os $(LTO_FLAGS)
 
 AVR_CPPFLAGS += $(ARCH_FLAGS)
 avr-%: CPPFLAGS += $(AVR_CPPFLAGS)
+avr-%: CPPFLAGS += -DEXTERN=extern
 
 AVR_CFLAGS += $(AVR_OPTFLAGS)
 AVR_CFLAGS += -fshort-enums
@@ -101,6 +102,7 @@ sim-%: CPPFLAGS += -D_AVR_SLEEP_H_
 #sim-%: CPPFLAGS += -D__externally_visible__='visibility("default")'
 # Work around incompatible section attributes across object formats
 sim-%: CPPFLAGS += -D'section(...)='
+sim-%: CPPFLAGS += -D'EXTERN=extern "C"'
 
 #sim-%: CPPFLAGS += -include signal.h
 sim-%: CPPFLAGS += -D'sleep_mode()=(void)0' # TODO
