@@ -123,6 +123,12 @@ avr-top: avr-decode-$$(DECODE_BITS)bit.o
 avr-top: avr-decode-static-$$(DECODE_BITS)bit.o
 avr-top: avr-coeff.o
 
+sim-top: sim-sine-precomp-$$(ENCODE_BITS)bit.o
+sim-top: sim-encode-$$(ENCODE_BITS)bit.o
+sim-top: sim-decode-$$(DECODE_BITS)bit.o
+sim-top: sim-decode-static-$$(DECODE_BITS)bit.o
+sim-top: sim-coeff.o
+
 FLASH_SECTIONS = text data vectors
 %.hex: avr-%
 	avr-objcopy $(FLASH_SECTIONS:%=-j .%) -O ihex $< $@
