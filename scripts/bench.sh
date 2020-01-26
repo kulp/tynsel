@@ -3,7 +3,7 @@ set -euo pipefail
 here=$(dirname $0)
 channel=0
 bits_per_sample=16
-sample_rate=8000
+sample_rate=8192
 baud_rate=300
 bits_per_word=11
 byte_count=100
@@ -50,15 +50,15 @@ do
     rand=$(mktemp $outdir/random_bytes.XXXXXX)
     stem=$(basename $rand)
     random_bytes $byte_count > $rand
+    generate_audio $rand > $rand.audio
     for noise_level in 0 0.1 0.2 0.4 0.8
     do
+        noise=$(mktemp $outdir/noise-$noise_level.XXXXXX)
+        noise $(compute_duration $byte_count) $noise_level > $noise
+        mix $rand.audio $noise > $rand.audio.noised-$noise_level
+
         for threshold in 1 16 256 1024
         do
-            generate_audio $rand > $rand.audio
-            noise=$(mktemp $outdir/noise.XXXXXX)
-            noise $(compute_duration $byte_count) $noise_level > $noise
-            mix $rand.audio $noise > $rand.audio.noised
-
             for rms_samples in {5..8} # 8 is the hardcoded maximum in the embedded code at this time
             do
                 for hysteresis in {4..11}
@@ -70,7 +70,7 @@ do
                             mkdir -p $(dirname $out)
                             if [[ ! -e $out ]] # assume existence implies previous completion
                             then
-                                $here/../listen -C $channel -W $rms_samples -T $threshold -H $hysteresis -O $offset < $rand.audio.noised 2> /dev/null > $out
+                                $here/../listen -C $channel -W $rms_samples -T $threshold -H $hysteresis -O $offset < $rand.audio.noised-$noise_level 2> /dev/null > $out
                             fi
                         ) &
                     done
