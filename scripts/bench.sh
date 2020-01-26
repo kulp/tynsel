@@ -42,7 +42,8 @@ function mix ()
 function compute_duration ()
 {
     local bytes=$1
-    bc <<<"scale=3;$bytes*$bits_per_word/$baud_rate"
+    # `gen` generates about 576 bit-times of padding, half on each end
+    bc <<<"scale=3;($bytes*$bits_per_word+576)/$baud_rate"
 }
 
 for run in {1..10}
