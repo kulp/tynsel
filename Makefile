@@ -42,8 +42,8 @@ sine-gen%: CC = cc#       ensure we do not get compiler meant for embedded
 sine-gen-%: sine-gen-%.o sine-%.o
 	$(LINK.c) -o $@ $^ $(LDLIBS)
 
-avr-encode-% encode-%: ENCODE_BITS = $(BITWIDTH)
-avr-decode-% decode-%: DECODE_BITS = $(BITWIDTH)
+sim-encode-% avr-encode-% encode-%: ENCODE_BITS = $(BITWIDTH)
+sim-decode-% avr-decode-% decode-%: DECODE_BITS = $(BITWIDTH)
 
 sim-sine-% avr-sine-% sine-%: ENCODE_BITS = $(BITWIDTH)
 
