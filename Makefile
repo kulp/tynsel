@@ -143,7 +143,7 @@ listen: decode-heap-16bit.o
 listen: decode-heap-8bit.o
 listen: coeff.o
 
-FREQUENCIES = $(shell echo 'FREQUENCY_LIST(FLATTEN3)' | avr-cpp -P $(CPPFLAGS) -imacros src/types.h -D'FLATTEN3(X,Y,Z)=Z')
+FREQUENCIES = $(shell echo 'FREQUENCY_LIST(FLATTEN3)' | avr-cpp -P -DSAMPLE_RATE=$(SAMPLE_RATE) -imacros src/types.h -D'FLATTEN3(X,Y,Z)=Z')
 coeffs_%.h: scripts/gen_notch.m
 	$(realpath $<) $$(echo $* | (IFS=_; read sample_rate notch_width rest ; echo $$sample_rate $$notch_width)) $(FREQUENCIES) > $@
 
