@@ -59,18 +59,18 @@ do
 
         for threshold in 1 16 256 1024
         do
-            for rms_samples in {5..8} # 8 is the hardcoded maximum in the embedded code at this time
+            for window in {5..8} # 8 is the hardcoded maximum in the embedded code at this time
             do
                 for hysteresis in {4..11}
                 do
                     for offset in {1..15}
                     do
                         (
-                            out=$outdir/bits_per_sample$bits_per_sample/chan$channel/run$run.$stem/noise$noise_level/window$rms_samples/threshold$threshold/hysteresis$hysteresis/offset$offset/$stem.decoded
+                            out=$outdir/bits_per_sample$bits_per_sample/chan$channel/run$run.$stem/noise$noise_level/window$window/threshold$threshold/hysteresis$hysteresis/offset$offset/$stem.decoded
                             mkdir -p $(dirname $out)
                             if [[ ! -e $out ]] # assume existence implies previous completion
                             then
-                                $here/../listen -C $channel -W $rms_samples -T $threshold -H $hysteresis -O $offset < $rand.audio.noised-$noise_level 2> /dev/null > $out
+                                $here/../listen -C $channel -W $window -T $threshold -H $hysteresis -O $offset < $rand.audio.noised-$noise_level 2> /dev/null > $out
                             fi
                         ) &
                     done
