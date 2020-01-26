@@ -20,6 +20,7 @@ CPPFLAGS += $(LANG_STD)
 
 # Look for generated files in the base directory
 coeff.o sine-precomp%.o avr-coeff.o avr-sine-precomp%.o: CPPFLAGS += -I.
+sim-coeff.o sim-sine-precomp%.o: CPPFLAGS += -I.
 
 ifneq ($(LTO),0)
 LTO_FLAGS += -flto
@@ -44,7 +45,7 @@ sine-gen-%: sine-gen-%.o sine-%.o
 avr-encode-% encode-%: ENCODE_BITS = $(BITWIDTH)
 avr-decode-% decode-%: DECODE_BITS = $(BITWIDTH)
 
-avr-sine-% sine-%: ENCODE_BITS = $(BITWIDTH)
+sim-sine-% avr-sine-% sine-%: ENCODE_BITS = $(BITWIDTH)
 
 %-8bit.d  %-8bit.o:  BITWIDTH = 8
 %-16bit.d %-16bit.o: BITWIDTH = 16
@@ -53,6 +54,8 @@ avr-sine-% sine-%: ENCODE_BITS = $(BITWIDTH)
 %-16bit.o: %.c ; $(COMPILE.c) -o $@ $<
 avr-%-8bit.o:  %.c ; $(COMPILE.c) -o $@ $<
 avr-%-16bit.o: %.c ; $(COMPILE.c) -o $@ $<
+sim-%-8bit.o:  %.c ; $(COMPILE.c) -o $@ $<
+sim-%-16bit.o: %.c ; $(COMPILE.c) -o $@ $<
 
 avr-coeff% coeff%: CPPFLAGS += -DNOTCH_WIDTH=150
 
@@ -83,6 +86,9 @@ AVR_LDFLAGS += $(ARCH_FLAGS)
 avr-%: LDFLAGS += $(AVR_LDFLAGS)
 
 avr-%.o: %.c
+	$(COMPILE.c) -o $@ $<
+
+sim-%.o: %.c
 	$(COMPILE.c) -o $@ $<
 
 sim-%: CXXFLAGS += $(AVR_CFLAGS)
