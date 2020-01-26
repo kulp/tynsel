@@ -57,7 +57,7 @@ avr-%-16bit.o: %.c ; $(COMPILE.c) -o $@ $<
 sim-%-8bit.o:  %.c ; $(COMPILE.c) -o $@ $<
 sim-%-16bit.o: %.c ; $(COMPILE.c) -o $@ $<
 
-avr-coeff% coeff%: CPPFLAGS += -DNOTCH_WIDTH=150
+sim-coeff% avr-coeff% coeff%: CPPFLAGS += -DNOTCH_WIDTH=150
 
 SINETABLE_GAIN = 1.0
 sinetable_%_16b.h: sine-gen-16bit
@@ -163,8 +163,11 @@ FREQUENCIES = $(shell echo 'FREQUENCY_LIST(FLATTEN3)' | avr-cpp -P -DSAMPLE_RATE
 coeffs_%.h: scripts/gen_notch.m
 	$(realpath $<) $$(echo $* | (IFS=_; read sample_rate notch_width rest ; echo $$sample_rate $$notch_width)) $(FREQUENCIES) > $@
 
-OBJ_PREFIXES = NULL avr-
+OBJ_PREFIXES = NULL avr- sim-
 OBJ_SUFFIXES = NULL -8bit -16bit
+
+# Prevent passing `-mmcu=...` options when generating dependency files for sim
+sim-%.d: ARCH_FLAGS =# nothing
 
 PATS = $(subst NULL,,$(foreach p,$(OBJ_PREFIXES),$(foreach s,$(OBJ_SUFFIXES),$p%$s.d)))
 $(PATS): %.c
