@@ -4,6 +4,8 @@ SAMPLE_RATE = 8000
 
 ifneq ($(DEBUG),)
 CFLAGS += -g -O0
+CXXFLAGS += -g -O0
+LDFLAGS += -g -O0
 CPPFLAGS += -DDEBUG
 else
 CPPFLAGS += -DNDEBUG
