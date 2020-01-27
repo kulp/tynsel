@@ -27,11 +27,9 @@
 #include <limits.h>
 
 #if defined(__AVR__)
-#define WARN(...) (void)(__VA_ARGS__)
 #include <avr/pgmspace.h>
 #else
 #include <stdio.h>
-#define WARN(Fmt,...) fprintf(stderr, Fmt "\n", ##__VA_ARGS__)
 #define PROGMEM
 #endif
 
@@ -54,7 +52,7 @@ static bool decode(const SERIAL_CONFIG *c, struct bits_state *s, int8_t offset, 
             if (s->bit < NUM_START_BITS) {
                 // start bit(s)
                 if (this_bit != 0) {
-                    WARN("Start bit is not 0");
+                    // Start bit is not 0 -- restart
                     s->byte = 0;
                     s->bit = 0;
                     s->off = -1;
@@ -64,7 +62,7 @@ static bool decode(const SERIAL_CONFIG *c, struct bits_state *s, int8_t offset, 
                 // parity, skip
             } else if (s->bit >= before_stop) {
                 if (this_bit != 1) {
-                    WARN("Stop bit was not 1");
+                    // Stop bit was not 1 -- abort this byte
                     s->byte = 0;
                     s->bit = 0;
                     s->off = -1;
