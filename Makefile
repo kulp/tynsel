@@ -38,6 +38,9 @@ all: gen listen avr-top
 sine-gen%: AVR_CPPFLAGS =#ensure we do not get flags meant for embedded
 sine-gen%: AVR_CFLAGS =#  ensure we do not get flags meant for embedded
 sine-gen%: AVR_LDFLAGS =# ensure we do not get flags meant for embedded
+sine-gen%: SIM_CPPFLAGS =#ensure we do not get flags meant for sim
+sine-gen%: SIM_CFLAGS =#  ensure we do not get flags meant for sim
+sine-gen%: SIM_LDFLAGS =# ensure we do not get flags meant for sim
 sine-gen%: CC = cc#       ensure we do not get compiler meant for embedded
 sine-gen-%: sine-gen-%.o sine-%.o
 	$(LINK.c) -o $@ $^ $(LDLIBS)
