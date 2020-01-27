@@ -99,9 +99,6 @@ sim-%: LDFLAGS += $(SIM_LDFLAGS)
 sim-%.o: %.c
 	$(COMPILE.c) -o $@ $<
 
-sim-%: SIM_CXXFLAGS += $(AVR_CFLAGS)
-sim-%: SIM_LDFLAGS += $(AVR_LDFLAGS)
-
 sim-%: SIM_CPPFLAGS += $(AVR_CPPFLAGS)
 sim-%: SIM_CXXFLAGS += -DNULL=0
 sim-%: SIM_CPPFLAGS += -Wno-error=unused-command-line-argument
