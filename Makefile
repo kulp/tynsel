@@ -92,6 +92,7 @@ avr-%.o: %.c
 	$(COMPILE.c) -o $@ $<
 
 sim-%: CPPFLAGS += $(SIM_CPPFLAGS)
+sim-%: CXXFLAGS += $(SIM_CXXFLAGS)
 sim-%.o: CFLAGS += $(SIM_CFLAGS)
 sim-%: LDFLAGS += $(SIM_LDFLAGS)
 
@@ -102,7 +103,7 @@ sim-%: SIM_CXXFLAGS += $(AVR_CFLAGS)
 sim-%: SIM_LDFLAGS += $(AVR_LDFLAGS)
 
 sim-%: SIM_CPPFLAGS += $(AVR_CPPFLAGS)
-sim-%: SIM_CPPFLAGS += -DNULL=0
+sim-%: SIM_CXXFLAGS += -DNULL=0
 sim-%: SIM_CPPFLAGS += -Wno-error=unused-command-line-argument
 sim-%: SIM_CPPFLAGS += -Wno-error=\#warnings
 sim-%: SIM_CPPFLAGS += -Wno-error=unknown-attributes
@@ -115,10 +116,10 @@ sim-%: SIM_CPPFLAGS += -D_AVR_SLEEP_H_
 #sim-%: SIM_CPPFLAGS += -D__externally_visible__='visibility("default")'
 # Work around incompatible section attributes across object formats
 sim-%: SIM_CPPFLAGS += -D'section(...)='
-sim-%: SIM_CPPFLAGS += -D'EXTERN=extern "C"'
+sim-%: SIM_CXXFLAGS += -D'EXTERN=extern "C"'
 
 #sim-%: SIM_CPPFLAGS += -include signal.h
-sim-%: SIM_CPPFLAGS += -D'sleep_mode()=(void)0' # TODO
+sim-%: SIM_CXXFLAGS += -D'sleep_mode()=(void)0' # TODO
 
 # Simulation objects get compiled as C++ files, enabling some dirty tricks to
 # replacement assignments
