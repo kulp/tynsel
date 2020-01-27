@@ -121,6 +121,8 @@ sim-%: SIM_CXXFLAGS += -D'EXTERN=extern "C"'
 #sim-%: SIM_CPPFLAGS += -include signal.h
 sim-%: SIM_CXXFLAGS += -D'sleep_mode()=(void)0' # TODO
 
+sim-top: LINK.o = $(LINK.cc)
+
 # Simulation objects get compiled as C++ files, enabling some dirty tricks to
 # replacement assignments
 sim-top.o: LANG_STD = -std=c++11
