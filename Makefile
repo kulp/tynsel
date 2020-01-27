@@ -33,7 +33,7 @@ CPPFLAGS += -DSAMPLE_RATE=$(SAMPLE_RATE)
 
 SOURCES = $(notdir $(wildcard src/*.c))
 
-all: gen listen avr-top
+all: gen listen avr-top sim-top
 
 sine-gen%: AVR_CPPFLAGS =#ensure we do not get flags meant for embedded
 sine-gen%: AVR_CFLAGS =#  ensure we do not get flags meant for embedded
