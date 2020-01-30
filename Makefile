@@ -123,6 +123,11 @@ sim-top.o: src/sim-prologue.h
 
 sim-top: LINK.o = $(LINK.cc)
 
+sim-debug%: SIM_CPPFLAGS =#ensure we do not get flags meant for embedded
+sim-debug%: SIM_CFLAGS =#  ensure we do not get flags meant for embedded
+sim-debug%: SIM_LDFLAGS =# ensure we do not get flags meant for embedded
+sim-top: sim-debug.o
+
 # Simulation objects get compiled as C++ files, enabling some dirty tricks to
 # replacement assignments
 sim-top.o: CXX_STD = -std=c++11
@@ -156,6 +161,7 @@ gen listen: CFLAGS += -O3
 endif
 
 vpath %.c src
+vpath %.cc src
 
 gen: encode-16bit.o
 gen: encode-8bit.o
