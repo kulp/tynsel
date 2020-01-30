@@ -25,6 +25,11 @@
 
 extern int sim_debug(const char *fmt, ...);
 
+namespace wrapped_io
+{
+#include <avr/io.h>
+}
+
 template<typename T>
 class Register
 {
@@ -51,6 +56,8 @@ public:
         return impl;
     }
 };
+
+using namespace wrapped_io;
 
 #endif
 
