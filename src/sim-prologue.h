@@ -23,7 +23,34 @@
 #ifndef SIM_PROLOGUE_H_
 #define SIM_PROLOGUE_H_
 
- // TODO
+extern int sim_debug(const char *fmt, ...);
+
+template<typename T>
+class Register
+{
+    T impl;
+
+public:
+    Register& operator=(const T& that)
+    {
+        impl = that;
+        sim_debug("equal");
+        return *this;
+    }
+
+    Register& operator|=(const T& that)
+    {
+        impl |= that;
+        sim_debug("or-equal");
+        return *this;
+    }
+
+    operator const T&()
+    {
+        sim_debug("read");
+        return impl;
+    }
+};
 
 #endif
 
