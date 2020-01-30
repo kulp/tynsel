@@ -15,8 +15,8 @@ CFLAGS += -Wall -Wextra -Wunused
 CFLAGS += -Wc++-compat
 CFLAGS += -Werror
 
-LANG_STD = -std=c11
-CPPFLAGS += $(LANG_STD)
+C_STD = -std=c11
+CPPFLAGS += $(C_STD)
 
 # Look for generated files in the base directory
 coeff.o sine-precomp%.o avr-coeff.o avr-sine-precomp%.o: CPPFLAGS += -I.
@@ -122,7 +122,9 @@ sim-top: LINK.o = $(LINK.cc)
 
 # Simulation objects get compiled as C++ files, enabling some dirty tricks to
 # replacement assignments
-sim-top.o: LANG_STD = -std=c++11
+sim-top.o: CXX_STD = -std=c++11
+sim-%.o: C_STD =# nothing
+CXXFLAGS += $(CXX_STD)
 
 sim-%.o: avr-%.c
 	$(COMPILE.cc) -x c++ $(CFLAGS) -o $@ $<
