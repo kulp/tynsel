@@ -62,6 +62,30 @@ public:
     }
 };
 
+#undef DAC0
+#undef DAC0_CTRLA
+#undef DAC0_DATA
+
+class DAC_t : private wrapped_io::DAC_t
+{
+    typedef wrapped_io::DAC_t Base;
+    DAC_t(const DAC_t&) = delete;
+    DAC_t& operator=(const DAC_t&) = delete;
+public:
+    DAC_t()
+        : CTRLA(Base::CTRLA)
+        , DATA(Base::DATA)
+    {}
+
+    Register<wrapped_io::uint8_t> CTRLA;
+    Register<wrapped_io::uint8_t> DATA;
+};
+
+DAC_t DAC0;
+
+#define DAC0_CTRLA  (DAC0.CTRLA)
+#define DAC0_DATA   (DAC0.DATA)
+
 using namespace wrapped_io;
 
 #endif
