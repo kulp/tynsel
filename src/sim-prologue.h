@@ -33,9 +33,14 @@ namespace wrapped_io
 template<typename T>
 class Register
 {
-    T impl;
+    volatile T& impl;
+
+    Register(Register&) = delete;
+    Register& operator=(const Register&) = delete;
 
 public:
+    Register(volatile T& store) : impl(store) {}
+
     Register& operator=(const T& that)
     {
         impl = that;
