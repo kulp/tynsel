@@ -53,20 +53,20 @@ public:
     Register& operator=(const T&& that)
     {
         impl = that;
-        sim_debug("equal");
+        sim_debug(__PRETTY_FUNCTION__);
         return *this;
     }
 
     Register& operator|=(const T&& that)
     {
         impl |= that;
-        sim_debug("or-equal");
+        sim_debug(__PRETTY_FUNCTION__);
         return *this;
     }
 
     operator const T&()
     {
-        sim_debug("read");
+        sim_debug(__PRETTY_FUNCTION__);
         return impl;
     }
 };
