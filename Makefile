@@ -126,11 +126,11 @@ sim-top: LINK.o = $(LINK.cc)
 sim-debug%: SIM_CPPFLAGS =#ensure we do not get flags meant for embedded
 sim-debug%: SIM_CFLAGS =#  ensure we do not get flags meant for embedded
 sim-debug%: SIM_LDFLAGS =# ensure we do not get flags meant for embedded
-sim-top: sim-debug.o
+sim-top: sim-debug.o sim-prologue.o
 
 # Simulation objects get compiled as C++ files, enabling some dirty tricks to
 # replacement assignments
-sim-top.o: CXX_STD = -std=c++11
+sim-%.o: CXX_STD = -std=c++11
 sim-%.o: C_STD =# nothing
 CXXFLAGS += $(CXX_STD)
 

@@ -30,6 +30,8 @@ namespace wrapped_io
 #include <avr/io.h>
 }
 
+extern volatile char sim_memory[];
+
 template<typename T>
 class Register
 {
@@ -81,7 +83,7 @@ public:
     Register<decltype(Base::DATA)> DATA;
 };
 
-DAC_t DAC0;
+extern DAC_t DAC0;
 
 #define DAC0_CTRLA  (DAC0.CTRLA)
 #define DAC0_DATA   (DAC0.DATA)
