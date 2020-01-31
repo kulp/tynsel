@@ -25,6 +25,13 @@
 
 extern int sim_debug(const char *fmt, ...);
 
+#include <cstdint>
+
+namespace sim
+{
+    typedef unsigned long long uintptr_t;
+}
+
 namespace wrapped_io
 {
 #include <avr/io.h>
