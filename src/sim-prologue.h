@@ -71,24 +71,29 @@ public:
     }
 };
 
-#undef DAC0
-
-class DAC_t : private wrapped_io::DAC_t
+namespace remapped_io
 {
-    typedef wrapped_io::DAC_t Base;
+
+class DAC_t
+{
     DAC_t(const DAC_t&) = delete;
     DAC_t& operator=(const DAC_t&) = delete;
+
+    volatile wrapped_io::DAC_t &base;
 public:
-    DAC_t()
-        : CTRLA(Base::CTRLA)
-        , DATA(Base::DATA)
+    DAC_t(volatile wrapped_io::DAC_t &b)
+        : base(b)
+        , CTRLA(base.CTRLA)
+        , DATA(base.DATA)
     {}
 
-    Register<decltype(Base::CTRLA)> CTRLA;
-    Register<decltype(Base::DATA)> DATA;
+    Register<decltype(base.CTRLA)> CTRLA;
+    Register<decltype(base.DATA)> DATA;
 };
 
-extern DAC_t DAC0_impl;
+}
+
+extern remapped_io::DAC_t DAC0_impl;
 
 #undef DAC0_CTRLA
 #undef DAC0_DATA
