@@ -77,8 +77,8 @@ public:
         , DATA(Base::DATA)
     {}
 
-    Register<wrapped_io::uint8_t> CTRLA;
-    Register<wrapped_io::uint8_t> DATA;
+    Register<decltype(Base::CTRLA)> CTRLA;
+    Register<decltype(Base::DATA)> DATA;
 };
 
 DAC_t DAC0;
