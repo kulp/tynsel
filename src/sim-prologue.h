@@ -74,6 +74,14 @@ public:
 namespace remapped_io
 {
 
+#define FIELD_LIST_DAC_t(_) \
+    _(CTRLA) \
+    _(DATA) \
+    // end macro
+
+#define INIT_MEMBERS(X)     , X(base.X)
+#define DECL_REGISTER(X)    Register<decltype(base.X)> X;
+
 class DAC_t
 {
     DAC_t(const DAC_t&) = delete;
@@ -83,12 +91,10 @@ class DAC_t
 public:
     DAC_t(volatile wrapped_io::DAC_t &b)
         : base(b)
-        , CTRLA(base.CTRLA)
-        , DATA(base.DATA)
+        FIELD_LIST_DAC_t(INIT_MEMBERS)
     {}
 
-    Register<decltype(base.CTRLA)> CTRLA;
-    Register<decltype(base.DATA)> DATA;
+    FIELD_LIST_DAC_t(DECL_REGISTER)
 };
 
 }
