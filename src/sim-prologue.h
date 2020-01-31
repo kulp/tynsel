@@ -41,14 +41,14 @@ class Register
 public:
     Register(volatile T& store) : impl(store) {}
 
-    Register& operator=(const T& that)
+    Register& operator=(const T&& that)
     {
         impl = that;
         sim_debug("equal");
         return *this;
     }
 
-    Register& operator|=(const T& that)
+    Register& operator|=(const T&& that)
     {
         impl |= that;
         sim_debug("or-equal");
