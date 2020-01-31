@@ -88,7 +88,7 @@ public:
     Register<decltype(Base::DATA)> DATA;
 };
 
-extern DAC_t DAC0;
+extern DAC_t DAC0_impl;
 
 #undef DAC0_CTRLA
 #undef DAC0_DATA

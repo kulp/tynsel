@@ -20,11 +20,11 @@
  * IN THE SOFTWARE.
  */
 
-#include "sim-prologue.h"
+#ifndef SIM_REMAP_H_
+#define SIM_REMAP_H_
 
-#include <cstddef>
+#undef DAC0
+#define DAC0 DAC0_impl
 
-const std::size_t RAM_SIZE = 0x10000;
-volatile char sim_memory[RAM_SIZE];
+#endif
 
-::DAC_t DAC0_impl;
