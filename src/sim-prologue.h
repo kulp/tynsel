@@ -72,8 +72,6 @@ public:
 };
 
 #undef DAC0
-#undef DAC0_CTRLA
-#undef DAC0_DATA
 
 class DAC_t : private wrapped_io::DAC_t
 {
@@ -92,6 +90,8 @@ public:
 
 extern DAC_t DAC0;
 
+#undef DAC0_CTRLA
+#undef DAC0_DATA
 #define DAC0_CTRLA  (DAC0.CTRLA)
 #define DAC0_DATA   (DAC0.DATA)
 
