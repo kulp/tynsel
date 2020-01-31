@@ -71,33 +71,38 @@ public:
     }
 };
 
-namespace remapped_io
-{
+#define INIT_MEMBERS(X)     , X(base.X)
+#define DECL_REGISTER(X)    Register<decltype(base.X)> X;
+
+#define CAT(X,Y)    CAT_(X,Y)
+#define CAT_(X,Y)   X ## Y
+
+#define DECLARE_REMAPPED_DEVICE(Name)                      \
+    namespace remapped_io                                  \
+    {                                                      \
+    class Name                                             \
+    {                                                      \
+        Name(const Name&) = delete;                        \
+        Name& operator=(const Name&) = delete;             \
+                                                           \
+        volatile wrapped_io::Name &base;                   \
+    public:                                                \
+        Name(volatile wrapped_io::Name &b)                 \
+            : base(b)                                      \
+            CAT(FIELD_LIST_,Name)(INIT_MEMBERS)            \
+        {}                                                 \
+                                                           \
+        CAT(FIELD_LIST_,Name)(DECL_REGISTER)               \
+    };                                                     \
+    }                                                      \
+    // end macro
 
 #define FIELD_LIST_DAC_t(_) \
     _(CTRLA) \
     _(DATA) \
     // end macro
 
-#define INIT_MEMBERS(X)     , X(base.X)
-#define DECL_REGISTER(X)    Register<decltype(base.X)> X;
-
-class DAC_t
-{
-    DAC_t(const DAC_t&) = delete;
-    DAC_t& operator=(const DAC_t&) = delete;
-
-    volatile wrapped_io::DAC_t &base;
-public:
-    DAC_t(volatile wrapped_io::DAC_t &b)
-        : base(b)
-        FIELD_LIST_DAC_t(INIT_MEMBERS)
-    {}
-
-    FIELD_LIST_DAC_t(DECL_REGISTER)
-};
-
-}
+DECLARE_REMAPPED_DEVICE(DAC_t)
 
 extern remapped_io::DAC_t DAC0_impl;
 
