@@ -24,7 +24,7 @@
 #define SIM_REMAP_H_
 
 #undef DAC0
-#define DAC0 DAC0_impl
+#define DAC0 ::remapped_io::DAC0_impl
 
 #undef DAC0_CTRLA
 #undef DAC0_DATA

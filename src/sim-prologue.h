@@ -104,7 +104,10 @@ public:
 
 DECLARE_REMAPPED_DEVICE(DAC_t)
 
-extern remapped_io::DAC_t DAC0_impl;
+namespace remapped_io
+{
+extern ::remapped_io::DAC_t DAC0_impl;
+}
 
 using namespace wrapped_io;
 

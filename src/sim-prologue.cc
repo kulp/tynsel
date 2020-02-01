@@ -31,6 +31,6 @@ volatile char sim_memory[RAM_SIZE];
 
 typedef std::remove_reference<decltype(DAC0)>::type old_DAC_t;
 
-remapped_io::DAC_t DAC0_impl(
+remapped_io::DAC_t remapped_io::DAC0_impl(
     *static_cast<volatile old_DAC_t*>(
         static_cast<volatile void*>( &sim_memory[ reinterpret_cast<sim::uintptr_t>(&DAC0) ] )));
