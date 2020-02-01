@@ -106,11 +106,6 @@ DECLARE_REMAPPED_DEVICE(DAC_t)
 
 extern remapped_io::DAC_t DAC0_impl;
 
-#undef DAC0_CTRLA
-#undef DAC0_DATA
-#define DAC0_CTRLA  (DAC0.CTRLA)
-#define DAC0_DATA   (DAC0.DATA)
-
 using namespace wrapped_io;
 
 #endif

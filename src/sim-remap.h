@@ -26,5 +26,10 @@
 #undef DAC0
 #define DAC0 DAC0_impl
 
+#undef DAC0_CTRLA
+#undef DAC0_DATA
+#define DAC0_CTRLA  (DAC0.CTRLA)
+#define DAC0_DATA   (DAC0.DATA)
+
 #endif
 
