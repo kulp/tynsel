@@ -97,6 +97,13 @@ public:
     }                                                      \
     // end macro
 
+#define DECLARE_REMAPPED_DEVICE_INSTANCE(Type,Instance)    \
+    namespace remapped_io                                  \
+    {                                                      \
+    extern ::remapped_io::Type Instance##_impl;            \
+    }                                                      \
+    // end macro
+
 #define FIELD_LIST_DAC_t(_) \
     _(CTRLA) \
     _(DATA) \
@@ -104,10 +111,7 @@ public:
 
 DECLARE_REMAPPED_DEVICE(DAC_t)
 
-namespace remapped_io
-{
-extern ::remapped_io::DAC_t DAC0_impl;
-}
+DECLARE_REMAPPED_DEVICE_INSTANCE(DAC_t, DAC0)
 
 using namespace wrapped_io;
 
