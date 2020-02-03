@@ -50,12 +50,16 @@ template<typename T>
 class Register
 {
     volatile T& impl;
+    DeviceModel& model;
 
     Register(Register&) = delete;
     Register& operator=(const Register&) = delete;
 
 public:
-    Register(volatile T& store) : impl(store) {}
+    Register(volatile T& store, DeviceModel& parent)
+        : impl(store)
+        , model(parent)
+    {}
 
     Register& operator=(const T&& that)
     {
@@ -80,7 +84,7 @@ public:
 
 }
 
-#define INIT_MEMBERS(X)     , X(base.X)
+#define INIT_MEMBERS(X)     , X(base.X, *this)
 #define DECL_REGISTER(X)    Register<decltype(base.X)> X;
 
 #define CAT(X,Y)    CAT_(X,Y)
