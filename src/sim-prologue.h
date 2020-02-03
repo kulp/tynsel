@@ -41,22 +41,25 @@ extern volatile char sim_memory[];
 
 namespace remapped_io
 {
+template<typename T>
 class DeviceModel
 {
+protected:
+    typedef T Base;
 
 };
 
-template<typename T>
+template<typename Base, typename T>
 class Register
 {
     volatile T& impl;
-    DeviceModel& model;
+    DeviceModel<Base>& model;
 
     Register(Register&) = delete;
     Register& operator=(const Register&) = delete;
 
 public:
-    Register(volatile T& store, DeviceModel& parent)
+    Register(volatile T& store, DeviceModel<Base>& parent)
         : impl(store)
         , model(parent)
     {}
@@ -85,7 +88,7 @@ public:
 }
 
 #define INIT_MEMBERS(X)     , X(base.X, *this)
-#define DECL_REGISTER(X)    Register<decltype(base.X)> X;
+#define DECL_REGISTER(X)    Register<BaseType::Base, decltype(base.X)> X;
 
 #define CAT(X,Y)    CAT_(X,Y)
 #define CAT_(X,Y)   X ## Y
@@ -93,8 +96,9 @@ public:
 #define DECLARE_REMAPPED_DEVICE(Name)                      \
     namespace remapped_io                                  \
     {                                                      \
-    class Name : public DeviceModel                        \
+    class Name : public DeviceModel<Name>                  \
     {                                                      \
+        typedef DeviceModel<Name> BaseType;                \
         Name(const Name&) = delete;                        \
         Name& operator=(const Name&) = delete;             \
                                                            \
