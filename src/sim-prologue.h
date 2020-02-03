@@ -45,7 +45,6 @@ class DeviceModel
 {
 
 };
-}
 
 template<typename T>
 class Register
@@ -78,6 +77,8 @@ public:
         return impl;
     }
 };
+
+}
 
 #define INIT_MEMBERS(X)     , X(base.X)
 #define DECL_REGISTER(X)    Register<decltype(base.X)> X;
