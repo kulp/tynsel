@@ -39,6 +39,14 @@ namespace wrapped_io
 
 extern volatile char sim_memory[];
 
+namespace remapped_io
+{
+class DeviceModel
+{
+
+};
+}
+
 template<typename T>
 class Register
 {
@@ -80,7 +88,7 @@ public:
 #define DECLARE_REMAPPED_DEVICE(Name)                      \
     namespace remapped_io                                  \
     {                                                      \
-    class Name                                             \
+    class Name : public DeviceModel                        \
     {                                                      \
         Name(const Name&) = delete;                        \
         Name& operator=(const Name&) = delete;             \
