@@ -91,9 +91,7 @@ static bool decode(const SERIAL_CONFIG *c, struct bits_state *s, int8_t offset, 
     return false;
 }
 
-// TODO rename -- we do not actually do the "root" part of RMS since it is
-// expensive and for our purposes unnecessary.
-static bool rms(const uint8_t window_size, struct rms_state *s, RMS_IN_DATA datum, RMS_OUT_DATA *out)
+static bool power(const uint8_t window_size, struct power_state *s, RMS_IN_DATA datum, RMS_OUT_DATA *out)
 {
     s->sum -= s->window[s->ptr];
     s->window[s->ptr] = (RMS_OUT_DATA)(datum * datum);
@@ -185,8 +183,8 @@ bool CAT(pump_decoder,DECODE_BITS)(
 
     RMS_OUT_DATA ra = 0, rb = 0;
     if (
-            ! rms(audio->window_size, &s->rms[0], (int8_t)SHRINK((FILTER_OUT_DATA)(f[0] - *in), int8_t), &ra)
-        ||  ! rms(audio->window_size, &s->rms[1], (int8_t)SHRINK((FILTER_OUT_DATA)(f[1] - *in), int8_t), &rb)
+            ! power(audio->window_size, &s->power[0], (int8_t)SHRINK((FILTER_OUT_DATA)(f[0] - *in), int8_t), &ra)
+        ||  ! power(audio->window_size, &s->power[1], (int8_t)SHRINK((FILTER_OUT_DATA)(f[1] - *in), int8_t), &rb)
         )
         return false;
 

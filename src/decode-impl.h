@@ -48,7 +48,7 @@ struct bits_state {
     char byte;
 };
 
-struct rms_state {
+struct power_state {
     RMS_OUT_DATA window[MAX_RMS_SAMPLES];
     RMS_OUT_DATA sum;
     uint8_t ptr;
@@ -66,7 +66,7 @@ struct filter_state {
 };
 
 struct decode_state {
-    struct rms_state rms[2];
+    struct power_state power[2];
     struct filter_state filt[2];
     struct runs_state run;
     struct bits_state dec;
