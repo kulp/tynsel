@@ -27,7 +27,7 @@
 
 #define COEFF_FRACTIONAL_BITS 14
 
-#if 0
+#if defined(USE_FLOATING_POINT)
 typedef float FILTER_COEFF;
 typedef float FILTER_STATE_DATA;
 #define DEFINE_COEFF(x) (x)
