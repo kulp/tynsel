@@ -1,4 +1,4 @@
-#!/usr/bin/env octave-cli --no-gui --quiet --norc
+#!/usr/bin/env -S octave-cli --no-gui --quiet --norc
 arg_list = argv();
 if nargin < 3
     printf('Bad argument count\n')
