@@ -13,7 +13,7 @@ endif
 
 CFLAGS += -Wall -Wextra -Wunused
 CFLAGS += -Wc++-compat
-CFLAGS += -Werror
+CFLAGS += $(if $(WERROR),-Werror,-Wno-error)
 
 CPPFLAGS += -std=c11
 
