@@ -20,6 +20,8 @@
  * IN THE SOFTWARE.
  */
 
+#define _XOPEN_SOURCE 700
+
 #include "sine.h"
 
 #define int16_tMAX INT16_MAX
