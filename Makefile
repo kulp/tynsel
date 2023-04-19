@@ -12,7 +12,7 @@ CPPFLAGS += -DNDEBUG
 endif
 
 CFLAGS += -Wall -Wextra -Wunused
-CFLAGS += -Wc++-compat
+CFLAGS += -Wc++-compat -Wno-error=c++-compat
 CFLAGS += $(if $(WERROR),-Werror,-Wno-error)
 
 CPPFLAGS += -std=c11
