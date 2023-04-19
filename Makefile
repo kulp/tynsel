@@ -33,6 +33,9 @@ SOURCES = $(notdir $(wildcard src/*.c))
 
 all: gen listen avr-top
 
+# The `generic` target builds things that need no special hardware.
+generic: gen listen sine-gen-8bit sine-gen-16bit
+
 sine-gen%: AVR_CPPFLAGS =#ensure we do not get flags meant for embedded
 sine-gen%: AVR_CFLAGS =#  ensure we do not get flags meant for embedded
 sine-gen%: AVR_LDFLAGS =# ensure we do not get flags meant for embedded
