@@ -37,6 +37,7 @@ sine-gen%: AVR_CPPFLAGS =#ensure we do not get flags meant for embedded
 sine-gen%: AVR_CFLAGS =#  ensure we do not get flags meant for embedded
 sine-gen%: AVR_LDFLAGS =# ensure we do not get flags meant for embedded
 sine-gen%: CC = cc#       ensure we do not get compiler meant for embedded
+sine-gen-%: LDLIBS += -lm
 sine-gen-%: sine-gen-%.o sine-%.o
 	$(LINK.c) -o $@ $^ $(LDLIBS)
 
@@ -106,6 +107,7 @@ gen: encode-16bit.o
 gen: encode-8bit.o
 gen: sine-16bit.o
 gen: sine-8bit.o
+gen: LDLIBS += -lm
 listen: decode-16bit.o
 listen: decode-8bit.o
 listen: decode-heap-16bit.o
