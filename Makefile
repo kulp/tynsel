@@ -130,5 +130,8 @@ $(foreach p,$(PATS),$(eval -include $(patsubst %.c,$p,$(SOURCES))))
 endif
 
 clean:
-	rm -f *.d *.o gen listen sine-gen-*bit coeffs_*.h sinetable_*.h
+	rm -f *.d *.o gen listen sine-gen-*bit
 
+# The `clobber` rule cleans up generated code, too.
+clobber: clean
+	rm coeffs_*.h sinetable_*.h
