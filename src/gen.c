@@ -20,6 +20,8 @@
  * IN THE SOFTWARE.
  */
 
+#define _POSIX_C_SOURCE 200809L
+
 #include "encode.h"
 #include "sine.h"
 #include "state.h"
