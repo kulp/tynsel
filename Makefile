@@ -121,9 +121,9 @@ coeffs_%.h: scripts/gen_notch.m
 OBJ_PREFIXES = NULL avr-
 OBJ_SUFFIXES = NULL -8bit -16bit
 
-PATS = $(subst NULL,,$(foreach p,$(OBJ_PREFIXES),$(foreach s,$(OBJ_SUFFIXES),$p%$s.d)))
-$(PATS): %.c
-	@$(COMPILE.c) -MM -MG -MT "$@ $(@:.d=.o)" -MF $@ $<
+# Generate dependency files.
+%.o: CFLAGS += -MMD
+-include *.d
 
 ifneq ($(findstring clean,$(MAKECMDGOALS)),clean)
 $(foreach p,$(PATS),$(eval -include $(patsubst %.c,$p,$(SOURCES))))
