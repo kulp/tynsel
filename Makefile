@@ -2,7 +2,11 @@
 
 SAMPLE_RATE = 8000
 
+TARGETS += generic
+
 AVR_CC = avr-gcc
+HAVE_AVR_GCC := $(if $(shell /bin/sh -c "command -v $(AVR_CC)"),1)
+$(if $(HAVE_AVR_GCC),TARGETS += avr-top,$(warning No AVR compiler `$(AVR_CC)` was found; skipping AVR compilation))
 
 ifneq ($(DEBUG),)
 CFLAGS += -g -O0
@@ -33,7 +37,7 @@ CPPFLAGS += -DSAMPLE_RATE=$(SAMPLE_RATE)
 
 SOURCES = $(notdir $(wildcard src/*.c))
 
-all: gen listen avr-top
+all: $(TARGETS)
 
 # The `generic` target builds things that need no special hardware.
 generic: gen listen sine-gen-8bit sine-gen-16bit
