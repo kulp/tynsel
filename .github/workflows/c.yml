@@ -1,0 +1,23 @@
+name: C-language CI
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build:
+
+    strategy:
+      matrix:
+        os:
+        - ubuntu-latest
+        # macOS builds are very slow. Disable them for now.
+        #- macos-latest
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+    - uses: actions/checkout@v1
+    - run: make WERROR=1 all
