@@ -2,6 +2,12 @@
 
 SAMPLE_RATE = 8000
 
+TARGETS += generic
+
+AVR_CC = avr-gcc
+HAVE_AVR_GCC := $(if $(shell /bin/sh -c "command -v $(AVR_CC)"),1)
+$(if $(HAVE_AVR_GCC),TARGETS += avr-top,$(warning No AVR compiler `$(AVR_CC)` was found; skipping AVR compilation))
+
 ifneq ($(DEBUG),)
 CFLAGS += -g -O0
 CXXFLAGS += -g -O0
@@ -12,8 +18,8 @@ CPPFLAGS += -DNDEBUG
 endif
 
 CFLAGS += -Wall -Wextra -Wunused
-CFLAGS += -Wc++-compat
-CFLAGS += -Werror
+CFLAGS += -Wc++-compat -Wno-error=c++-compat
+CFLAGS += $(if $(WERROR),-Werror,-Wno-error)
 
 CPPFLAGS += -std=c11
 
@@ -31,12 +37,16 @@ CPPFLAGS += -DSAMPLE_RATE=$(SAMPLE_RATE)
 
 SOURCES = $(notdir $(wildcard src/*.c))
 
-all: gen listen avr-top
+all: $(TARGETS)
+
+# The `generic` target builds things that need no special hardware.
+generic: gen listen sine-gen-8bit sine-gen-16bit
 
 sine-gen%: AVR_CPPFLAGS =#ensure we do not get flags meant for embedded
 sine-gen%: AVR_CFLAGS =#  ensure we do not get flags meant for embedded
 sine-gen%: AVR_LDFLAGS =# ensure we do not get flags meant for embedded
 sine-gen%: CC = cc#       ensure we do not get compiler meant for embedded
+sine-gen-%: LDLIBS += -lm
 sine-gen-%: sine-gen-%.o sine-%.o
 	$(LINK.c) -o $@ $^ $(LDLIBS)
 
@@ -63,8 +73,8 @@ sinetable_%_8b.h: sine-gen-8bit
 
 -include avr-site.mk
 
-avr-%: CC = avr-gcc
-avr-%: LD = avr-gcc
+avr-%: CC = $(AVR_CC)
+avr-%: LD = $(AVR_CC)
 
 AVR_OPTFLAGS ?= -Os $(LTO_FLAGS)
 
@@ -106,6 +116,7 @@ gen: encode-16bit.o
 gen: encode-8bit.o
 gen: sine-16bit.o
 gen: sine-8bit.o
+gen: LDLIBS += -lm
 listen: decode-16bit.o
 listen: decode-8bit.o
 listen: decode-heap-16bit.o
@@ -119,14 +130,17 @@ coeffs_%.h: scripts/gen_notch.m
 OBJ_PREFIXES = NULL avr-
 OBJ_SUFFIXES = NULL -8bit -16bit
 
-PATS = $(subst NULL,,$(foreach p,$(OBJ_PREFIXES),$(foreach s,$(OBJ_SUFFIXES),$p%$s.d)))
-$(PATS): %.c
-	@$(COMPILE.c) -MM -MG -MT "$@ $(@:.d=.o)" -MF $@ $<
+# Generate dependency files.
+%.o: CFLAGS += -MMD
+-include *.d
 
 ifneq ($(findstring clean,$(MAKECMDGOALS)),clean)
 $(foreach p,$(PATS),$(eval -include $(patsubst %.c,$p,$(SOURCES))))
 endif
 
 clean:
-	rm -f *.d *.o gen listen sine-gen-*bit coeffs_*.h sinetable_*.h
+	rm -f *.d *.o gen listen sine-gen-*bit
 
+# The `clobber` rule cleans up generated code, too.
+clobber: clean
+	rm coeffs_*.h sinetable_*.h
