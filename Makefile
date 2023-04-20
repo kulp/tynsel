@@ -2,6 +2,8 @@
 
 SAMPLE_RATE = 8000
 
+AVR_CC = avr-gcc
+
 ifneq ($(DEBUG),)
 CFLAGS += -g -O0
 CXXFLAGS += -g -O0
@@ -67,8 +69,8 @@ sinetable_%_8b.h: sine-gen-8bit
 
 -include avr-site.mk
 
-avr-%: CC = avr-gcc
-avr-%: LD = avr-gcc
+avr-%: CC = $(AVR_CC)
+avr-%: LD = $(AVR_CC)
 
 AVR_OPTFLAGS ?= -Os $(LTO_FLAGS)
 
