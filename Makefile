@@ -6,7 +6,7 @@ TARGETS += generic
 
 AVR_CC = avr-gcc
 HAVE_AVR_GCC := $(if $(shell /bin/sh -c "command -v $(AVR_CC)"),1)
-$(if $(HAVE_AVR_GCC),TARGETS += avr-top,$(warning No AVR compiler `$(AVR_CC)` was found; skipping AVR compilation))
+$(if $(HAVE_AVR_GCC),$(eval TARGETS += avr-top),$(warning No AVR compiler `$(AVR_CC)` was found; skipping AVR compilation))
 
 ifneq ($(DEBUG),)
 CFLAGS += -g -O0
