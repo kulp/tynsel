@@ -21,3 +21,4 @@ jobs:
     steps:
     - uses: actions/checkout@v1
     - run: make WERROR=1 all
+    - run: ./scripts/test-gen-decode.sh
