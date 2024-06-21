@@ -14,6 +14,10 @@ Someday, the tynsel software might be hosted within a hardware design like [soyl
 
 ## Building
 
+In order to compute the notch filter coefficients, you will need the `signal` package installed for [GNU Octave]:
+
+    octave --eval "pkg install -forge signal control"
+
 Unless you are building for an AVR target like the [ATTINY412], you probably want to build just the `gen` and `listen` targets:
 
     make gen listen
@@ -49,3 +53,4 @@ You can use `gen` to generate data in real time, using the `-r 1` option; in thi
 [SoX]: http://sox.sourceforge.net
 [soylent]: https://github.com/kulp/soylent
 [minimodem]: http://www.whence.com/minimodem/
+[GNU Octave]: https://octave.org
