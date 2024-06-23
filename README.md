@@ -46,6 +46,21 @@ You can use `gen` to generate data in real time, using the `-r 1` option; in thi
     ./gen -r 1 |
         play --rate 8000 --encoding signed --bits 16 --type raw --no-show-progress -
 
+### Interoperating with [minimodem]
+
+Sending from [minimodem] and receiving in tynsel:
+
+    echo 'hello from minimodem' |
+        minimodem --tx 300 --volume 0.5 --file minimodem.wav --samplerate 8000 --stopbits 2
+    sox minimodem.wav --encoding signed --bits 16 --type raw - |
+        ./listen -C 0
+
+Sending from tynsel and receiving in [minimodem]:
+
+    echo 'hello from tynsel' |
+        ./gen -C 0 |
+        sox --rate 8000 --encoding signed --bits 16 --type raw - gen.wav
+    minimodem --rx 300 --file gen.wav
 
 [FSK]: https://en.wikipedia.org/wiki/Frequency-shift_keying
 [Bell 103 dataset]: https://en.wikipedia.org/wiki/Bell_103_modem
