@@ -13,8 +13,7 @@ jobs:
       matrix:
         os:
         - ubuntu-latest
-        # macOS builds are very slow. Disable them for now.
-        #- macos-latest
+        - macos-latest
 
     runs-on: ${{ matrix.os }}
 
