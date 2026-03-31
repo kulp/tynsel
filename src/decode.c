@@ -72,7 +72,7 @@ static bool decode(const SERIAL_CONFIG *c, struct bits_state *s, int8_t offset, 
                 s->byte |= (char)(this_bit << (s->bit - 1));
             }
 
-            if (s->bit >= before_stop + 1) { // accept a minimum number of stop bits
+            if (s->bit >= before_stop + c->stop_bits - 1) { // accept after required stop bits
                 *out = s->byte;
                 s->byte = 0;
                 s->bit = 0;
