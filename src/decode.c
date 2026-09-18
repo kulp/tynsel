@@ -25,6 +25,7 @@
 
 #include <assert.h>
 #include <limits.h>
+#include <stddef.h>
 
 #if defined(__AVR__)
 #include <avr/pgmspace.h>
@@ -34,9 +35,9 @@
 #endif
 
 #if defined(USE_GOERTZEL)
-static int64_t abs64(int64_t x)
+static uint64_t mag64(int64_t x)
 {
-    return x < 0 ? -x : x;
+    return x < 0 ? (uint64_t)(-(x + 1)) + 1u : (uint64_t)x;
 }
 #endif
 
@@ -201,8 +202,8 @@ static bool goertzel_power(const struct filter_config *c, DECODE_STATE *s, RMS_O
     int64_t s1 = 0;
     int64_t s2 = 0;
 #endif
-    uint16_t ptr = s->signal_ptr;
-    for (uint16_t i = 0; i < GOERTZEL_WINDOW_SIZE; i++) {
+    size_t ptr = s->signal_ptr;
+    for (size_t i = 0; i < GOERTZEL_WINDOW_SIZE; i++) {
         const int8_t datum = s->signal_window[ptr];
 
 #if defined(USE_FLOATING_POINT)
@@ -232,17 +233,15 @@ static bool goertzel_power(const struct filter_config *c, DECODE_STATE *s, RMS_O
     uint8_t downshift = 0;
     const uint8_t limit_bits = COEFF_FRACTIONAL_BITS < 60 ? (uint8_t)((60 - COEFF_FRACTIONAL_BITS) / 2) : 0;
     const int64_t max_mag = 1LL << limit_bits;
-    while ((abs64(a) > max_mag || abs64(b) > max_mag) && downshift < 24) {
+    while (mag64(a) > (uint64_t)max_mag || mag64(b) > (uint64_t)max_mag) {
         a >>= 1;
         b >>= 1;
         downshift++;
     }
 
-    int64_t power_q = (((a * a) + (b * b)) << COEFF_FRACTIONAL_BITS) - ((int64_t)coeff * a * b);
-    if (power_q < 0)
-        power_q = 0;
-
-    int64_t power = power_q >> COEFF_FRACTIONAL_BITS;
+    int64_t power = (a * a) + (b * b) - (((int64_t)coeff * a * b) >> COEFF_FRACTIONAL_BITS);
+    if (power < 0)
+        power = 0;
     if (downshift) {
         const uint8_t restore = (uint8_t)(downshift * 2);
         for (uint8_t i = 0; i < restore; i++) {
