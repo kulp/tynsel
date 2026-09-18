@@ -54,8 +54,10 @@ enum { NUM_START_BITS = 1 };
 #error "#define SAMPLE_RATE in Hz"
 #endif
 
-static const unsigned int BAUD_RATE = 300;
-static const unsigned int SAMPLES_PER_BIT = (SAMPLE_RATE + BAUD_RATE / 2) / BAUD_RATE; // round to nearest
+enum {
+    BAUD_RATE = 300,
+    SAMPLES_PER_BIT = (SAMPLE_RATE + BAUD_RATE / 2) / BAUD_RATE, // round to nearest
+};
 
 #define FREQUENCY_LIST(_) \
     _(CHAN_ZERO, BIT_ZERO, 1070) \

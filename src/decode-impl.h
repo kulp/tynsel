@@ -28,6 +28,7 @@
 
 #define THRESHOLD 0
 #define MAX_RMS_SAMPLES 8
+#define GOERTZEL_WINDOW_SIZE SAMPLES_PER_BIT
 
 #define EXPAND(X,Y) (assert(sizeof(Y) >= sizeof(X)), (X) << (CHAR_BIT * (sizeof(Y) - sizeof(X))))
 #define SHRINK(X,Y) (assert(sizeof(X) >= sizeof(Y)), (X) >> (CHAR_BIT * (sizeof(X) - sizeof(Y))))
@@ -67,9 +68,9 @@ struct filter_state {
 
 struct decode_state {
 #if defined(USE_GOERTZEL)
-    int8_t signal_window[MAX_RMS_SAMPLES];
-    uint8_t signal_ptr;
-    bool signal_primed;
+    int8_t signal_window[GOERTZEL_WINDOW_SIZE];
+    uint16_t signal_ptr;
+    uint16_t signal_count;
 #else
     struct power_state power[2];
     struct filter_state filt[2];
