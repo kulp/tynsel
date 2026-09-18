@@ -26,8 +26,11 @@
 #include "coeff.h"
 #include "decode.h"
 
+#include <stddef.h>
+
 #define THRESHOLD 0
 #define MAX_RMS_SAMPLES 8
+#define GOERTZEL_WINDOW_SIZE ((SAMPLE_RATE + BAUD_RATE_VALUE / 2) / BAUD_RATE_VALUE)
 
 #define EXPAND(X,Y) (assert(sizeof(Y) >= sizeof(X)), (X) << (CHAR_BIT * (sizeof(Y) - sizeof(X))))
 #define SHRINK(X,Y) (assert(sizeof(X) >= sizeof(Y)), (X) >> (CHAR_BIT * (sizeof(X) - sizeof(Y))))
@@ -66,11 +69,16 @@ struct filter_state {
 };
 
 struct decode_state {
+#if defined(USE_GOERTZEL)
+    int8_t signal_window[GOERTZEL_WINDOW_SIZE];
+    size_t signal_ptr;
+    size_t signal_count;
+#else
     struct power_state power[2];
     struct filter_state filt[2];
+#endif
     struct runs_state run;
     struct bits_state dec;
 };
 
 #endif
-
