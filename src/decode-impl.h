@@ -66,11 +66,16 @@ struct filter_state {
 };
 
 struct decode_state {
+#if defined(USE_GOERTZEL)
+    int8_t signal_window[MAX_RMS_SAMPLES];
+    uint8_t signal_ptr;
+    bool signal_primed;
+#else
     struct power_state power[2];
     struct filter_state filt[2];
+#endif
     struct runs_state run;
     struct bits_state dec;
 };
 
 #endif
-

@@ -131,6 +131,7 @@ static bool runs(int8_t hysteresis, struct runs_state *s, RUNS_IN_DATA da, RUNS_
     return true;
 }
 
+#if ! defined(USE_GOERTZEL)
 static bool filter(const struct filter_config * PROGMEM c, struct filter_state *s, FILTER_IN_DATA datum, FILTER_OUT_DATA *out)
 {
     s->in[s->ptr] = datum;
@@ -162,6 +163,72 @@ static bool filter(const struct filter_config * PROGMEM c, struct filter_state *
 
     return true;
 }
+#else
+static bool goertzel_window(uint8_t window_size, DECODE_STATE *s, int8_t datum)
+{
+    s->signal_window[s->signal_ptr] = datum;
+
+    if (s->signal_ptr == window_size - 1)
+        s->signal_primed = true;
+
+    // Avoid expensive modulo
+    if (++s->signal_ptr >= window_size)
+        s->signal_ptr = 0;
+
+    return s->signal_primed;
+}
+
+static bool goertzel_power(const struct filter_config *c, uint8_t window_size, DECODE_STATE *s, RMS_OUT_DATA *out)
+{
+    if (c->coeff_b0 == 0)
+        return false;
+
+#if defined(USE_FLOATING_POINT)
+    const float coeff = -c->coeff_b1 / c->coeff_b0;
+    float q1 = 0;
+    float q2 = 0;
+#else
+    const int32_t coeff = -((int32_t)c->coeff_b1 << COEFF_FRACTIONAL_BITS) / c->coeff_b0;
+    int32_t s1 = 0;
+    int32_t s2 = 0;
+#endif
+    uint8_t ptr = s->signal_ptr;
+    for (uint8_t i = 0; i < window_size; i++) {
+        const int8_t datum = s->signal_window[ptr];
+
+#if defined(USE_FLOATING_POINT)
+        const float q0 = (float)datum + coeff * q1 - q2;
+        q2 = q1;
+        q1 = q0;
+#else
+        const int32_t s0 = (int32_t)datum + (int32_t)(((int64_t)coeff * s1) >> COEFF_FRACTIONAL_BITS) - s2;
+        s2 = s1;
+        s1 = s0;
+#endif
+
+        if (++ptr >= window_size)
+            ptr = 0;
+    }
+
+#if defined(USE_FLOATING_POINT)
+    float power = q1 * q1 + q2 * q2 - coeff * q1 * q2;
+    if (power < 0)
+        power = 0;
+    if (power > UINT16_MAX)
+        power = UINT16_MAX;
+    *out = (RMS_OUT_DATA)power;
+#else
+    int64_t power = ((int64_t)s1 * s1) + ((int64_t)s2 * s2) - (((int64_t)coeff * s1 * s2) >> COEFF_FRACTIONAL_BITS);
+    if (power < 0)
+        power = 0;
+    if (power > UINT16_MAX)
+        power = UINT16_MAX;
+    *out = (RMS_OUT_DATA)power;
+#endif
+
+    return true;
+}
+#endif
 
 bool CAT(pump_decoder,DECODE_BITS)(
         const SERIAL_CONFIG *c,
@@ -174,6 +241,17 @@ bool CAT(pump_decoder,DECODE_BITS)(
 {
     DECODE_DATA_TYPE *in = (DECODE_DATA_TYPE*)p;
 
+#if defined(USE_GOERTZEL)
+    if (! goertzel_window(audio->window_size, s, (int8_t)SHRINK(*in, int8_t)))
+        return false;
+
+    RMS_OUT_DATA ra = 0, rb = 0;
+    if (
+            ! goertzel_power(&coeffs[BIT_ZERO], audio->window_size, s, &ra)
+        ||  ! goertzel_power(&coeffs[BIT_ONE ], audio->window_size, s, &rb)
+       )
+        return false;
+#else
     FILTER_OUT_DATA f[2] = { 0 };
     if (
             ! filter(&coeffs[BIT_ZERO], &s->filt[0], *in, &f[0])
@@ -187,6 +265,7 @@ bool CAT(pump_decoder,DECODE_BITS)(
         ||  ! power(audio->window_size, &s->power[1], (int8_t)SHRINK((FILTER_OUT_DATA)(f[1] - *in), int8_t), &rb)
         )
         return false;
+#endif
 
     if (ra < audio->threshold && rb < audio->threshold)
         return false;
@@ -197,4 +276,3 @@ bool CAT(pump_decoder,DECODE_BITS)(
 
     return decode(c, &s->dec, audio->offset, ro, out);
 }
-

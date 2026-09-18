@@ -22,6 +22,10 @@ Unless you are building for an AVR target like the [ATTINY412], you probably wan
 
     make gen listen
 
+By default, `listen` uses the existing notch-filter based decoder. To build `listen` with a Goertzel-based detector instead:
+
+    make DECODE_METHOD=goertzel listen
+
 ## Basic functionality
 
 The `gen` binary takes ASCII data on `stdin` and produces raw monoaural audio on `stdout` as 16-bit signed integers at 8000Hz by default. The `listen` binary does the reverse, so they can be chained together, as illustrated in the examples below.
