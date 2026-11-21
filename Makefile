@@ -123,7 +123,11 @@ listen: decode-heap-16bit.o
 listen: decode-heap-8bit.o
 listen: coeff.o
 
-FREQUENCIES = $(shell echo 'FREQUENCY_LIST(FLATTEN3)' | avr-cpp -P $(CPPFLAGS) -imacros src/types.h -D'FLATTEN3(X,Y,Z)=Z')
+# The frequencies come from FREQUENCY_LIST in src/types.h. avr-cpp would do the
+# same job, but a host without the AVR toolchain installed would then regenerate
+# this header with no frequencies at all, and the redirection would leave an
+# empty file behind that the compiler only reports on later.
+FREQUENCIES = $(shell echo 'FREQUENCY_LIST(FLATTEN3)' | $(CC) -E -P -x c - $(CPPFLAGS) -imacros src/types.h -D'FLATTEN3(X,Y,Z)=Z')
 coeffs_%.h: scripts/gen_notch.m
 	$(realpath $<) $$(echo $* | (IFS=_; read sample_rate notch_width rest ; echo $$sample_rate $$notch_width)) $(FREQUENCIES) > $@
 
