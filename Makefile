@@ -87,7 +87,14 @@ avr-%: LD = $(AVR_CC)
 
 AVR_OPTFLAGS ?= -Os $(LTO_FLAGS)
 
-AVR_CPPFLAGS += $(ARCH_FLAGS)
+# The microcontroller the embedded build is for. avr-site.mk or the command line
+# can override it. Without -mmcu, avr/io.h defines no DAC0, ADC0, or GPIOR0, so
+# src/avr-top.c would not compile at all; the part named here has to offer both
+# a DAC, which modulates the audio, and an ADC, which clocks the samples.
+F_MCU ?= attiny412
+AVR_ARCH_FLAGS ?= -mmcu=$(F_MCU)
+
+AVR_CPPFLAGS += $(ARCH_FLAGS) $(AVR_ARCH_FLAGS)
 avr-%: CPPFLAGS += $(AVR_CPPFLAGS)
 
 AVR_CFLAGS += $(AVR_OPTFLAGS)
@@ -96,7 +103,7 @@ AVR_CFLAGS += -Wpadded
 avr-%.o: CFLAGS += $(AVR_CFLAGS)
 
 AVR_LDFLAGS += $(AVR_OPTFLAGS)
-AVR_LDFLAGS += $(ARCH_FLAGS)
+AVR_LDFLAGS += $(ARCH_FLAGS) $(AVR_ARCH_FLAGS)
 avr-%: LDFLAGS += $(AVR_LDFLAGS)
 
 avr-%.o: %.c
@@ -151,16 +158,12 @@ FREQUENCIES = $(shell echo 'FREQUENCY_LIST(FLATTEN3)' | $(CC) -E -P -x c - $(CPP
 coeffs_%.h: $(if $(REGEN_COEFFS),scripts/gen_notch.m)
 	$(realpath scripts/gen_notch.m) $$(echo $* | (IFS=_; read sample_rate notch_width rest ; echo $$sample_rate $$notch_width)) $(FREQUENCIES) > $@
 
-OBJ_PREFIXES = NULL avr-
-OBJ_SUFFIXES = NULL -8bit -16bit
-
-# Generate dependency files.
+# Generate dependency files as objects are compiled, and read them back on the
+# next run. The block that used to iterate over $(PATS) never ran: PATS was
+# never defined, and neither were OBJ_PREFIXES, OBJ_SUFFIXES, or SOURCES, which
+# it consumed.
 %.o: CFLAGS += -MMD
 -include *.d
-
-ifneq ($(findstring clean,$(MAKECMDGOALS)),clean)
-$(foreach p,$(PATS),$(eval -include $(patsubst %.c,$p,$(SOURCES))))
-endif
 
 clean:
 	rm -f *.d *.o gen listen sine-gen-*bit
