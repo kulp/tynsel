@@ -39,6 +39,14 @@ SOURCES = $(notdir $(wildcard src/*.c))
 
 all: $(TARGETS)
 
+.PHONY: test
+test: all
+
+test: test-gen-decode
+.PHONY: test-gen-decode
+test-gen-decode:
+	./scripts/test-gen-decode.sh
+
 # The `generic` target builds things that need no special hardware.
 generic: gen listen sine-gen-8bit sine-gen-16bit
 
@@ -65,6 +73,7 @@ avr-%-16bit.o: %.c ; $(COMPILE.c) -o $@ $<
 
 avr-coeff% coeff%: CPPFLAGS += -DNOTCH_WIDTH=150
 
+.SECONDARY: sine-gen-8bit.o sine-gen-16bit.o
 SINETABLE_GAIN = 1.0
 sinetable_%_16b.h: sine-gen-16bit
 	$(realpath $^) $$(echo $* | (IFS=_; read a b ; echo $$a)) $(SINETABLE_GAIN) > $@
@@ -123,9 +132,24 @@ listen: decode-heap-16bit.o
 listen: decode-heap-8bit.o
 listen: coeff.o
 
-FREQUENCIES = $(shell echo 'FREQUENCY_LIST(FLATTEN3)' | avr-cpp -P $(CPPFLAGS) -imacros src/types.h -D'FLATTEN3(X,Y,Z)=Z')
-coeffs_%.h: scripts/gen_notch.m
-	$(realpath $<) $$(echo $* | (IFS=_; read sample_rate notch_width rest ; echo $$sample_rate $$notch_width)) $(FREQUENCIES) > $@
+# The frequencies come from FREQUENCY_LIST in src/types.h. avr-cpp would do the
+# same job, but a host without the AVR toolchain installed would then regenerate
+# this header with no frequencies at all, and the redirection would leave an
+# empty file behind that the compiler only reports on later.
+FREQUENCIES = $(shell echo 'FREQUENCY_LIST(FLATTEN3)' | $(CC) -E -P -x c - $(CPPFLAGS) -imacros src/types.h -D'FLATTEN3(X,Y,Z)=Z')
+# A fresh checkout writes coeffs_8000_150_.h before scripts/gen_notch.m, so
+# the generator always timestamps newer than the checked-in header. With the
+# generator as a plain prerequisite, the second `make` in a clean clone (CI
+# runs `make all` and then `make test`) regenerates the header, which needs
+# Octave, and hosts without it fail the build with `octave-cli: No such file
+# or directory`. The header is checked in precisely so that an ordinary build
+# needs no Octave, so make the prerequisite conditional; refresh the header
+# deliberately with `make REGEN_COEFFS=1 coeffs_8000_150_.h` after editing
+# gen_notch.m or the FREQUENCY_LIST in src/types.h. The recipe names the
+# generator by path rather than through `$<`, because after `make clobber`
+# the header is missing and must be regenerated with REGEN_COEFFS unset.
+coeffs_%.h: $(if $(REGEN_COEFFS),scripts/gen_notch.m)
+	$(realpath scripts/gen_notch.m) $$(echo $* | (IFS=_; read sample_rate notch_width rest ; echo $$sample_rate $$notch_width)) $(FREQUENCIES) > $@
 
 OBJ_PREFIXES = NULL avr-
 OBJ_SUFFIXES = NULL -8bit -16bit
