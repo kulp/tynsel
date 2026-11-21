@@ -19,7 +19,7 @@ fail ()
 # happen to warm up without the false edge, which is why this sweeps the window
 # instead of using one.
 
-for chan in 0; do # TODO: fix separate channel-one bug
+for chan in 0 1; do
     printf 'HELLO WORLD' | "$here/../gen" -C "$chan" > "$temp/message-raw"
     printf '' | "$here/../gen" -C 0 > "$temp/carrier-raw"
 

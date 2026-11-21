@@ -32,7 +32,7 @@
 #define PROGMEM
 #endif
 
-const struct filter_config coeff_table[] PROGMEM = {
+const struct filter_config coeff_table[CHAN_max * BIT_max] PROGMEM = {
     #include STR(CAT(CAT(coeffs_,SAMPLE_RATE),CAT(CAT(_,NOTCH_WIDTH),_.h)))
 };
 
