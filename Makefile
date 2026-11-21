@@ -65,6 +65,7 @@ avr-%-16bit.o: %.c ; $(COMPILE.c) -o $@ $<
 
 avr-coeff% coeff%: CPPFLAGS += -DNOTCH_WIDTH=150
 
+.SECONDARY: sine-gen-8bit.o sine-gen-16bit.o
 SINETABLE_GAIN = 1.0
 sinetable_%_16b.h: sine-gen-16bit
 	$(realpath $^) $$(echo $* | (IFS=_; read a b ; echo $$a)) $(SINETABLE_GAIN) > $@
