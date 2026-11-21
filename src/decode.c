@@ -130,6 +130,8 @@ static bool runs(int8_t hysteresis, struct runs_state *s, RUNS_IN_DATA da, RUNS_
     if (s->current < min)
         s->current = min;
 
+    s->locked = s->locked || s->current == max || s->current == min;
+
     *out = s->current;
 
     return true;
@@ -197,6 +199,12 @@ bool CAT(pump_decoder,DECODE_BITS)(
 
     RUNS_OUT_DATA ro = 0;
     if (! runs(audio->hysteresis, &s->run, ra, rb, &ro))
+        return false;
+
+    // Until the integrator has reached a bound, a rise through zero here is the
+    // filters warming up rather than the start bit of a character, and the byte
+    // read from it is one the caller never sent.
+    if (! s->run.locked)
         return false;
 
     return decode(c, &s->dec, audio->offset, ro, out);

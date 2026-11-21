@@ -47,6 +47,11 @@ test: test-gen-decode
 test-gen-decode:
 	./scripts/test-gen-decode.sh
 
+test: test-start-bit
+.PHONY: test-start-bit
+test-start-bit:
+	./scripts/test-start-bit.sh
+
 # The `generic` target builds things that need no special hardware.
 generic: gen listen sine-gen-8bit sine-gen-16bit
 

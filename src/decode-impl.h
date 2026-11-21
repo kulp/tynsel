@@ -56,6 +56,12 @@ struct power_state {
 
 struct runs_state {
     RUNS_OUT_DATA current;
+    // The integrator starts at zero while the filters are still warming up, so the
+    // first few comparisons of the two channels carry no information, and their
+    // recovery looks like a rise through zero, which is what a start bit looks like.
+    // Reaching either bound of the hysteresis is the point at which the demodulator
+    // has decided which channel is sounding.
+    bool locked;
 };
 
 struct filter_state {
