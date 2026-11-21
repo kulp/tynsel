@@ -18,6 +18,10 @@ In order to compute the notch filter coefficients, you will need the `signal` pa
 
     octave --eval "pkg install -forge signal control"
 
+The computed header `coeffs_8000_150_.h` is checked in, so an ordinary build needs no Octave. After changing `scripts/gen_notch.m` or the `FREQUENCY_LIST` in `src/types.h`, regenerate it explicitly:
+
+    make REGEN_COEFFS=1 coeffs_8000_150_.h
+
 Unless you are building for an AVR target like the [ATTINY412], you probably want to build just the `gen` and `listen` targets:
 
     make gen listen
