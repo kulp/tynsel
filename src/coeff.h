@@ -45,7 +45,15 @@ struct filter_config {
 #define coeff_a1 coeff_b1
 };
 
-extern const struct filter_config coeff_table[];
+// The generated coefficient file carries one entry per frequency, in the order that
+// FREQUENCY_LIST in types.h emits them: channel-major, bit-minor. A decoder wants
+// the pair of filters belonging to one channel, so take the pair through this macro
+// rather than indexing the table by channel directly.
+#define COEFF_PAIR(Channel) (&coeff_table[(Channel) * BIT_max])
+
+// The declared size is the check that a generated coefficient file covers every
+// frequency; a short or long table conflicts with the definition in coeff.c.
+extern const struct filter_config coeff_table[CHAN_max * BIT_max];
 
 #endif
 
