@@ -30,14 +30,21 @@
 
 #define DECODE_DATA_TYPE SIZED(DECODE_BITS)
 
-typedef uint16_t RMS_OUT_DATA;
+typedef uint16_t POWER_OUT_DATA;
+
+// The windowed square sum holds at most this many samples, so a measurement
+// window cannot be wider; AUDIO_CONFIG::window_size is bounded by it.
+#define MAX_POWER_SAMPLES 8
 
 struct filter_config;
 
 typedef struct {
     enum channel channel;
     uint8_t      window_size;
-    RMS_OUT_DATA threshold;
+    // Compared against the sum of the squares the window holds, so this is on
+    // the squared scale, and the reading grows with window_size: at the default
+    // window of seven, a threshold of ten is a per-sample magnitude of about 1.2.
+    POWER_OUT_DATA threshold;
     int8_t       hysteresis;
     int8_t       offset;
 } AUDIO_CONFIG;

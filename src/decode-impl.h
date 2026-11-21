@@ -27,7 +27,6 @@
 #include "decode.h"
 
 #define THRESHOLD 0
-#define MAX_RMS_SAMPLES 8
 
 #define EXPAND(X,Y) (assert(sizeof(Y) >= sizeof(X)), (X) << (CHAR_BIT * (sizeof(Y) - sizeof(X))))
 #define SHRINK(X,Y) (assert(sizeof(X) >= sizeof(Y)), (X) >> (CHAR_BIT * (sizeof(X) - sizeof(Y))))
@@ -35,10 +34,10 @@
 typedef DECODE_DATA_TYPE FILTER_IN_DATA;
 typedef FILTER_IN_DATA FILTER_OUT_DATA;
 
-typedef int8_t RMS_IN_DATA;
+typedef int8_t POWER_IN_DATA;
 typedef int8_t RUNS_OUT_DATA;
 
-typedef RMS_OUT_DATA RUNS_IN_DATA;
+typedef POWER_OUT_DATA RUNS_IN_DATA;
 typedef RUNS_OUT_DATA DECODE_IN_DATA;
 
 struct bits_state {
@@ -49,8 +48,8 @@ struct bits_state {
 };
 
 struct power_state {
-    RMS_OUT_DATA window[MAX_RMS_SAMPLES];
-    RMS_OUT_DATA sum;
+    POWER_OUT_DATA window[MAX_POWER_SAMPLES];
+    POWER_OUT_DATA sum;
     uint8_t ptr;
     bool primed;
 };

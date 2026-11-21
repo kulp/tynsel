@@ -91,10 +91,14 @@ static bool decode(const SERIAL_CONFIG *c, struct bits_state *s, int8_t offset, 
     return false;
 }
 
-static bool power(const uint8_t window_size, struct power_state *s, RMS_IN_DATA datum, RMS_OUT_DATA *out)
+// A sum of squares over a sliding window, which is a power measurement: the root
+// is expensive on the target and monotonic, so AUDIO_CONFIG::threshold is compared
+// against the squared scale. The sum is not divided by the window size, so
+// widening the window raises the reading without changing the audio at all.
+static bool power(const uint8_t window_size, struct power_state *s, POWER_IN_DATA datum, POWER_OUT_DATA *out)
 {
     s->sum -= s->window[s->ptr];
-    s->window[s->ptr] = (RMS_OUT_DATA)(datum * datum);
+    s->window[s->ptr] = (POWER_OUT_DATA)(datum * datum);
     s->sum += s->window[s->ptr];
 
     if (s->ptr == window_size - 1)
@@ -181,7 +185,7 @@ bool CAT(pump_decoder,DECODE_BITS)(
         )
         return false;
 
-    RMS_OUT_DATA ra = 0, rb = 0;
+    POWER_OUT_DATA ra = 0, rb = 0;
     if (
             ! power(audio->window_size, &s->power[0], (int8_t)SHRINK((FILTER_OUT_DATA)(f[0] - *in), int8_t), &ra)
         ||  ! power(audio->window_size, &s->power[1], (int8_t)SHRINK((FILTER_OUT_DATA)(f[1] - *in), int8_t), &rb)
