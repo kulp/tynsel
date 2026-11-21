@@ -39,6 +39,14 @@ SOURCES = $(notdir $(wildcard src/*.c))
 
 all: $(TARGETS)
 
+.PHONY: test
+test: all
+
+test: test-gen-decode
+.PHONY: test-gen-decode
+test-gen-decode:
+	./scripts/test-gen-decode.sh
+
 # The `generic` target builds things that need no special hardware.
 generic: gen listen sine-gen-8bit sine-gen-16bit
 
