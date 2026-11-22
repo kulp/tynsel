@@ -90,6 +90,18 @@ sinetable_%_16b.h: sine-gen-16bit
 sinetable_%_8b.h: sine-gen-8bit
 	$(realpath $^) $$(echo $* | (IFS=_; read a b ; echo $$a)) $(SINETABLE_GAIN) > $@
 
+# The precomputed sine table is generated, and sine-precomp.c reaches it
+# only through macros, which make cannot read as a dependency: the objects
+# that include the table say which table their compile asks for, the 64u
+# coming from WAVE_TABLE_SIZE in src/sine.h. Without these lines a tree
+# that has never built the table fails the compile rather than generating
+# it, which only stayed invisible because no target built for the plain
+# AVR toolchain had ever needed the table.
+sine-precomp-8bit.o: sinetable_64u_8b.h
+sine-precomp-16bit.o: sinetable_64u_16b.h
+avr-sine-precomp-8bit.o: sinetable_64u_8b.h
+avr-sine-precomp-16bit.o: sinetable_64u_16b.h
+
 -include avr-site.mk
 
 avr-%: CC = $(AVR_CC)
