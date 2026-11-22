@@ -36,7 +36,9 @@ typedef float FILTER_STATE_DATA;
 typedef int16_t FILTER_COEFF;
 typedef int16_t FILTER_STATE_DATA;
 #define DEFINE_COEFF(x) ((FILTER_COEFF)((x) * (1 << COEFF_FRACTIONAL_BITS)))
-#define FILTER_MULT(a, b) (((a) * (b)) >> COEFF_FRACTIONAL_BITS)
+// A Q14 product of two 16-bit magnitudes needs 30 bits, and a target whose
+// int is 16 bits would otherwise wrap the product before it is shifted down.
+#define FILTER_MULT(a, b) ((((long)(a)) * ((long)(b))) >> COEFF_FRACTIONAL_BITS)
 #endif
 
 struct filter_config {
