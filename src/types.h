@@ -36,7 +36,8 @@
 
 #define SIZED(Bits) TYPE(int, Bits, _t)
 
-enum channel { CHAN_ZERO, CHAN_ONE, CHAN_max };
+// Specifying the width of some enums avoids `-Wlto-type-mismatch`.
+enum channel : unsigned char { CHAN_ZERO, CHAN_ONE, CHAN_max };
 enum bit { BIT_ZERO, BIT_ONE, BIT_max };
 enum parity { PARITY_SPACE, PARITY_MARK, PARITY_EVEN, PARITY_ODD };
 
